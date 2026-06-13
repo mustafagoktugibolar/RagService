@@ -155,11 +155,16 @@ public sealed class Worker(
     {
         var replyTo = args.BasicProperties?.ReplyTo;
         var correlationId = args.BasicProperties?.CorrelationId;
+        string? requestId = null;
+        string? documentId = null;
 
         try
         {
             var request = JsonSerializer.Deserialize<IndexDocumentRequest>(args.Body.Span, JsonOptions)
                 ?? throw new JsonException("Message body was empty.");
+
+            requestId = request.RequestId;
+            documentId = request.DocumentId;
 
             using var scope = scopeFactory.CreateScope();
             var service = scope.ServiceProvider.GetRequiredService<IndexDocumentService>();
@@ -186,8 +191,8 @@ public sealed class Worker(
             logger.LogError(ex, "Failed to process index request with correlation id {CorrelationId}", correlationId);
             var errorResponse = new IndexDocumentResponse
             {
-                RequestId = string.Empty,
-                DocumentId = string.Empty,
+                RequestId = requestId ?? string.Empty,
+                DocumentId = documentId ?? string.Empty,
                 Success = false,
                 ErrorMessage = ex.Message
             };

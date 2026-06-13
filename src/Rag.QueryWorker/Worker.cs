@@ -155,11 +155,14 @@ public sealed class Worker(
     {
         var replyTo = args.BasicProperties?.ReplyTo;
         var correlationId = args.BasicProperties?.CorrelationId;
+        string? requestId = null;
 
         try
         {
             var request = JsonSerializer.Deserialize<QueryRequest>(args.Body.Span, JsonOptions)
                 ?? throw new JsonException("Message body was empty.");
+
+            requestId = request.RequestId;
 
             using var scope = scopeFactory.CreateScope();
             var service = scope.ServiceProvider.GetRequiredService<VectorSearchService>();
@@ -186,7 +189,7 @@ public sealed class Worker(
             logger.LogError(ex, "Failed to process query request with correlation id {CorrelationId}", correlationId);
             var errorResponse = new QueryResponse
             {
-                RequestId = string.Empty,
+                RequestId = requestId ?? string.Empty,
                 Success = false,
                 ErrorMessage = ex.Message,
                 Results = []

@@ -54,6 +54,11 @@ services:
     volumes:
       - redis-data:/data
     command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   jaeger:
     image: jaegertracing/all-in-one:latest
@@ -94,7 +99,7 @@ services:
       minio:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       jaeger:
         condition: service_started
 
@@ -113,7 +118,7 @@ services:
       minio:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       jaeger:
         condition: service_started
 
