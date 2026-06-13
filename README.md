@@ -20,7 +20,7 @@ sequenceDiagram
     S->>MS: Upload passage as .txt<br/>(passages/{id}.txt)
     S->>MQ: Publish IndexDocumentRequest<br/>{ documentId, filePath, collection }
 
-    MQ-->>IW: Deliver message (prefetch=32, concurrency=32)
+    MQ-->>IW: Deliver message (prefetch=8, concurrency=8)
 
     IW->>MS: OpenReadAsync(filePath)
     MS-->>IW: Stream content
@@ -234,6 +234,6 @@ REDIS__CONNECTIONSTRING=redis:6379
 EMBEDDINGCACHE__ENABLED=true           # Cache embeddings in Redis
 EMBEDDINGCACHE__TTLHOURS=24
 
-RABBITMQ__PREFETCH=32
-RABBITMQ__CONCURRENCY=32
+RABBITMQ__PREFETCH=8
+RABBITMQ__CONCURRENCY=8
 ```
