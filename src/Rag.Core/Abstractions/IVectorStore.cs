@@ -12,6 +12,7 @@ public interface IVectorStore
         string collection,
         float[] embedding,
         int topK,
+        Dictionary<string, string>? filters,
         CancellationToken ct);
 
     Task DeleteByDocumentIdAsync(string collection, string documentId, CancellationToken ct);

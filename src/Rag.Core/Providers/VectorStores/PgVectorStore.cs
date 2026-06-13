@@ -78,10 +78,27 @@ public sealed class PgVectorStore : IVectorStore, IAsyncDisposable
         string collection,
         float[] embedding,
         int topK,
+        Dictionary<string, string>? filters,
         CancellationToken ct)
     {
         await EnsureTablesAsync(ct);
         await using var connection = await OpenConnectionAsync(ct);
+
+        var filterClauses = new System.Text.StringBuilder();
+        var filterParams = new List<(string keyParam, string keyValue, string valParam, string valValue)>();
+        if (filters is not null)
+        {
+            var i = 0;
+            foreach (var (key, value) in filters)
+            {
+                var kp = $"fk{i}";
+                var vp = $"fv{i}";
+                filterClauses.Append($"\n  AND jsonb_extract_path_text(metadata, @{kp}) = @{vp}");
+                filterParams.Add((kp, key, vp, value));
+                i++;
+            }
+        }
+
         await using var command = new NpgsqlCommand($"""
             SELECT document_id,
                    chunk_id,
@@ -89,7 +106,7 @@ public sealed class PgVectorStore : IVectorStore, IAsyncDisposable
                    metadata::text,
                    1 - (embedding <=> @embedding) AS score
             FROM {VectorTable}
-            WHERE collection = @collection
+            WHERE collection = @collection{filterClauses}
             ORDER BY embedding <=> @embedding
             LIMIT @topK
             """, connection);
@@ -97,6 +114,11 @@ public sealed class PgVectorStore : IVectorStore, IAsyncDisposable
         command.Parameters.AddWithValue("collection", collection);
         command.Parameters.AddWithValue("embedding", new Vector(embedding));
         command.Parameters.AddWithValue("topK", topK);
+        foreach (var (kp, kv, vp, vv) in filterParams)
+        {
+            command.Parameters.AddWithValue(kp, kv);
+            command.Parameters.AddWithValue(vp, vv);
+        }
 
         var results = new List<VectorSearchResult>();
         await using var reader = await command.ExecuteReaderAsync(ct);

@@ -50,12 +50,14 @@ public sealed class CachingEmbeddingProvider(
             var embeddings = await inner.EmbedBatchAsync(missTexts, ct);
             var entryOptions = BuildEntryOptions();
 
+            var writeTasks = new Task[missIndexes.Count];
             for (var j = 0; j < missIndexes.Count; j++)
             {
                 var originalIndex = missIndexes[j];
                 results[originalIndex] = embeddings[j];
-                await cache.SetAsync(BuildKey(texts[originalIndex]), Serialize(embeddings[j]), entryOptions, ct);
+                writeTasks[j] = cache.SetAsync(BuildKey(texts[originalIndex]), Serialize(embeddings[j]), entryOptions, ct);
             }
+            await Task.WhenAll(writeTasks);
         }
 
         return results;

@@ -4,6 +4,12 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
 
   qdrant:
     image: qdrant/qdrant:latest
@@ -81,11 +87,16 @@ services:
     env_file:
       - .env
     depends_on:
-      - rabbitmq
-      - qdrant
-      - minio
-      - redis
-      - jaeger
+      rabbitmq:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      jaeger:
+        condition: service_started
 
   rag.indexworker:
     image: rag.indexworker
@@ -95,11 +106,16 @@ services:
     env_file:
       - .env
     depends_on:
-      - rabbitmq
-      - qdrant
-      - minio
-      - redis
-      - jaeger
+      rabbitmq:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      jaeger:
+        condition: service_started
 
   rag.wikipedia-seeder:
     image: rag.wikipedia-seeder

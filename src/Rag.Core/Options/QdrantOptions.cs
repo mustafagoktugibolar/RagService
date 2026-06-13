@@ -6,6 +6,8 @@ public sealed class QdrantOptions
 
     public int Port { get; set; } = 6334;
 
+    public int HttpPort { get; set; } = 6333;
+
     public bool Https { get; set; }
 
     public string? ApiKey { get; set; }

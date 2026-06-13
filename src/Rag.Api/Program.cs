@@ -70,7 +70,7 @@ try
 
     builder.Services.AddHealthChecks()
         .AddUrlGroup(
-            new Uri($"http://{qdrantOpts.Host}:{qdrantOpts.Port - 1}/healthz"),
+            new Uri($"http://{qdrantOpts.Host}:{qdrantOpts.HttpPort}/healthz"),
             name: "qdrant",
             failureStatus: HealthStatus.Unhealthy,
             tags: ["ready"])

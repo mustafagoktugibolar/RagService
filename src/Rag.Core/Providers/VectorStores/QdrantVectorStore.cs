@@ -73,11 +73,20 @@ public sealed class QdrantVectorStore : IVectorStore, IDisposable
         string collection,
         float[] embedding,
         int topK,
+        Dictionary<string, string>? filters,
         CancellationToken ct)
     {
+        Filter? filter = null;
+        if (filters is not null && filters.Count > 0)
+        {
+            filter = new Filter();
+            foreach (var (key, value) in filters)
+                filter.Must.Add(Conditions.MatchKeyword($"metadata.{key}", value));
+        }
+
         var results = await RagPipelines.Qdrant.ExecuteAsync(
             async token => await _client.SearchAsync(
-                collection, embedding, limit: (ulong)topK,
+                collection, embedding, filter: filter, limit: (ulong)topK,
                 payloadSelector: true, vectorsSelector: false, cancellationToken: token), ct);
 
         return results

@@ -25,6 +25,7 @@ public static class ServiceCollectionExtensions
         services.Configure<RabbitMqOptions>(configuration.GetSection("RabbitMQ"));
         services.Configure<ChunkingOptions>(configuration.GetSection("Chunking"));
         services.Configure<EmbeddingCacheOptions>(configuration.GetSection("EmbeddingCache"));
+        services.Configure<QueryCacheOptions>(configuration.GetSection("QueryCache"));
 
         var redisConnectionString = configuration["Redis:ConnectionString"] ?? "localhost:6379";
         services.AddStackExchangeRedisCache(o => o.ConfigurationOptions = ConfigurationOptions.Parse(redisConnectionString));

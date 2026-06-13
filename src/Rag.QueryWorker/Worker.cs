@@ -52,7 +52,7 @@ public sealed class Worker(
         consumer.ReceivedAsync += async (_, args) =>
         {
             await semaphore.WaitAsync(stoppingToken);
-            var success = false;
+            bool? success = false;
             try
             {
                 success = await HandleMessageAsync(args, stoppingToken);
@@ -72,10 +72,10 @@ public sealed class Worker(
 
             try
             {
-                if (success)
+                if (success == true)
                     await channel.BasicAckAsync(args.DeliveryTag, multiple: false, cancellationToken: CancellationToken.None);
                 else
-                    await channel.BasicNackAsync(args.DeliveryTag, multiple: false, requeue: false, cancellationToken: CancellationToken.None);
+                    await channel.BasicNackAsync(args.DeliveryTag, multiple: false, requeue: success is null, cancellationToken: CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -151,11 +151,10 @@ public sealed class Worker(
         }
     }
 
-    private async Task<bool> HandleMessageAsync(BasicDeliverEventArgs args, CancellationToken ct)
+    private async Task<bool?> HandleMessageAsync(BasicDeliverEventArgs args, CancellationToken ct)
     {
         var replyTo = args.BasicProperties?.ReplyTo;
         var correlationId = args.BasicProperties?.CorrelationId;
-        QueryResponse response;
 
         try
         {
@@ -164,7 +163,14 @@ public sealed class Worker(
 
             using var scope = scopeFactory.CreateScope();
             var service = scope.ServiceProvider.GetRequiredService<VectorSearchService>();
-            response = await service.SearchAsync(request, ct);
+            var response = await service.SearchAsync(request, ct);
+
+            if (!string.IsNullOrWhiteSpace(replyTo))
+                await PublishResponseAsync(replyTo, correlationId, response, ct);
+            else
+                logger.LogWarning("Query message with delivery tag {Tag} did not include reply-to", args.DeliveryTag);
+
+            return response.Success;
         }
         catch (OperationCanceledException)
         {
@@ -172,33 +178,23 @@ public sealed class Worker(
         }
         catch (BrokenCircuitException ex)
         {
-            logger.LogWarning(ex, "Circuit open — downstream unavailable, nacking message {CorrelationId}", correlationId);
-            response = new QueryResponse
-            {
-                RequestId = string.Empty,
-                Success = false,
-                ErrorMessage = "Service temporarily unavailable.",
-                Results = []
-            };
+            logger.LogWarning(ex, "Circuit open — downstream unavailable, requeuing message {CorrelationId}", correlationId);
+            return null;
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to process query request with correlation id {CorrelationId}", correlationId);
-            response = new QueryResponse
+            var errorResponse = new QueryResponse
             {
                 RequestId = string.Empty,
                 Success = false,
                 ErrorMessage = ex.Message,
                 Results = []
             };
+            if (!string.IsNullOrWhiteSpace(replyTo))
+                await PublishResponseAsync(replyTo, correlationId, errorResponse, ct);
+            return false;
         }
-
-        if (!string.IsNullOrWhiteSpace(replyTo))
-            await PublishResponseAsync(replyTo, correlationId, response, ct);
-        else
-            logger.LogWarning("Query message with delivery tag {Tag} did not include reply-to", args.DeliveryTag);
-
-        return response.Success;
     }
 
     private async Task PublishResponseAsync(string replyTo, string? correlationId, QueryResponse response, CancellationToken ct)

@@ -12,6 +12,7 @@ sequenceDiagram
     participant MQ as RabbitMQ<br/>rag.index
     participant IW as IndexWorker
     participant MS as MinIO<br/>(rag-documents)
+    participant RD as Redis<br/>(embedding cache)
     participant OAI as OpenAI<br/>text-embedding-3-small
     participant QD as Qdrant<br/>(vector store)
     participant DLQ as RabbitMQ<br/>rag.index.dlq
@@ -26,14 +27,22 @@ sequenceDiagram
 
     IW->>IW: Extract text → chunk<br/>(chunk size 1000, overlap 200)
 
-    IW->>OAI: EmbedBatchAsync(chunks[])<br/>POST /v1/embeddings
-    OAI-->>IW: float[1536][] embeddings
+    IW->>RD: GetAsync(batch keys)
+    alt Cache hit
+        RD-->>IW: float[1536][]
+    else Cache miss
+        IW->>OAI: EmbedBatchAsync(chunks[])<br/>POST /v1/embeddings
+        OAI-->>IW: float[1536][]
+        IW->>RD: SetAsync in parallel (TTL 24h)
+    end
 
     IW->>QD: EnsureCollection + UpsertAsync<br/>gRPC :6334
     QD-->>IW: OK
 
     alt Success
         IW->>MQ: BasicAck
+    else BrokenCircuitException
+        IW->>MQ: BasicNack (requeue=true)
     else Failure (after Polly retries)
         IW->>MQ: BasicNack (requeue=false)
         MQ->>DLQ: Route via rag.dlx exchange
@@ -47,22 +56,31 @@ sequenceDiagram
     participant GW as API Gateway<br/>(external .NET app)
     participant MQ as RabbitMQ<br/>rag.query
     participant QW as QueryWorker
+    participant RD as Redis<br/>(embedding cache)
     participant OAI as OpenAI<br/>text-embedding-3-small
     participant QD as Qdrant<br/>(vector store)
     participant DLQ as RabbitMQ<br/>rag.query.dlq
 
-    GW->>MQ: Publish QueryRequest<br/>{ query, collection, topK }
+    GW->>MQ: Publish QueryRequest<br/>{ query, collection, topK, filters }
 
     MQ-->>QW: Deliver message
 
-    QW->>OAI: EmbedAsync(query)<br/>POST /v1/embeddings
-    OAI-->>QW: float[1536] embedding
+    QW->>RD: GetAsync(query key)
+    alt Cache hit
+        RD-->>QW: float[1536]
+    else Cache miss
+        QW->>OAI: EmbedAsync(query)<br/>POST /v1/embeddings
+        OAI-->>QW: float[1536]
+        QW->>RD: SetAsync (TTL 24h)
+    end
 
-    QW->>QD: SearchAsync(embedding, topK)<br/>gRPC :6334
+    QW->>QD: SearchAsync(embedding, topK, filters)<br/>gRPC :6334 — filters pushed as native payload filter
     QD-->>QW: VectorSearchResult[]
 
     alt Success
         QW->>MQ: BasicAck
+    else BrokenCircuitException
+        QW->>MQ: BasicNack (requeue=true)
     else Failure (after Polly retries)
         QW->>MQ: BasicNack (requeue=false)
         MQ->>DLQ: Route via rag.dlx exchange
@@ -75,13 +93,20 @@ sequenceDiagram
 sequenceDiagram
     participant C as Client
     participant API as Rag.Api<br/>:8080
+    participant RD as Redis<br/>(embedding cache)
     participant OAI as OpenAI
     participant QD as Qdrant
 
-    C->>API: POST /query<br/>{ query, collection, topK }
-    API->>OAI: EmbedAsync(query)
-    OAI-->>API: float[1536]
-    API->>QD: SearchAsync(embedding, topK)
+    C->>API: POST /query<br/>{ query, collection, topK, filters }
+    API->>RD: GetAsync(query key)
+    alt Cache hit
+        RD-->>API: float[1536]
+    else Cache miss
+        API->>OAI: EmbedAsync(query)
+        OAI-->>API: float[1536]
+        API->>RD: SetAsync (TTL 24h)
+    end
+    API->>QD: SearchAsync(embedding, topK, filters)
     QD-->>API: results
     API-->>C: 200 QueryResponse
 
@@ -99,7 +124,8 @@ sequenceDiagram
 | `rag.queryworker` | Consumes `rag.query` queue, runs semantic search | — |
 | `rag.wikipedia-seeder` | One-shot seeder: downloads HuggingFace dataset → MinIO → RabbitMQ | — |
 | `rabbitmq` | Message broker (management UI at `:15672`) | 5672 / 15672 |
-| `qdrant` | Vector database (gRPC `:6334`, REST `:6333`) | 6333 / 6334 |
+| `qdrant` | Vector database (gRPC `:6334`, HTTP `:6333`) | 6333 / 6334 |
+| `redis` | Embedding cache (append-only persistence) | 6379 |
 | `minio` | S3-compatible object storage (console at `:9001`) | 9000 / 9001 |
 | `jaeger` | Distributed tracing UI | 16686 |
 | `postgres` | PgVector provider (alternative to Qdrant, not active by default) | 5432 |
@@ -111,10 +137,11 @@ src/
 ├── Rag.Core/               # Shared library: abstractions, services, providers, resilience
 │   ├── Abstractions/       # IBlobStorage, IEmbeddingProvider, IVectorStore, ITextExtractor, IChunker
 │   ├── Services/           # IndexDocumentService, VectorSearchService
-│   ├── Providers/          # OpenAI, Qdrant, MinIO, PgVector, PDF/text extractors
+│   ├── Providers/          # OpenAI, AzureOpenAI, Qdrant, PgVector, MinIO, PDF/DOCX/text extractors
+│   ├── Options/            # Typed config: RagOptions, EmbeddingCacheOptions, QdrantOptions, ...
 │   ├── Resilience/         # Polly pipelines (ExternalApi, Qdrant, Storage)
 │   ├── Telemetry/          # ActivitySource + Meters (rag.documents.indexed, rag.queries.executed, ...)
-│   └── Extensions/         # AddRagCore, AddBlobStorage, AddRagOpenTelemetry
+│   └── Extensions/         # AddRagCore, AddBlobStorage, AddEmbeddingProvider, AddVectorStore
 ├── Rag.IndexWorker/        # BackgroundService consuming rag.index queue
 ├── Rag.QueryWorker/        # BackgroundService consuming rag.query queue
 ├── Rag.Api/                # Minimal API for dev/test
@@ -131,7 +158,10 @@ Each external call is wrapped in a dedicated Polly pipeline:
 | `Qdrant` | Vector store operations | 3× exponential backoff + jitter | 30s |
 | `Storage` | MinIO get/put | 3× exponential backoff + jitter | 30s |
 
-Failed messages (after all retries) are nacked with `requeue=false` and routed to a Dead Letter Queue via the `rag.dlx` exchange.
+**Message acknowledgement:**
+- **Success** → `BasicAck`
+- **BrokenCircuitException** (circuit open, transient infra failure) → `BasicNack(requeue=true)` — message returns to queue and is retried automatically when the circuit closes
+- **Other failure** (after all Polly retries exhausted) → `BasicNack(requeue=false)` → routed to Dead Letter Queue via `rag.dlx` exchange
 
 ## Observability
 
@@ -174,9 +204,16 @@ curl -X POST http://localhost:8080/query \
   -d '{"query": "Who invented the telephone?", "collection": "wikipedia", "topK": 3}'
 ```
 
+**Sample query with metadata filters:**
+```bash
+curl -X POST http://localhost:8080/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Who invented the telephone?", "collection": "wikipedia", "topK": 3, "filters": {"language": "en"}}'
+```
+
 ## Configuration
 
-Key environment variables (see `.env`):
+Key environment variables (see `.env.template`):
 
 ```env
 RAG__EMBEDDINGPROVIDER=OpenAI          # OpenAI | AzureOpenAI
@@ -187,6 +224,16 @@ RAG__DEFAULTTOPK=5
 
 OPENAI__APIKEY=sk-...
 OPENTELEMETRY__OTLPENDPOINT=http://jaeger:4317
+
+QDRANT__HOST=qdrant
+QDRANT__PORT=6334                      # gRPC port
+QDRANT__HTTPPORT=6333                  # HTTP port (used for health checks)
+
+REDIS__CONNECTIONSTRING=redis:6379
+
+EMBEDDINGCACHE__ENABLED=true           # Cache embeddings in Redis
+EMBEDDINGCACHE__TTLHOURS=24
+
 RABBITMQ__PREFETCH=32
 RABBITMQ__CONCURRENCY=32
 ```

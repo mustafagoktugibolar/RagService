@@ -1,4 +1,8 @@
 using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Rag.Core.Abstractions;
@@ -12,9 +16,13 @@ namespace Rag.Core.Services;
 public sealed class VectorSearchService(
     IEmbeddingProvider embeddingProvider,
     IVectorStore vectorStore,
+    IDistributedCache cache,
     IOptions<RagOptions> options,
+    IOptions<QueryCacheOptions> queryCacheOptions,
     ILogger<VectorSearchService> logger)
 {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
     public async Task<QueryResponse> SearchAsync(QueryRequest request, CancellationToken ct)
     {
         using var activity = RagTelemetry.ActivitySource.StartActivity("rag.query");
@@ -53,6 +61,22 @@ public sealed class VectorSearchService(
                     $"Collection '{request.Collection}' was indexed with {metadata.EmbeddingProvider}/{metadata.EmbeddingModel}/{metadata.VectorSize}, but current configuration is {expected.EmbeddingProvider}/{expected.EmbeddingModel}/{expected.VectorSize}.");
             }
 
+            var cacheOpts = queryCacheOptions.Value;
+            string? queryCacheKey = cacheOpts.Enabled ? BuildQueryCacheKey(request, topK) : null;
+
+            if (queryCacheKey is not null)
+            {
+                var cached = await cache.GetAsync(queryCacheKey, ct);
+                if (cached is not null)
+                {
+                    var cachedResults = JsonSerializer.Deserialize<List<RetrievedChunkDto>>(cached, JsonOptions)!;
+                    activity?.SetTag("rag.result_count", cachedResults.Count);
+                    activity?.SetTag("rag.cache_hit", true);
+                    activity?.SetStatus(ActivityStatusCode.Ok);
+                    return new QueryResponse { RequestId = request.RequestId, Results = cachedResults, Success = true };
+                }
+            }
+
             var embedding = await embeddingProvider.EmbedAsync(request.Query, ct);
             if (embedding.Length != ragOptions.VectorSize)
             {
@@ -61,13 +85,8 @@ public sealed class VectorSearchService(
                     $"Embedding vector size {embedding.Length} does not match configured Rag:VectorSize {ragOptions.VectorSize}.");
             }
 
-            var fetchK = request.Filters is null || request.Filters.Count == 0
-                ? topK
-                : Math.Min(Math.Max(topK * 10, topK), 1000);
-
-            var results = await vectorStore.SearchAsync(request.Collection, embedding, fetchK, ct);
-            var filtered = ApplyFilters(results, request.Filters)
-                .Take(topK)
+            var results = await vectorStore.SearchAsync(request.Collection, embedding, topK, request.Filters, ct);
+            var resultDtos = results
                 .Select(result => new RetrievedChunkDto
                 {
                     DocumentId = result.DocumentId,
@@ -78,14 +97,23 @@ public sealed class VectorSearchService(
                 })
                 .ToList();
 
-            activity?.SetTag("rag.result_count", filtered.Count);
+            if (queryCacheKey is not null)
+            {
+                var bytes = JsonSerializer.SerializeToUtf8Bytes(resultDtos, JsonOptions);
+                await cache.SetAsync(queryCacheKey, bytes, new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(cacheOpts.TtlMinutes)
+                }, ct);
+            }
+
+            activity?.SetTag("rag.result_count", resultDtos.Count);
             activity?.SetStatus(ActivityStatusCode.Ok);
             RagTelemetry.QueriesExecuted.Add(1, new TagList { { "collection", request.Collection } });
 
             return new QueryResponse
             {
                 RequestId = request.RequestId,
-                Results = filtered,
+                Results = resultDtos,
                 Success = true
             };
         }
@@ -106,6 +134,16 @@ public sealed class VectorSearchService(
         }
     }
 
+    private static string BuildQueryCacheKey(QueryRequest request, int topK)
+    {
+        var filterPart = request.Filters is null || request.Filters.Count == 0
+            ? string.Empty
+            : string.Join("|", request.Filters.OrderBy(kv => kv.Key).Select(kv => $"{kv.Key}={kv.Value}"));
+        var raw = $"{request.Collection}|{topK}|{filterPart}|{request.Query}";
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(raw));
+        return $"rag:query:{Convert.ToHexString(hash)}";
+    }
+
     private static void ValidateRequest(QueryRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.RequestId))
@@ -122,22 +160,6 @@ public sealed class VectorSearchService(
         {
             throw new InvalidOperationException("Query is required.");
         }
-    }
-
-    private static IEnumerable<VectorSearchResult> ApplyFilters(
-        IEnumerable<VectorSearchResult> results,
-        Dictionary<string, string>? filters)
-    {
-        if (filters is null || filters.Count == 0)
-        {
-            return results;
-        }
-
-        return results.Where(result =>
-            result.Metadata is not null
-            && filters.All(filter =>
-                result.Metadata.TryGetValue(filter.Key, out var value)
-                && string.Equals(value, filter.Value, StringComparison.Ordinal)));
     }
 
     private static bool IsCompatible(CollectionMetadata current, CollectionMetadata expected)
