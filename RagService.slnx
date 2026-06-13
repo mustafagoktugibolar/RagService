@@ -3,6 +3,9 @@
     <File Path="compose.yaml" />
   </Folder>
   <Project Path="src/Rag.Core/Rag.Core.csproj" />
+  <Folder Name="/tests/">
+    <Project Path="tests/Rag.IntegrationTests/Rag.IntegrationTests.csproj" />
+  </Folder>
   <Project Path="src/Rag.Api/Rag.Api.csproj" />
   <Project Path="src/Rag.IndexWorker/Rag.IndexWorker.csproj" />
   <Project Path="src/Rag.QueryWorker/Rag.QueryWorker.csproj" />
