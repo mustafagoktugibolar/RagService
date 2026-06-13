@@ -127,7 +127,9 @@ sequenceDiagram
 | `qdrant` | Vector database (gRPC `:6334`, HTTP `:6333`) | 6333 / 6334 |
 | `redis` | Embedding cache (append-only persistence) | 6379 |
 | `minio` | S3-compatible object storage (console at `:9001`) | 9000 / 9001 |
-| `jaeger` | Distributed tracing UI | 16686 |
+| `tempo` | Distributed tracing backend (OTLP gRPC receiver) | 4317 / 3200 |
+| `prometheus` | Metrics scraping and storage | 9090 |
+| `grafana` | Observability UI (traces, metrics, dashboards) | 3000 |
 | `postgres` | PgVector provider (alternative to Qdrant, not active by default) | 5432 |
 
 ## Projects
@@ -168,8 +170,8 @@ Each external call is wrapped in a dedicated Polly pipeline:
 | Signal | Implementation | Endpoint |
 |---|---|---|
 | Structured logs | Serilog → compact JSON | stdout |
-| Distributed traces | OpenTelemetry → Jaeger (OTLP gRPC) | `http://localhost:16686` |
-| Metrics | OpenTelemetry → Prometheus scrape | `http://localhost:8080/metrics` |
+| Distributed traces | OpenTelemetry → Tempo (OTLP gRPC) | `http://localhost:3000` (Grafana) |
+| Metrics | OpenTelemetry → Prometheus scrape | `http://localhost:3000` (Grafana) |
 | Health — liveness | Always 200 | `GET /health/live` |
 | Health — readiness | Checks Qdrant + MinIO | `GET /health/ready` |
 
@@ -223,7 +225,7 @@ RAG__VECTORSIZE=1536
 RAG__DEFAULTTOPK=5
 
 OPENAI__APIKEY=sk-...
-OPENTELEMETRY__OTLPENDPOINT=http://jaeger:4317
+OPENTELEMETRY__OTLPENDPOINT=http://tempo:4317
 
 QDRANT__HOST=qdrant
 QDRANT__PORT=6334                      # gRPC port

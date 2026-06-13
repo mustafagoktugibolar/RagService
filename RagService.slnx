@@ -7,4 +7,5 @@
   <Project Path="src/Rag.IndexWorker/Rag.IndexWorker.csproj" />
   <Project Path="src/Rag.QueryWorker/Rag.QueryWorker.csproj" />
   <Project Path="src/Rag.WikipediaSeeder/Rag.WikipediaSeeder.csproj" />
+  <Project Path="tests/Rag.Core.Tests/Rag.Core.Tests.csproj" />
 </Solution>
