@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
+using Polly.CircuitBreaker;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using Rag.Core.Contracts;
@@ -168,6 +169,17 @@ public sealed class Worker(
         catch (OperationCanceledException)
         {
             throw;
+        }
+        catch (BrokenCircuitException ex)
+        {
+            logger.LogWarning(ex, "Circuit open — downstream unavailable, nacking message {CorrelationId}", correlationId);
+            response = new QueryResponse
+            {
+                RequestId = string.Empty,
+                Success = false,
+                ErrorMessage = "Service temporarily unavailable.",
+                Results = []
+            };
         }
         catch (Exception ex)
         {
