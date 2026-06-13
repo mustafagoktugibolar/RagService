@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="compose.yaml" />
+  </Folder>
+  <Project Path="src/Rag.Core/Rag.Core.csproj" />
+  <Project Path="src/Rag.Api/Rag.Api.csproj" />
+  <Project Path="src/Rag.IndexWorker/Rag.IndexWorker.csproj" />
+  <Project Path="src/Rag.QueryWorker/Rag.QueryWorker.csproj" />
+  <Project Path="src/Rag.WikipediaSeeder/Rag.WikipediaSeeder.csproj" />
+</Solution>

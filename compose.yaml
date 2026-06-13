@@ -1,0 +1,110 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant-data:/qdrant/storage
+
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_DB: rag
+      POSTGRES_USER: rag
+      POSTGRES_PASSWORD: rag
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgvector-data:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+
+  rag.api:
+    image: rag.api
+    build:
+      context: .
+      dockerfile: src/Rag.Api/Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    depends_on:
+      - qdrant
+      - minio
+      - jaeger
+
+  rag.queryworker:
+    image: rag.queryworker
+    build:
+      context: .
+      dockerfile: src/Rag.QueryWorker/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
+      - qdrant
+      - minio
+      - jaeger
+
+  rag.indexworker:
+    image: rag.indexworker
+    build:
+      context: .
+      dockerfile: src/Rag.IndexWorker/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
+      - qdrant
+      - minio
+      - jaeger
+
+  rag.wikipedia-seeder:
+    image: rag.wikipedia-seeder
+    build:
+      context: .
+      dockerfile: src/Rag.WikipediaSeeder/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
+      - minio
+      - jaeger
+    profiles:
+      - seed
+
+volumes:
+  qdrant-data:
+  pgvector-data:
+  minio-data:
