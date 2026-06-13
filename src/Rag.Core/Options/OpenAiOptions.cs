@@ -11,4 +11,6 @@ public sealed class OpenAiOptions
     public string? Project { get; set; }
 
     public int? Dimensions { get; set; }
+
+    public int MaxBatchSize { get; set; } = 2048;
 }

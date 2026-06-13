@@ -26,6 +26,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<PlainTextExtractor>();
         services.AddSingleton<PdfTextExtractor>();
+        services.AddSingleton<DocxTextExtractor>();
         services.AddSingleton<ITextExtractor, FileExtensionTextExtractor>();
         services.AddSingleton<IChunker, DataIngestionTokenChunker>();
 

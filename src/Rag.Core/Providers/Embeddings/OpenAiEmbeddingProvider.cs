@@ -15,6 +15,7 @@ public sealed class OpenAiEmbeddingProvider(
     IOptions<OpenAiOptions> options,
     IOptions<RagOptions> ragOptions) : IEmbeddingProvider
 {
+    private int MaxBatchSize => options.Value.MaxBatchSize;
     public async Task<float[]> EmbedAsync(string text, CancellationToken ct)
     {
         return await RagPipelines.ExternalApi.ExecuteAsync(async token =>
@@ -32,6 +33,21 @@ public sealed class OpenAiEmbeddingProvider(
         if (texts.Count == 0)
             return [];
 
+        if (texts.Count <= MaxBatchSize)
+            return await EmbedBatchInternalAsync(texts, ct);
+
+        var results = new List<float[]>(texts.Count);
+        for (var i = 0; i < texts.Count; i += MaxBatchSize)
+        {
+            var batch = texts.Skip(i).Take(MaxBatchSize).ToArray();
+            var batchResult = await EmbedBatchInternalAsync(batch, ct);
+            results.AddRange(batchResult);
+        }
+        return results;
+    }
+
+    private async Task<IReadOnlyList<float[]>> EmbedBatchInternalAsync(IReadOnlyList<string> texts, CancellationToken ct)
+    {
         return await RagPipelines.ExternalApi.ExecuteAsync(async token =>
         {
             var sw = Stopwatch.StartNew();

@@ -102,7 +102,8 @@ public sealed class DataIngestionTokenChunker(
             }
         }
 
-        return TiktokenTokenizer.CreateForModel("gpt-4o");
+        // cl100k_base is used by text-embedding-3-small/large and gpt-4 family
+        return TiktokenTokenizer.CreateForEncoding("cl100k_base");
     }
 
     private static IEnumerable<string> SplitParagraphs(string text)

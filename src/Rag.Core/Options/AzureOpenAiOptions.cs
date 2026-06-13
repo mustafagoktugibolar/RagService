@@ -9,4 +9,6 @@ public sealed class AzureOpenAiOptions
     public string Deployment { get; set; } = string.Empty;
 
     public int? Dimensions { get; set; }
+
+    public int MaxBatchSize { get; set; } = 16;
 }
