@@ -12,7 +12,8 @@ public sealed class CachingEmbeddingProvider(
     IEmbeddingProvider inner,
     IDistributedCache cache,
     IOptions<RagOptions> ragOptions,
-    IOptions<EmbeddingCacheOptions> cacheOptions) : IEmbeddingProvider
+    IOptions<EmbeddingCacheOptions> cacheOptions,
+    int? dimensions) : IEmbeddingProvider
 {
     public async Task<float[]> EmbedAsync(string text, CancellationToken ct)
     {
@@ -63,7 +64,8 @@ public sealed class CachingEmbeddingProvider(
     private string BuildKey(string text)
     {
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(text));
-        return $"rag:emb:{ragOptions.Value.EmbeddingModel}:{Convert.ToHexString(hash)}";
+        var dimSegment = dimensions.HasValue ? $":{dimensions}" : string.Empty;
+        return $"rag:emb:{ragOptions.Value.EmbeddingModel}{dimSegment}:{Convert.ToHexString(hash)}";
     }
 
     private DistributedCacheEntryOptions BuildEntryOptions() => new()

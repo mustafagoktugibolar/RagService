@@ -91,11 +91,19 @@ public static class ServiceCollectionExtensions
             var cacheOptions = sp.GetRequiredService<IOptions<EmbeddingCacheOptions>>().Value;
             var normalizedProvider = Normalize(provider);
 
-            IEmbeddingProvider inner = normalizedProvider switch
+            IEmbeddingProvider inner;
+            int? dimensions;
+
+            if (normalizedProvider == "openai")
             {
-                "openai" => sp.GetRequiredService<OpenAiEmbeddingProvider>(),
-                _ => sp.GetRequiredService<AzureOpenAiEmbeddingProvider>()
-            };
+                inner = sp.GetRequiredService<OpenAiEmbeddingProvider>();
+                dimensions = sp.GetRequiredService<IOptions<OpenAiOptions>>().Value.Dimensions;
+            }
+            else
+            {
+                inner = sp.GetRequiredService<AzureOpenAiEmbeddingProvider>();
+                dimensions = sp.GetRequiredService<IOptions<AzureOpenAiOptions>>().Value.Dimensions;
+            }
 
             if (!cacheOptions.Enabled)
                 return inner;
@@ -104,7 +112,8 @@ public static class ServiceCollectionExtensions
                 inner,
                 sp.GetRequiredService<Microsoft.Extensions.Caching.Distributed.IDistributedCache>(),
                 sp.GetRequiredService<IOptions<RagOptions>>(),
-                sp.GetRequiredService<IOptions<EmbeddingCacheOptions>>());
+                sp.GetRequiredService<IOptions<EmbeddingCacheOptions>>(),
+                dimensions);
         });
 
         return services;
