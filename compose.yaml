@@ -41,6 +41,14 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+
   jaeger:
     image: jaegertracing/all-in-one:latest
     ports:
@@ -62,6 +70,7 @@ services:
     depends_on:
       - qdrant
       - minio
+      - redis
       - jaeger
 
   rag.queryworker:
@@ -75,6 +84,7 @@ services:
       - rabbitmq
       - qdrant
       - minio
+      - redis
       - jaeger
 
   rag.indexworker:
@@ -88,6 +98,7 @@ services:
       - rabbitmq
       - qdrant
       - minio
+      - redis
       - jaeger
 
   rag.wikipedia-seeder:
@@ -100,6 +111,7 @@ services:
     depends_on:
       - rabbitmq
       - minio
+      - redis
       - jaeger
     profiles:
       - seed
@@ -108,3 +120,4 @@ volumes:
   qdrant-data:
   pgvector-data:
   minio-data:
+  redis-data:

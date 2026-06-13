@@ -9,6 +9,7 @@ using Rag.Core.Providers.Storage;
 using Rag.Core.Providers.TextExtraction;
 using Rag.Core.Providers.VectorStores;
 using Rag.Core.Services;
+using StackExchange.Redis;
 
 namespace Rag.Core.Extensions;
 
@@ -23,6 +24,10 @@ public static class ServiceCollectionExtensions
         services.Configure<PgVectorOptions>(configuration.GetSection("PgVector"));
         services.Configure<RabbitMqOptions>(configuration.GetSection("RabbitMQ"));
         services.Configure<ChunkingOptions>(configuration.GetSection("Chunking"));
+        services.Configure<EmbeddingCacheOptions>(configuration.GetSection("EmbeddingCache"));
+
+        var redisConnectionString = configuration["Redis:ConnectionString"] ?? "localhost:6379";
+        services.AddStackExchangeRedisCache(o => o.ConfigurationOptions = ConfigurationOptions.Parse(redisConnectionString));
 
         services.AddSingleton<PlainTextExtractor>();
         services.AddSingleton<PdfTextExtractor>();
@@ -68,18 +73,39 @@ public static class ServiceCollectionExtensions
         switch (Normalize(provider))
         {
             case "openai":
-                services.AddTransient<IEmbeddingProvider, OpenAiEmbeddingProvider>();
+                services.AddTransient<OpenAiEmbeddingProvider>();
                 break;
 
             case "azureopenai":
             case "azureopenaiembedding":
-                services.AddTransient<IEmbeddingProvider, AzureOpenAiEmbeddingProvider>();
+                services.AddTransient<AzureOpenAiEmbeddingProvider>();
                 break;
 
             default:
                 throw new InvalidOperationException(
                     $"Unsupported Rag:EmbeddingProvider '{provider}'. Supported values are OpenAI and AzureOpenAI.");
         }
+
+        services.AddTransient<IEmbeddingProvider>(sp =>
+        {
+            var cacheOptions = sp.GetRequiredService<IOptions<EmbeddingCacheOptions>>().Value;
+            var normalizedProvider = Normalize(provider);
+
+            IEmbeddingProvider inner = normalizedProvider switch
+            {
+                "openai" => sp.GetRequiredService<OpenAiEmbeddingProvider>(),
+                _ => sp.GetRequiredService<AzureOpenAiEmbeddingProvider>()
+            };
+
+            if (!cacheOptions.Enabled)
+                return inner;
+
+            return new CachingEmbeddingProvider(
+                inner,
+                sp.GetRequiredService<Microsoft.Extensions.Caching.Distributed.IDistributedCache>(),
+                sp.GetRequiredService<IOptions<RagOptions>>(),
+                sp.GetRequiredService<IOptions<EmbeddingCacheOptions>>());
+        });
 
         return services;
     }
