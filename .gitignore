@@ -6,3 +6,5 @@ riderModule.iml
 .idea/
 .env
 .env.local
+/.vs
+/src/Rag.Api/Properties/launchSettings.json
