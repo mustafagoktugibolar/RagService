@@ -163,7 +163,7 @@ public sealed class PgVectorStore : IVectorStore, IAsyncDisposable
         await EnsureTablesAsync(ct);
         await using var connection = await OpenConnectionAsync(ct);
         await using var command = new NpgsqlCommand($"""
-            SELECT collection, embedding_provider, embedding_model, vector_size
+            SELECT collection, embedding_provider, embedding_model, vector_size, index_version
             FROM {MetadataTable}
             WHERE collection = @collection
             """, connection);
@@ -181,7 +181,8 @@ public sealed class PgVectorStore : IVectorStore, IAsyncDisposable
             Collection = reader.GetString(0),
             EmbeddingProvider = reader.GetString(1),
             EmbeddingModel = reader.GetString(2),
-            VectorSize = reader.GetInt32(3)
+            VectorSize = reader.GetInt32(3),
+            IndexVersion = reader.GetString(4)
         };
     }
 
@@ -190,19 +191,21 @@ public sealed class PgVectorStore : IVectorStore, IAsyncDisposable
         await EnsureTablesAsync(ct);
         await using var connection = await OpenConnectionAsync(ct);
         await using var command = new NpgsqlCommand($"""
-            INSERT INTO {MetadataTable} (collection, embedding_provider, embedding_model, vector_size)
-            VALUES (@collection, @embeddingProvider, @embeddingModel, @vectorSize)
+            INSERT INTO {MetadataTable} (collection, embedding_provider, embedding_model, vector_size, index_version)
+            VALUES (@collection, @embeddingProvider, @embeddingModel, @vectorSize, @indexVersion)
             ON CONFLICT (collection)
             DO UPDATE SET
                 embedding_provider = EXCLUDED.embedding_provider,
                 embedding_model = EXCLUDED.embedding_model,
-                vector_size = EXCLUDED.vector_size
+                vector_size = EXCLUDED.vector_size,
+                index_version = EXCLUDED.index_version
             """, connection);
 
         command.Parameters.AddWithValue("collection", metadata.Collection);
         command.Parameters.AddWithValue("embeddingProvider", metadata.EmbeddingProvider);
         command.Parameters.AddWithValue("embeddingModel", metadata.EmbeddingModel);
         command.Parameters.AddWithValue("vectorSize", metadata.VectorSize);
+        command.Parameters.AddWithValue("indexVersion", metadata.IndexVersion);
         await command.ExecuteNonQueryAsync(ct);
     }
 
@@ -229,8 +232,12 @@ public sealed class PgVectorStore : IVectorStore, IAsyncDisposable
                 collection text PRIMARY KEY,
                 embedding_provider text NOT NULL,
                 embedding_model text NOT NULL,
-                vector_size integer NOT NULL
+                vector_size integer NOT NULL,
+                index_version text NOT NULL DEFAULT ''
             );
+
+            -- tables created before index versioning existed
+            ALTER TABLE {MetadataTable} ADD COLUMN IF NOT EXISTS index_version text NOT NULL DEFAULT '';
             """, connection);
 
         await command.ExecuteNonQueryAsync(ct);

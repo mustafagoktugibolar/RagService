@@ -111,19 +111,29 @@ public sealed class QdrantVectorStore : IVectorStore, IDisposable
             }
         };
 
-        await _client.DeleteAsync(collection, filter, wait: true, cancellationToken: ct);
+        await RagPipelines.Qdrant.ExecuteAsync(
+            async token => await _client.DeleteAsync(collection, filter, wait: true, cancellationToken: token), ct);
     }
 
     public async Task<CollectionMetadata?> GetCollectionMetadataAsync(string collection, CancellationToken ct)
     {
-        await EnsureCollectionInternalAsync(_options.MetadataCollection, 1, ct);
-
-        var points = await _client.RetrieveAsync(
-            _options.MetadataCollection,
-            CreatePointId(collection),
-            withPayload: true,
-            withVectors: false,
-            cancellationToken: ct);
+        // Hot path (once per query): no EnsureCollection round trip. A missing metadata collection
+        // simply means nothing has been indexed yet.
+        IReadOnlyList<RetrievedPoint> points;
+        try
+        {
+            points = await RagPipelines.Qdrant.ExecuteAsync(
+                async token => await _client.RetrieveAsync(
+                    _options.MetadataCollection,
+                    CreatePointId(collection),
+                    withPayload: true,
+                    withVectors: false,
+                    cancellationToken: token), ct);
+        }
+        catch (RpcException ex) when (ex.StatusCode == StatusCode.NotFound)
+        {
+            return null;
+        }
 
         var payload = points.FirstOrDefault()?.Payload;
         if (payload is null || payload.Count == 0)
@@ -136,7 +146,8 @@ public sealed class QdrantVectorStore : IVectorStore, IDisposable
             Collection = GetString(payload, "collection"),
             EmbeddingProvider = GetString(payload, "embeddingProvider"),
             EmbeddingModel = GetString(payload, "embeddingModel"),
-            VectorSize = GetInt(payload, "vectorSize")
+            VectorSize = GetInt(payload, "vectorSize"),
+            IndexVersion = GetString(payload, "indexVersion")
         };
     }
 
@@ -153,11 +164,13 @@ public sealed class QdrantVectorStore : IVectorStore, IDisposable
                 ["collection"] = metadata.Collection,
                 ["embeddingProvider"] = metadata.EmbeddingProvider,
                 ["embeddingModel"] = metadata.EmbeddingModel,
-                ["vectorSize"] = (long)metadata.VectorSize
+                ["vectorSize"] = (long)metadata.VectorSize,
+                ["indexVersion"] = metadata.IndexVersion
             }
         };
 
-        await _client.UpsertAsync(_options.MetadataCollection, new[] { point }, wait: true, cancellationToken: ct);
+        await RagPipelines.Qdrant.ExecuteAsync(
+            async token => await _client.UpsertAsync(_options.MetadataCollection, new[] { point }, wait: true, cancellationToken: token), ct);
     }
 
     public void Dispose()

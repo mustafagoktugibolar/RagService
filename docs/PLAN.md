@@ -25,14 +25,15 @@ Companion docs: [ASSESSMENT.md](ASSESSMENT.md) · [Knowledge Base](kb/README.md)
 - [x] Baseline build + unit tests (0 errors, 72 pass)
 - [x] ASSESSMENT.md
 - [x] PLAN.md
-- [ ] KB index + Ch.1 (architecture), Ch.2 (.NET), Ch.8 (cache) written from source
+- [x] KB index + Ch.1 (architecture) + Ch.8 (cache) written from source
+- [ ] Ch.2 (.NET) written from source
 - [ ] KB chapters 3,4,5,9,10,11,12,13 for *existing* tech written from source
 - [ ] Claude Artifact index published
 **Acceptance** Every claim in KB cites a real file; every capability tagged with a maturity status; planned features never described as implemented.
 **Tests** Link/reference check script (Phase 9 automation); manual review.
 **Risks** Documentation drift → mitigated by "Status" lines per chapter and the Phase-9 reference check.
 
-## Phase 2 — Query cache correctness and index versioning — ⬜
+## Phase 2 — Query cache correctness and index versioning — ✅
 **Goal** Cached results can never outlive the index or configuration that produced them.
 **Technical design**
 - `CollectionMetadata` gains `IndexVersion` (string token; empty = legacy collection, treated as `"0"` → backward compatible).
@@ -40,14 +41,14 @@ Companion docs: [ASSESSMENT.md](ASSESSMENT.md) · [Knowledge Base](kb/README.md)
 - New `QueryCacheKeyBuilder` (pure, unit-testable): key = hash of length-prefixed fields: schema version, collection, **index version**, embedding provider/model/dim, retrieval strategy (`"dense"` for now), topK, sorted filters (escaped), query. Later phases add fields through one `RetrievalFingerprint` record, not by string concatenation.
 - Query path reads metadata (already does) → builds key from `metadata.IndexVersion`.
 **Tasks**
-- [ ] Failing regression tests that prove today's bug: (a) reindex → same query returns stale cached results; (b) different embedding model config → same key; (c) filter value containing `|`/`=` collides
-- [ ] `QueryCacheKeyBuilder` + unit tests (determinism, field sensitivity, no collisions, filter order independence)
-- [ ] `IndexVersion` on `CollectionMetadata`; Qdrant + Pg persistence (nullable column/payload, legacy → `"0"`)
-- [ ] `IndexDocumentService` bumps version; tests for bump-on-index
-- [ ] `VectorSearchService` uses builder; cache-hit increments `QueriesExecuted`
-- [ ] Qdrant: metadata ops moved inside resilience pipeline; avoid per-query `EnsureCollection` on metadata collection (assessment A3)
-- [ ] Integration test (Testcontainers) of reindex → fresh results, if Docker available
-**Acceptance** The three regression tests fail on `main` and pass after; 72 existing tests still pass; legacy metadata without version still works.
+- [x] Failing regression tests that prove today's bug (verified red on pre-fix code, commit `test: regression tests…`): (a) reindex → same query returns stale cached results; (b) different embedding model config → same key; (c) filter value containing `|`/`=` collides
+- [x] `QueryCacheKeyBuilder` + unit tests (determinism, field sensitivity, no collisions, filter order independence)
+- [x] `IndexVersion` on `CollectionMetadata`; Qdrant + Pg persistence (legacy → empty string, treated as a stable version; Pg `ALTER TABLE … IF NOT EXISTS` verified against real Postgres)
+- [x] `IndexDocumentService` bumps version (GUID token); tests for bump-on-index and distinct versions
+- [x] `VectorSearchService` uses builder; cache-hit increments `QueriesExecuted` (tag `cache_hit=true`)
+- [x] Qdrant: metadata get/set and delete inside resilience pipeline; per-query `EnsureCollection` removed (A3). Pg still runs `EnsureTablesAsync` DDL on every call — **not fixed, open risk**
+- [x] Testcontainers tests against real Qdrant and real pgvector for metadata round-trip, unknown collection, fresh instance, legacy table upgrade (5 tests, passing). A full reindex→query integration test through the API is **not** written (the main `IntegrationTestWebAppFactory` cannot start here: `minio/minio` is not pullable from Docker Hub and Quay requires auth); the reindex behaviour is covered at unit level with a real `IndexDocumentService` + `VectorSearchService`
+**Acceptance** ✅ The three regression tests failed on `main` and pass after. 71 of the original 72 tests unchanged and passing; 1 test that asserted the old "never rewrite metadata" behaviour was deliberately rewritten (`…KeepsEmbeddingConfigAndPublishesNewIndexVersion`). Legacy metadata without version works (Pg verified). Result: 92 unit tests + 5 new integration tests pass.
 **Perf** One string hash per query (negligible); removes one RPC per query (A3).
 **Risks** Version bump races between concurrent indexers (benign: any change yields a different token; documented in KB Ch.8). Old cache entries become unreachable and expire via TTL (no flush needed).
 **KB** Ch.8 (Redis/caching) gains the full design, the failure scenario, and interview section.
@@ -97,3 +98,5 @@ Perf pass, README/KB/plan consistency, doc reference checker, diagram accuracy c
 | Date | Phase | Event |
 |---|---|---|
 | 2026-10-24 | 1 | Baseline verified: build OK, 72/72 unit tests; ASSESSMENT + PLAN written |
+| 2026-10-24 | 2 | Stale-cache bug reproduced (3 red tests), fixed with `IndexVersion` + `QueryCacheKeyBuilder`; 92 unit + 5 integration tests green |
+| 2026-10-24 | env | Pre-existing: `IntegrationTestWebAppFactory` fails to start here (`minio/minio` pull denied) → 6 of the older integration tests cannot run in this environment; unrelated to Phase 2 |

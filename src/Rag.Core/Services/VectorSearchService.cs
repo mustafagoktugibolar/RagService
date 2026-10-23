@@ -1,6 +1,4 @@
 using System.Diagnostics;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
@@ -62,7 +60,20 @@ public sealed class VectorSearchService(
             }
 
             var cacheOpts = queryCacheOptions.Value;
-            string? queryCacheKey = cacheOpts.Enabled ? BuildQueryCacheKey(request, topK) : null;
+            string? queryCacheKey = cacheOpts.Enabled
+                ? QueryCacheKeyBuilder.Build(new RetrievalFingerprint
+                {
+                    Collection = request.Collection,
+                    IndexVersion = metadata.IndexVersion,
+                    EmbeddingProvider = expected.EmbeddingProvider,
+                    EmbeddingModel = expected.EmbeddingModel,
+                    VectorSize = expected.VectorSize,
+                    Strategy = "dense",
+                    TopK = topK,
+                    Query = request.Query,
+                    Filters = request.Filters
+                })
+                : null;
 
             if (queryCacheKey is not null)
             {
@@ -73,6 +84,7 @@ public sealed class VectorSearchService(
                     activity?.SetTag("rag.result_count", cachedResults.Count);
                     activity?.SetTag("rag.cache_hit", true);
                     activity?.SetStatus(ActivityStatusCode.Ok);
+                    RagTelemetry.QueriesExecuted.Add(1, new TagList { { "collection", request.Collection }, { "cache_hit", true } });
                     return new QueryResponse { RequestId = request.RequestId, Results = cachedResults, Success = true };
                 }
             }
@@ -132,16 +144,6 @@ public sealed class VectorSearchService(
             RagTelemetry.QueryErrors.Add(1, new TagList { { "collection", request.Collection } });
             return Failure(request, ex.Message);
         }
-    }
-
-    private static string BuildQueryCacheKey(QueryRequest request, int topK)
-    {
-        var filterPart = request.Filters is null || request.Filters.Count == 0
-            ? string.Empty
-            : string.Join("|", request.Filters.OrderBy(kv => kv.Key).Select(kv => $"{kv.Key}={kv.Value}"));
-        var raw = $"{request.Collection}|{topK}|{filterPart}|{request.Query}";
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(raw));
-        return $"rag:query:{Convert.ToHexString(hash)}";
     }
 
     private static void ValidateRequest(QueryRequest request)

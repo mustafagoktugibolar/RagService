@@ -63,10 +63,6 @@ public sealed class IndexDocumentService(
             }
 
             await vectorStore.EnsureCollectionAsync(request.Collection, ragOptions.VectorSize, ct);
-            if (currentMetadata is null)
-            {
-                await vectorStore.SetCollectionMetadataAsync(expectedMetadata, ct);
-            }
 
             var vectorDocuments = chunks
                 .Select((chunk, index) => new VectorDocument
@@ -81,6 +77,10 @@ public sealed class IndexDocumentService(
 
             await vectorStore.DeleteByDocumentIdAsync(request.Collection, request.DocumentId, ct);
             await vectorStore.UpsertAsync(request.Collection, vectorDocuments, ct);
+
+            // Content changed: publish a new version so cached query results keyed on the old one are never served.
+            await vectorStore.SetCollectionMetadataAsync(
+                expectedMetadata with { IndexVersion = Guid.NewGuid().ToString("N") }, ct);
 
             logger.LogInformation(
                 "Indexed document {DocumentId} into collection {Collection} with {ChunkCount} chunks",

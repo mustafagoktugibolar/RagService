@@ -235,7 +235,7 @@ public sealed class IndexDocumentServiceTests
     }
 
     [Fact]
-    public async Task IndexAsync_CompatibleMetadata_DoesNotOverwriteMetadata()
+    public async Task IndexAsync_CompatibleMetadata_KeepsEmbeddingConfigAndPublishesNewIndexVersion()
     {
         var textExtractor = Substitute.For<ITextExtractor>();
         textExtractor.ExtractAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult("text"));
@@ -257,7 +257,36 @@ public sealed class IndexDocumentServiceTests
         var result = await sut.IndexAsync(ValidRequest, CancellationToken.None);
 
         Assert.True(result.Success);
-        await vectorStore.DidNotReceive().SetCollectionMetadataAsync(Arg.Any<CollectionMetadata>(), Arg.Any<CancellationToken>());
+        await vectorStore.Received(1).SetCollectionMetadataAsync(
+            Arg.Is<CollectionMetadata>(m =>
+                m.EmbeddingModel == CompatibleMetadata.EmbeddingModel
+                && m.VectorSize == CompatibleMetadata.VectorSize
+                && !string.IsNullOrEmpty(m.IndexVersion)),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task IndexAsync_EachSuccessfulRun_PublishesDistinctIndexVersion()
+    {
+        var textExtractor = Substitute.For<ITextExtractor>();
+        textExtractor.ExtractAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult("text"));
+        var chunker = Substitute.For<IChunker>();
+        chunker.ChunkAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Dictionary<string, string>?>(), Arg.Any<CancellationToken>())
+               .Returns(Task.FromResult<IReadOnlyList<DocumentChunk>>([new DocumentChunk { Text = "chunk1" }]));
+        var embeddingProvider = Substitute.For<IEmbeddingProvider>();
+        embeddingProvider.EmbedBatchAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>())
+                         .Returns(Task.FromResult<IReadOnlyList<float[]>>([new float[DefaultVectorSize]]));
+        var vectorStore = Substitute.For<IVectorStore>();
+        var versions = new List<string>();
+        await vectorStore.SetCollectionMetadataAsync(
+            Arg.Do<CollectionMetadata>(m => versions.Add(m.IndexVersion)), Arg.Any<CancellationToken>());
+
+        var sut = Build(textExtractor, chunker, embeddingProvider, vectorStore);
+        await sut.IndexAsync(ValidRequest, CancellationToken.None);
+        await sut.IndexAsync(ValidRequest, CancellationToken.None);
+
+        Assert.Equal(2, versions.Count);
+        Assert.NotEqual(versions[0], versions[1]);
     }
 
     // ── Happy Path ───────────────────────────────────────────────────────────
