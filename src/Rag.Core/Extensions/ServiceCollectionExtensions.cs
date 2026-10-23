@@ -26,6 +26,7 @@ public static class ServiceCollectionExtensions
         services.Configure<ChunkingOptions>(configuration.GetSection("Chunking"));
         services.Configure<EmbeddingCacheOptions>(configuration.GetSection("EmbeddingCache"));
         services.Configure<QueryCacheOptions>(configuration.GetSection("QueryCache"));
+        services.Configure<RetrievalOptions>(configuration.GetSection("Retrieval"));
 
         var redisConnectionString = configuration["Redis:ConnectionString"] ?? "localhost:6379";
         services.AddStackExchangeRedisCache(o => o.ConfigurationOptions = ConfigurationOptions.Parse(redisConnectionString));

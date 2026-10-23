@@ -7,6 +7,7 @@ using Rag.Core.Abstractions;
 using Rag.Core.Contracts;
 using Rag.Core.Models;
 using Rag.Core.Options;
+using Rag.Core.Retrieval;
 using Rag.Core.Telemetry;
 
 namespace Rag.Core.Services;
@@ -17,7 +18,8 @@ public sealed class VectorSearchService(
     IDistributedCache cache,
     IOptions<RagOptions> options,
     IOptions<QueryCacheOptions> queryCacheOptions,
-    ILogger<VectorSearchService> logger)
+    ILogger<VectorSearchService> logger,
+    IOptions<RetrievalOptions>? retrievalOptions = null)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -60,6 +62,15 @@ public sealed class VectorSearchService(
             }
 
             var cacheOpts = queryCacheOptions.Value;
+            var retrieval = retrievalOptions?.Value ?? new RetrievalOptions();
+            var plan = RetrievalPlan.Resolve(retrieval, StoreCapabilities.Of(vectorStore));
+            if (plan.Error is not null)
+            {
+                return Failure(request, plan.Error);
+            }
+
+            activity?.SetTag("rag.strategy", plan.StrategyId);
+
             string? queryCacheKey = cacheOpts.Enabled
                 ? QueryCacheKeyBuilder.Build(new RetrievalFingerprint
                 {
@@ -68,7 +79,7 @@ public sealed class VectorSearchService(
                     EmbeddingProvider = expected.EmbeddingProvider,
                     EmbeddingModel = expected.EmbeddingModel,
                     VectorSize = expected.VectorSize,
-                    Strategy = "dense",
+                    Strategy = plan.StrategyId,
                     TopK = topK,
                     Query = request.Query,
                     Filters = request.Filters
@@ -89,27 +100,44 @@ public sealed class VectorSearchService(
                 }
             }
 
-            var embedding = await embeddingProvider.EmbedAsync(request.Query, ct);
-            if (embedding.Length != ragOptions.VectorSize)
+            float[]? embedding = null;
+            if (plan.Strategy != RetrievalStrategy.Lexical)
             {
-                return Failure(
-                    request,
-                    $"Embedding vector size {embedding.Length} does not match configured Rag:VectorSize {ragOptions.VectorSize}.");
+                embedding = await embeddingProvider.EmbedAsync(request.Query, ct);
+                if (embedding.Length != ragOptions.VectorSize)
+                {
+                    return Failure(
+                        request,
+                        $"Embedding vector size {embedding.Length} does not match configured Rag:VectorSize {ragOptions.VectorSize}.");
+                }
             }
 
-            var results = await vectorStore.SearchAsync(request.Collection, embedding, topK, request.Filters, ct);
-            var resultDtos = results
-                .Select(result => new RetrievedChunkDto
+            var outcome = await CreateRetriever(plan.Strategy, retrieval)
+                .RetrieveAsync(new RetrievalRequest(request.Collection, request.Query, embedding, topK, request.Filters), ct);
+
+            var warnings = plan.Warnings.Concat(outcome.Warnings).ToList();
+            foreach (var warning in warnings)
+            {
+                logger.LogWarning("Query {RequestId} on {Collection} degraded: {Warning}", request.RequestId, request.Collection, warning);
+            }
+
+            var includeSources = plan.Strategy != RetrievalStrategy.Dense;
+            var resultDtos = outcome.Results
+                .Select(fused => new RetrievedChunkDto
                 {
-                    DocumentId = result.DocumentId,
-                    ChunkId = result.ChunkId,
-                    Text = result.Text,
-                    Score = result.Score,
-                    Metadata = result.Metadata
+                    DocumentId = fused.Result.DocumentId,
+                    ChunkId = fused.Result.ChunkId,
+                    Text = fused.Result.Text,
+                    Score = fused.Score,
+                    Metadata = fused.Result.Metadata,
+                    Sources = includeSources
+                        ? fused.Sources.Select(s => new ChunkSourceDto(s.Source, s.Rank, s.OriginalScore)).ToList()
+                        : null
                 })
                 .ToList();
 
-            if (queryCacheKey is not null)
+            // A result produced by a failed hybrid leg is worse than normal; never pin it in the cache.
+            if (queryCacheKey is not null && outcome.Warnings.Count == 0)
             {
                 var bytes = JsonSerializer.SerializeToUtf8Bytes(resultDtos, JsonOptions);
                 await cache.SetAsync(queryCacheKey, bytes, new DistributedCacheEntryOptions
@@ -126,7 +154,8 @@ public sealed class VectorSearchService(
             {
                 RequestId = request.RequestId,
                 Results = resultDtos,
-                Success = true
+                Success = true,
+                Warnings = warnings.Count == 0 ? null : warnings
             };
         }
         catch (OperationCanceledException)
@@ -146,6 +175,19 @@ public sealed class VectorSearchService(
         }
     }
 
+    private IRetriever CreateRetriever(RetrievalStrategy strategy, RetrievalOptions retrieval) => strategy switch
+    {
+        RetrievalStrategy.Dense => new DenseRetriever(vectorStore),
+        RetrievalStrategy.Lexical => new LexicalRetriever((ILexicalSearchStore)vectorStore),
+        RetrievalStrategy.Hybrid => new HybridRetriever(
+            vectorStore,
+            (ILexicalSearchStore)vectorStore,
+            new ReciprocalRankFusion(retrieval.RrfK),
+            retrieval,
+            logger),
+        _ => throw new ArgumentOutOfRangeException(nameof(strategy), strategy, null)
+    };
+
     private static void ValidateRequest(QueryRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.RequestId))
@@ -162,6 +204,8 @@ public sealed class VectorSearchService(
         {
             throw new InvalidOperationException("Query is required.");
         }
+
+        FilterValidator.Validate(request.Filters);
     }
 
     private static bool IsCompatible(CollectionMetadata current, CollectionMetadata expected)

@@ -8,12 +8,18 @@ namespace Rag.Core.Tests.Fakes;
 /// (score 1.0) after applying exact-match metadata filters; ranking quality is not its concern —
 /// it exists so services can be exercised end to end without infrastructure.
 /// </summary>
-public sealed class InMemoryVectorStore : IVectorStore
+public class InMemoryVectorStore : IVectorStore
 {
     private readonly Dictionary<string, List<VectorDocument>> _collections = new();
     private readonly Dictionary<string, CollectionMetadata> _metadata = new();
 
     public int SearchCalls { get; private set; }
+
+    protected IEnumerable<VectorDocument> Documents(string collection, Dictionary<string, string>? filters) =>
+        !_collections.TryGetValue(collection, out var list)
+            ? []
+            : list.Where(d => filters is null || filters.All(f =>
+                d.Metadata is not null && d.Metadata.TryGetValue(f.Key, out var v) && v == f.Value)).ToArray();
 
     public Task EnsureCollectionAsync(string collection, int vectorSize, CancellationToken ct)
     {
