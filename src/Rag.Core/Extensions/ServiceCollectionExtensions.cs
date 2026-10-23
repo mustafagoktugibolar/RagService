@@ -26,8 +26,6 @@ public static class ServiceCollectionExtensions
         services.Configure<ChunkingOptions>(configuration.GetSection("Chunking"));
         services.Configure<EmbeddingCacheOptions>(configuration.GetSection("EmbeddingCache"));
         services.Configure<QueryCacheOptions>(configuration.GetSection("QueryCache"));
-        services.Configure<RetrievalOptions>(configuration.GetSection("Retrieval"));
-        services.Configure<RerankOptions>(configuration.GetSection("Rerank"));
 
         var redisConnectionString = configuration["Redis:ConnectionString"] ?? "localhost:6379";
         services.AddStackExchangeRedisCache(o => o.ConfigurationOptions = ConfigurationOptions.Parse(redisConnectionString));
@@ -41,6 +39,7 @@ public static class ServiceCollectionExtensions
         services.AddBlobStorage(configuration);
         services.AddEmbeddingProvider(configuration);
         services.AddVectorStore(configuration);
+        services.AddReranking(configuration);
 
         services.AddTransient<IndexDocumentService>();
         services.AddTransient<VectorSearchService>();

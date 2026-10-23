@@ -7,7 +7,7 @@ namespace Rag.Core.Resilience;
 
 internal static class RagPipelines
 {
-    private static bool IsTransientHttp(Exception ex) =>
+    internal static bool IsTransientHttp(Exception ex) =>
         ex is HttpRequestException or TimeoutRejectedException or IOException;
 
     private static bool IsTransientGrpc(Exception ex) =>
@@ -22,12 +22,13 @@ internal static class RagPipelines
         || ex is AmazonClientException
             && ex.InnerException is HttpRequestException or IOException or SocketException;
 
-    private static ResiliencePipeline Create(
+    internal static ResiliencePipeline Create(
         Func<Exception, bool> shouldHandle,
         int minimumThroughput,
         TimeSpan samplingDuration,
         TimeSpan breakDuration,
-        TimeSpan timeout) =>
+        TimeSpan timeout,
+        int maxRetryAttempts = 3) =>
         new(
             new CircuitBreakerOptions
             {
@@ -39,7 +40,7 @@ internal static class RagPipelines
             },
             new RetryOptions
             {
-                MaxRetryAttempts = 3,
+                MaxRetryAttempts = maxRetryAttempts,
                 Delay = TimeSpan.FromSeconds(1),
                 UseJitter = true,
                 ShouldHandle = shouldHandle
@@ -69,4 +70,17 @@ internal static class RagPipelines
         samplingDuration: TimeSpan.FromSeconds(30),
         breakDuration: TimeSpan.FromSeconds(20),
         timeout: TimeSpan.FromSeconds(30));
+
+    /// <summary>
+    /// Pipeline for one rerank provider. Each adapter owns its instance, so each provider gets its own circuit breaker.
+    /// Only transient failures are retried (HttpRequestException is thrown solely for 408/429/5xx; other statuses surface
+    /// as non-transient exceptions), and at most two retries are made to respect the rerank latency budget.
+    /// </summary>
+    internal static ResiliencePipeline ForRerankProvider(TimeSpan attemptTimeout) => Create(
+        IsTransientHttp,
+        minimumThroughput: 5,
+        samplingDuration: TimeSpan.FromSeconds(60),
+        breakDuration: TimeSpan.FromSeconds(30),
+        timeout: attemptTimeout,
+        maxRetryAttempts: 2);
 }

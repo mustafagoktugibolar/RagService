@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Rag.Core.Options;
 using Rag.Core.Retrieval;
+using Rag.Core.Telemetry;
 
 namespace Rag.Core.Reranking;
 
@@ -34,10 +35,25 @@ public interface IReranker
 /// Chunk identity, text, metadata and the inner retriever's source attribution are preserved; a "rerank" source is added.
 /// Any reranker failure or timeout degrades to the inner retriever's order and is reported in the warnings.
 /// </summary>
+/// <summary>Raised when reranking fails and <see cref="RerankFailurePolicy.Fail"/> is configured. The message carries no query or passage text.</summary>
+public sealed class RerankFailedException(string reranker, Exception inner)
+    : Exception($"Reranking with '{reranker}' failed.", inner);
+
+/// <summary>Reranker that keeps retrieval order: the second stage runs but changes nothing. Plumbing check and ablation baseline.</summary>
+public sealed class NoOpReranker : IReranker
+{
+    public string Name => "none";
+
+    public Task<IReadOnlyList<RerankScore>> RerankAsync(
+        string query, IReadOnlyList<RerankCandidate> candidates, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<RerankScore>>(
+            candidates.Select((c, i) => new RerankScore(c.ChunkId, candidates.Count - i)).ToArray());
+}
+
 public sealed class RerankingRetriever(
     IRetriever inner,
     IReranker reranker,
-    RerankOptions options,
+    RerankingOptions options,
     ILogger logger) : IRetriever
 {
     public const string Source = "rerank";
@@ -72,13 +88,21 @@ public sealed class RerankingRetriever(
         }
         catch (OperationCanceledException)
         {
-            logger.LogWarning("Rerank with {Reranker} timed out after {Seconds}s; keeping retrieval order", reranker.Name, options.TimeoutSeconds);
-            return Truncate(fetched, request.TopK, [TimedOut]);
+            logger.LogWarning("Rerank with {Reranker} timed out after {Seconds}s; {Policy}",
+                reranker.Name, options.TimeoutSeconds, options.FailurePolicy == RerankFailurePolicy.Fail ? "failing the query" : "keeping retrieval order");
+            RagTelemetry.RerankFallbacks.Add(1, new TagList { { "reason", "timeout" } });
+            return options.FailurePolicy == RerankFailurePolicy.Fail
+                ? throw new RerankFailedException(reranker.Name, new TimeoutException())
+                : Truncate(fetched, request.TopK, [TimedOut]);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Rerank with {Reranker} failed; keeping retrieval order", reranker.Name);
-            return Truncate(fetched, request.TopK, [Failed]);
+            logger.LogWarning("Rerank with {Reranker} failed ({ErrorType}); {Policy}",
+                reranker.Name, ex.GetType().Name, options.FailurePolicy == RerankFailurePolicy.Fail ? "failing the query" : "keeping retrieval order");
+            RagTelemetry.RerankFallbacks.Add(1, new TagList { { "reason", "failed" } });
+            return options.FailurePolicy == RerankFailurePolicy.Fail
+                ? throw new RerankFailedException(reranker.Name, ex)
+                : Truncate(fetched, request.TopK, [Failed]);
         }
 
         // First score per chunk wins; scores for chunks that were not sent are ignored.
@@ -95,6 +119,7 @@ public sealed class RerankingRetriever(
         if (scored.Any(x => !x.Has))
         {
             warnings.Add(Incomplete);
+            RagTelemetry.RerankFallbacks.Add(1, new TagList { { "reason", "incomplete" } });
         }
 
         var ordered = scored.Where(x => x.Has).OrderByDescending(x => x.Score).ThenBy(x => x.Position)

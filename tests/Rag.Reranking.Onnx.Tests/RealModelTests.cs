@@ -122,7 +122,8 @@ public sealed class RealModelTests : IDisposable
     {
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
         {
-            ["Rerank:Enabled"] = "true",
+            ["Retrieval:Reranking:Enabled"] = "true",
+            ["Retrieval:Reranking:Provider"] = "Onnx",
             ["OnnxReranker:ModelPath"] = ModelFiles.ModelPath,
             ["OnnxReranker:VocabPath"] = ModelFiles.VocabPath
         }).Build();

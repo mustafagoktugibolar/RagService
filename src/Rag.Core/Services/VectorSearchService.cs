@@ -21,8 +21,7 @@ public sealed class VectorSearchService(
     IOptions<QueryCacheOptions> queryCacheOptions,
     ILogger<VectorSearchService> logger,
     IOptions<RetrievalOptions>? retrievalOptions = null,
-    IReranker? reranker = null,
-    IOptions<RerankOptions>? rerankOptions = null)
+    IReranker? reranker = null)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -72,7 +71,7 @@ public sealed class VectorSearchService(
                 return Failure(request, plan.Error);
             }
 
-            var rerank = rerankOptions?.Value ?? new RerankOptions();
+            var rerank = retrieval.Reranking;
             var rerankActive = reranker is not null && rerank.Enabled;
             // The reranker's identity and candidate budget change the result list, so they are part of the strategy id
             // that keys the query cache.

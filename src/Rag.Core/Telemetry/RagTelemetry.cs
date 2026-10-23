@@ -26,4 +26,16 @@ public static class RagTelemetry
 
     public static readonly Histogram<double> EmbeddingDurationMs =
         Meter.CreateHistogram<double>("rag.embedding.duration", unit: "ms", description: "Embedding API call duration");
+
+    public static readonly Counter<long> RerankRequests =
+        Meter.CreateCounter<long>("rag.rerank.requests", description: "Rerank provider requests by provider and outcome");
+
+    public static readonly Counter<long> RerankInputTokens =
+        Meter.CreateCounter<long>("rag.rerank.input_tokens", description: "Input tokens billed by rerank providers");
+
+    public static readonly Counter<long> RerankFallbacks =
+        Meter.CreateCounter<long>("rag.rerank.fallbacks", description: "Queries served in retrieval order because reranking failed, timed out or was incomplete");
+
+    public static readonly Histogram<double> RerankDurationMs =
+        Meter.CreateHistogram<double>("rag.rerank.duration", unit: "ms", description: "Duration of one rerank provider request");
 }
