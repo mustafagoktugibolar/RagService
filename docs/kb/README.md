@@ -26,7 +26,7 @@ Her bölümün başında ve her kavramın yanında şu etiketlerden biri bulunur
 | 4 | [Embeddings ve Vektör Arama](04-embeddings-vector-search.md) | ⬜ | Cosine, HNSW, Qdrant, PgVector, filtreleme |
 | 5 | [Ingestion ve Chunking](05-ingestion-chunking.md) | ⬜ | Extractor'lar, tokenization, overlap, chunk identity |
 | 6 | [İleri Seviye Retrieval](06-advanced-retrieval.md) | 🔵 planned | BM25, hybrid, RRF, reranking, query rewriting |
-| 7 | [Retrieval Evaluation](07-retrieval-evaluation.md) | 🔵 planned | Recall/Precision/MRR/nDCG, golden dataset, quality gate |
+| 7 | [Retrieval Evaluation](07-retrieval-evaluation.md) | ✅ yazıldı (Faz 3) | Recall/Precision/MRR/nDCG/AP, golden dataset, harness, ilk baseline; quality gate 🔵 planned |
 | 8 | [Redis ve Caching](08-redis-caching.md) | ✅ yazıldı | Embedding cache, query cache, cache key, stale sorunu |
 | 9 | [Storage Sistemleri](09-storage-systems.md) | ⬜ | MinIO, Qdrant, PostgreSQL, persistent vs derived data |
 | 10 | [Resilience ve Observability](10-resilience-observability.md) | ⬜ | Polly, OpenTelemetry, Prometheus, Grafana, Tempo |
