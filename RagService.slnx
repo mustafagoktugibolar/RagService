@@ -4,6 +4,7 @@
   </Folder>
   <Project Path="src/Rag.Core/Rag.Core.csproj" />
   <Project Path="src/Rag.Evaluation/Rag.Evaluation.csproj" />
+  <Project Path="src/Rag.Evaluation.Cli/Rag.Evaluation.Cli.csproj" />
   <Folder Name="/tests/">
     <Project Path="tests/Rag.IntegrationTests/Rag.IntegrationTests.csproj" />
     <Project Path="tests/Rag.Evaluation.Tests/Rag.Evaluation.Tests.csproj" />

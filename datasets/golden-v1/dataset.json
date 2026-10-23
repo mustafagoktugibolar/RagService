@@ -1,0 +1,855 @@
+{
+  "datasetVersion": "golden-v1.0.0",
+  "name": "RagService technical notes (author-judged, single annotator)",
+  "corpus": [
+    {
+      "documentId": "rabbitmq-ack",
+      "text": "With manual acknowledgements a consumer tells RabbitMQ when a delivery was handled. BasicAckAsync removes the message from the queue. BasicNackAsync with requeue set to true puts the message back so another attempt can happen, while requeue set to false discards it or routes it to a dead letter exchange. If a consumer crashes before acknowledging, the broker redelivers the message, which is why handlers must tolerate duplicates.",
+      "metadata": {
+        "topic": "messaging"
+      }
+    },
+    {
+      "documentId": "rabbitmq-dlq",
+      "text": "A dead letter exchange receives messages that were rejected without requeue, that expired, or that overflowed a queue length limit. A queue is wired to it with the x-dead-letter-exchange argument. Operators bind a dead letter queue to the exchange and inspect it to find poison messages: payloads that fail every time and would otherwise cycle forever. The dead letter queue keeps the evidence for later replay.",
+      "metadata": {
+        "topic": "messaging"
+      }
+    },
+    {
+      "documentId": "rabbitmq-prefetch",
+      "text": "Prefetch limits how many unacknowledged deliveries a consumer may hold. A prefetch count of 8 means the broker stops sending after eight messages are in flight until some are acknowledged. This is the main backpressure mechanism: slow workers stay bounded instead of buffering the entire queue in memory, and unacked messages remain available for other consumers.",
+      "metadata": {
+        "topic": "messaging"
+      }
+    },
+    {
+      "documentId": "rabbitmq-idempotency",
+      "text": "Message brokers usually promise at-least-once delivery, so the same message can arrive twice after a timeout or a crash. An idempotent handler produces the same final state no matter how often it runs. Deterministic identifiers, upserts instead of inserts, and delete-then-write patterns make reprocessing safe. Exactly-once delivery is not something the network can guarantee; exactly-once effect is achieved by idempotency.",
+      "metadata": {
+        "topic": "messaging"
+      }
+    },
+    {
+      "documentId": "qdrant-overview",
+      "text": "Qdrant is a vector database written in Rust. Points consist of an id, one or more vectors and a JSON payload. Collections fix the vector size and the distance metric at creation time. It exposes REST on port 6333 and gRPC on port 6334, and persists data to a storage directory so collections survive restarts.",
+      "metadata": {
+        "topic": "vector-store"
+      }
+    },
+    {
+      "documentId": "qdrant-filtering",
+      "text": "Qdrant applies payload filters during graph traversal rather than after it. A filter has must, should and must_not clauses; a match condition on a keyword field restricts candidates to points whose payload equals the value. Because filtering happens inside the search, asking for ten results with a selective filter still returns ten results instead of an empty page, provided enough points match.",
+      "metadata": {
+        "topic": "vector-store"
+      }
+    },
+    {
+      "documentId": "hnsw-index",
+      "text": "HNSW, hierarchical navigable small world, builds a layered proximity graph. Upper layers are sparse and allow long jumps; the bottom layer links every vector to its near neighbours. A query enters at the top and greedily descends. The parameter M sets how many links each node keeps and ef_construction sets the candidate list size while building. Higher values improve recall and cost memory and build time. The search is approximate: it can miss the true nearest neighbour.",
+      "metadata": {
+        "topic": "vector-index"
+      }
+    },
+    {
+      "documentId": "cosine-similarity",
+      "text": "Cosine similarity measures the angle between two vectors: the dot product divided by the product of their lengths. It ranges from minus one to one and ignores magnitude, so a long document and a short one about the same topic can still match. When vectors are normalised to unit length, cosine similarity equals the plain dot product, which is cheaper to compute.",
+      "metadata": {
+        "topic": "vector-math"
+      }
+    },
+    {
+      "documentId": "distance-metrics",
+      "text": "Euclidean distance measures the straight line between two points and is sensitive to vector length. The inner product rewards both direction and magnitude. For unit-length embeddings all three metrics produce the same ordering of neighbours, so the choice mostly matters for models that do not normalise their output.",
+      "metadata": {
+        "topic": "vector-math"
+      }
+    },
+    {
+      "documentId": "pgvector-indexes",
+      "text": "The pgvector extension adds a vector column type to PostgreSQL. Without an index every query scans the whole table and compares exactly. An ivfflat index clusters vectors into lists and probes only some of them at query time, while an hnsw index builds a graph. The operator class must match the distance operator used in queries, for example vector_cosine_ops for the cosine distance operator.",
+      "metadata": {
+        "topic": "vector-store"
+      }
+    },
+    {
+      "documentId": "bm25",
+      "text": "BM25 is a lexical ranking function. It scores a document by summing, over query terms, an inverse document frequency weight multiplied by a saturating term frequency component. The parameter k1 controls how quickly repeated terms stop adding score and b controls length normalisation. Rare terms such as error codes or identifiers dominate the score, which makes BM25 strong on exact keyword queries and weak on paraphrases.",
+      "metadata": {
+        "topic": "lexical"
+      }
+    },
+    {
+      "documentId": "hybrid-search",
+      "text": "Hybrid search runs a dense vector query and a sparse lexical query and merges the two candidate lists. Dense retrieval captures meaning and survives vocabulary mismatch; sparse retrieval nails exact tokens like product names. Their score scales are unrelated, so the lists are merged by rank rather than by raw score.",
+      "metadata": {
+        "topic": "retrieval"
+      }
+    },
+    {
+      "documentId": "rrf",
+      "text": "Reciprocal rank fusion adds 1 divided by k plus rank for every list in which a document appears. The constant k is conventionally 60 and dampens the advantage of the very top ranks. Because only ranks are used, no score normalisation is needed, and a document found by both retrievers rises above documents found by one.",
+      "metadata": {
+        "topic": "retrieval"
+      }
+    },
+    {
+      "documentId": "cross-encoder-reranking",
+      "text": "A cross-encoder reads the query and one candidate together and outputs a relevance score, which is far more accurate than comparing two independent embeddings but too slow for the whole collection. Systems therefore retrieve a few dozen candidates cheaply and rerank only those. The cost is added latency per query and, for hosted models, a per-request fee.",
+      "metadata": {
+        "topic": "retrieval"
+      }
+    },
+    {
+      "documentId": "hyde",
+      "text": "HyDE, hypothetical document embeddings, asks a language model to write a plausible answer to the query and embeds that answer instead of the question. Answers resemble documents more than questions do, which can help when queries are short. It adds a model call per query and can hallucinate details that steer retrieval in the wrong direction.",
+      "metadata": {
+        "topic": "retrieval"
+      }
+    },
+    {
+      "documentId": "query-rewriting",
+      "text": "Query rewriting uses a language model to reformulate a conversational question into a self-contained search query. Multi-query retrieval generates several paraphrases, searches with each and merges the results, trading extra calls for recall. Rewrites must preserve the original intent; a guard that falls back to the original query when entities or numbers change prevents drift.",
+      "metadata": {
+        "topic": "retrieval"
+      }
+    },
+    {
+      "documentId": "chunking-fixed",
+      "text": "Fixed-size chunking cuts text into windows of a set number of tokens, usually with an overlap so that a sentence straddling a boundary appears whole in at least one chunk. It is simple and predictable. Too small a window loses context; too large a window dilutes the embedding with unrelated sentences and wastes prompt tokens.",
+      "metadata": {
+        "topic": "ingestion"
+      }
+    },
+    {
+      "documentId": "chunking-semantic",
+      "text": "Semantic chunking embeds consecutive sentences and starts a new chunk where similarity drops sharply, which tends to align chunks with topic changes. It costs an embedding call per sentence at ingestion time and produces chunks of uneven size, so its benefit over fixed windows has to be measured on real queries.",
+      "metadata": {
+        "topic": "ingestion"
+      }
+    },
+    {
+      "documentId": "chunking-parent-child",
+      "text": "Parent-child retrieval indexes small child chunks for precise matching but returns the larger parent section that contains the match. Small chunks give sharp embeddings; the parent supplies surrounding context for the reader. It needs a stable parent identifier stored with every child.",
+      "metadata": {
+        "topic": "ingestion"
+      }
+    },
+    {
+      "documentId": "redis-eviction",
+      "text": "Redis keys can carry a time to live. When it elapses the key is removed. Under memory pressure the eviction policy decides what to drop: allkeys-lru removes the least recently used keys, while noeviction rejects writes. Choosing a TTL is a freshness decision, not only a memory one.",
+      "metadata": {
+        "topic": "cache"
+      }
+    },
+    {
+      "documentId": "cache-keys",
+      "text": "A cache key must contain every input that influences the cached value. If a key omits the embedding model or the index version, two different computations share one entry and stale answers are served. Hashing long inputs keeps keys short, and a version segment lets you invalidate everything by changing a number instead of deleting entries.",
+      "metadata": {
+        "topic": "cache"
+      }
+    },
+    {
+      "documentId": "embedding-cache",
+      "text": "Embedding the same text twice is wasted money, so systems cache vectors under a hash of the text and the model name. Because an embedding is a pure function of model and text, such entries never go stale and only need a TTL for memory hygiene. Storing floats as raw bytes is far smaller than JSON.",
+      "metadata": {
+        "topic": "cache"
+      }
+    },
+    {
+      "documentId": "polly-retry",
+      "text": "A retry strategy re-runs a failed call after a delay. Exponential backoff doubles the wait between attempts, and UseJitter randomises it so that many clients do not retry in lockstep and flatten a recovering service. Only transient faults such as timeouts and 503 responses deserve a retry; a validation error will fail identically every time.",
+      "metadata": {
+        "topic": "resilience"
+      }
+    },
+    {
+      "documentId": "polly-circuit-breaker",
+      "text": "A circuit breaker watches failures. When the FailureRatio over the sampling window exceeds the threshold and the minimum throughput is met, it opens and rejects calls immediately for the break duration, giving the dependency room to recover. After that it half-opens and lets a probe through. Callers receive a BrokenCircuitException while it is open.",
+      "metadata": {
+        "topic": "resilience"
+      }
+    },
+    {
+      "documentId": "otel-tracing",
+      "text": "A trace follows one request across services as a tree of spans. Each span records a name, timing and attributes, and carries a trace id propagated through headers or message properties. In .NET an ActivitySource creates spans and the OpenTelemetry SDK exports them over OTLP to a backend such as Tempo.",
+      "metadata": {
+        "topic": "observability"
+      }
+    },
+    {
+      "documentId": "prometheus-metrics",
+      "text": "Prometheus scrapes numeric time series from an HTTP endpoint. Counters only increase, gauges move both ways, and histograms count observations into buckets so quantiles such as the 95th percentile latency can be estimated. Labels add dimensions but each distinct label combination creates a new series, so unbounded label values are dangerous.",
+      "metadata": {
+        "topic": "observability"
+      }
+    },
+    {
+      "documentId": "grafana-tempo",
+      "text": "Grafana visualises metrics from Prometheus and traces from Tempo in one place. Tempo stores traces cheaply by indexing only the trace id, and Grafana can jump from a latency spike on a dashboard to an example trace of a slow request.",
+      "metadata": {
+        "topic": "observability"
+      }
+    },
+    {
+      "documentId": "minio-s3",
+      "text": "MinIO is an S3-compatible object store you can run yourself. Applications address data as buckets and keys over the S3 API, so code written for Amazon S3 works against it with a different endpoint. Objects are immutable blobs, which suits uploaded documents that are read whole.",
+      "metadata": {
+        "topic": "storage"
+      }
+    },
+    {
+      "documentId": "docker-multistage",
+      "text": "A multi-stage Docker build compiles the application in an image that contains the SDK and copies only the published output into a small runtime image. The final image ships without compilers or source, which shrinks it and reduces its attack surface. Layer ordering matters: copy project files and restore packages before copying source to reuse the cache.",
+      "metadata": {
+        "topic": "deployment"
+      }
+    },
+    {
+      "documentId": "compose-healthchecks",
+      "text": "In Docker Compose a healthcheck runs a command inside the container until it succeeds. Other services can wait with depends_on and the condition service_healthy, which is stronger than waiting for the container to merely start, because a database process can be running long before it accepts connections.",
+      "metadata": {
+        "topic": "deployment"
+      }
+    },
+    {
+      "documentId": "dotnet-cancellation",
+      "text": "A CancellationToken lets a caller ask running work to stop cooperatively. Methods accept the token, pass it to every awaited operation and may call ThrowIfCancellationRequested at safe points. Swallowing OperationCanceledException hides shutdown requests, so hosts let it propagate and treat it as a normal exit.",
+      "metadata": {
+        "topic": "dotnet"
+      }
+    },
+    {
+      "documentId": "dotnet-backgroundservice",
+      "text": "A BackgroundService runs long-lived work inside the generic host. The host calls ExecuteAsync on start and signals its stopping token on shutdown. Scoped services such as database contexts cannot be injected directly into a singleton worker, so the worker creates a scope per unit of work using IServiceScopeFactory.",
+      "metadata": {
+        "topic": "dotnet"
+      }
+    },
+    {
+      "documentId": "embedding-dimensions",
+      "text": "An embedding model maps text to a fixed-length vector, for example 1536 numbers. Some models are trained so that the first dimensions carry most of the meaning and can be truncated to save storage at a small quality cost. The dimension count is fixed per collection, so changing models normally means reindexing everything.",
+      "metadata": {
+        "topic": "vector-math"
+      }
+    },
+    {
+      "documentId": "ndcg",
+      "text": "Normalised discounted cumulative gain scores a ranking using graded relevance. Gains are discounted by the logarithm of the rank so a relevant result at position one counts more than at position ten, then divided by the ideal ordering's score. A value of one means the ranking is as good as possible for the judged documents.",
+      "metadata": {
+        "topic": "evaluation"
+      }
+    },
+    {
+      "documentId": "prompt-injection",
+      "text": "Retrieved documents are untrusted input. A passage can contain instructions aimed at the model, such as telling it to ignore earlier rules. Defences include clearly delimiting retrieved text, never granting retrieved content authority over tools, filtering by the caller's access rights before retrieval and keeping source attribution so answers can be audited.",
+      "metadata": {
+        "topic": "security"
+      }
+    }
+  ],
+  "queries": [
+    {
+      "id": "kw-01",
+      "query": "x-dead-letter-exchange argument",
+      "category": "keyword",
+      "relevantDocuments": [
+        {
+          "documentId": "rabbitmq-dlq",
+          "grade": 3,
+          "evidence": "x-dead-letter-exchange"
+        }
+      ]
+    },
+    {
+      "id": "kw-02",
+      "query": "ef_construction",
+      "category": "keyword",
+      "relevantDocuments": [
+        {
+          "documentId": "hnsw-index",
+          "grade": 3,
+          "evidence": "ef_construction"
+        }
+      ]
+    },
+    {
+      "id": "kw-03",
+      "query": "BasicNackAsync requeue",
+      "category": "keyword",
+      "relevantDocuments": [
+        {
+          "documentId": "rabbitmq-ack",
+          "grade": 3,
+          "evidence": "BasicNackAsync"
+        }
+      ]
+    },
+    {
+      "id": "kw-04",
+      "query": "ivfflat lists probes",
+      "category": "keyword",
+      "relevantDocuments": [
+        {
+          "documentId": "pgvector-indexes",
+          "grade": 3,
+          "evidence": "ivfflat"
+        }
+      ]
+    },
+    {
+      "id": "kw-05",
+      "query": "UseJitter",
+      "category": "keyword",
+      "relevantDocuments": [
+        {
+          "documentId": "polly-retry",
+          "grade": 3,
+          "evidence": "UseJitter"
+        }
+      ]
+    },
+    {
+      "id": "kw-06",
+      "query": "FailureRatio BrokenCircuitException",
+      "category": "keyword",
+      "relevantDocuments": [
+        {
+          "documentId": "polly-circuit-breaker",
+          "grade": 3,
+          "evidence": "FailureRatio"
+        }
+      ]
+    },
+    {
+      "id": "kw-07",
+      "query": "service_healthy depends_on",
+      "category": "keyword",
+      "relevantDocuments": [
+        {
+          "documentId": "compose-healthchecks",
+          "grade": 3,
+          "evidence": "service_healthy"
+        }
+      ]
+    },
+    {
+      "id": "kw-08",
+      "query": "ThrowIfCancellationRequested",
+      "category": "keyword",
+      "relevantDocuments": [
+        {
+          "documentId": "dotnet-cancellation",
+          "grade": 3,
+          "evidence": "ThrowIfCancellationRequested"
+        }
+      ]
+    },
+    {
+      "id": "kw-09",
+      "query": "IServiceScopeFactory scoped services",
+      "category": "keyword",
+      "relevantDocuments": [
+        {
+          "documentId": "dotnet-backgroundservice",
+          "grade": 3,
+          "evidence": "IServiceScopeFactory"
+        }
+      ]
+    },
+    {
+      "id": "kw-10",
+      "query": "BM25 k1 parameter",
+      "category": "keyword",
+      "relevantDocuments": [
+        {
+          "documentId": "bm25",
+          "grade": 3,
+          "evidence": "k1"
+        }
+      ]
+    },
+    {
+      "id": "kw-11",
+      "query": "allkeys-lru",
+      "category": "keyword",
+      "relevantDocuments": [
+        {
+          "documentId": "redis-eviction",
+          "grade": 3,
+          "evidence": "allkeys-lru"
+        }
+      ]
+    },
+    {
+      "id": "kw-12",
+      "query": "vector_cosine_ops",
+      "category": "keyword",
+      "relevantDocuments": [
+        {
+          "documentId": "pgvector-indexes",
+          "grade": 3,
+          "evidence": "vector_cosine_ops"
+        }
+      ]
+    },
+    {
+      "id": "kw-13",
+      "query": "Qdrant gRPC port 6334",
+      "category": "keyword",
+      "relevantDocuments": [
+        {
+          "documentId": "qdrant-overview",
+          "grade": 3,
+          "evidence": "6334"
+        }
+      ]
+    },
+    {
+      "id": "kw-14",
+      "query": "ActivitySource OTLP Tempo",
+      "category": "keyword",
+      "relevantDocuments": [
+        {
+          "documentId": "otel-tracing",
+          "grade": 3,
+          "evidence": "ActivitySource"
+        },
+        {
+          "documentId": "grafana-tempo",
+          "grade": 1
+        }
+      ]
+    },
+    {
+      "id": "pa-01",
+      "query": "what happens to messages that keep failing forever",
+      "category": "paraphrase",
+      "relevantDocuments": [
+        {
+          "documentId": "rabbitmq-dlq",
+          "grade": 3,
+          "evidence": "poison messages"
+        },
+        {
+          "documentId": "rabbitmq-ack",
+          "grade": 1
+        }
+      ]
+    },
+    {
+      "id": "pa-02",
+      "query": "how do I stop a slow worker from being flooded",
+      "category": "paraphrase",
+      "relevantDocuments": [
+        {
+          "documentId": "rabbitmq-prefetch",
+          "grade": 3,
+          "evidence": "backpressure mechanism"
+        }
+      ]
+    },
+    {
+      "id": "pa-03",
+      "query": "why can the same job run twice and how to make that harmless",
+      "category": "paraphrase",
+      "relevantDocuments": [
+        {
+          "documentId": "rabbitmq-idempotency",
+          "grade": 3,
+          "evidence": "idempotent handler"
+        },
+        {
+          "documentId": "rabbitmq-ack",
+          "grade": 2,
+          "evidence": "redelivers the message"
+        }
+      ]
+    },
+    {
+      "id": "pa-04",
+      "query": "finding similar items without checking every single one",
+      "category": "paraphrase",
+      "relevantDocuments": [
+        {
+          "documentId": "hnsw-index",
+          "grade": 3,
+          "evidence": "layered proximity graph"
+        },
+        {
+          "documentId": "pgvector-indexes",
+          "grade": 2
+        }
+      ]
+    },
+    {
+      "id": "pa-05",
+      "query": "comparing direction of two embeddings regardless of text length",
+      "category": "paraphrase",
+      "relevantDocuments": [
+        {
+          "documentId": "cosine-similarity",
+          "grade": 3,
+          "evidence": "ignores magnitude"
+        }
+      ]
+    },
+    {
+      "id": "pa-06",
+      "query": "combining two ranked result lists without comparing their scores",
+      "category": "paraphrase",
+      "relevantDocuments": [
+        {
+          "documentId": "rrf",
+          "grade": 3,
+          "evidence": "only ranks are used"
+        },
+        {
+          "documentId": "hybrid-search",
+          "grade": 2,
+          "evidence": "merged by rank"
+        }
+      ]
+    },
+    {
+      "id": "pa-07",
+      "query": "a second more precise model that re-orders the shortlist",
+      "category": "paraphrase",
+      "relevantDocuments": [
+        {
+          "documentId": "cross-encoder-reranking",
+          "grade": 3,
+          "evidence": "rerank only those"
+        }
+      ]
+    },
+    {
+      "id": "pa-08",
+      "query": "having a language model guess an answer and searching with that guess",
+      "category": "paraphrase",
+      "relevantDocuments": [
+        {
+          "documentId": "hyde",
+          "grade": 3,
+          "evidence": "plausible answer"
+        }
+      ]
+    },
+    {
+      "id": "pa-09",
+      "query": "turn a chat follow-up into a standalone search question",
+      "category": "paraphrase",
+      "relevantDocuments": [
+        {
+          "documentId": "query-rewriting",
+          "grade": 3,
+          "evidence": "self-contained search query"
+        }
+      ]
+    },
+    {
+      "id": "pa-10",
+      "query": "waiting longer between attempts so a struggling service can recover",
+      "category": "paraphrase",
+      "relevantDocuments": [
+        {
+          "documentId": "polly-retry",
+          "grade": 3,
+          "evidence": "Exponential backoff"
+        },
+        {
+          "documentId": "polly-circuit-breaker",
+          "grade": 1
+        }
+      ]
+    },
+    {
+      "id": "pa-11",
+      "query": "stop calling a dependency that is clearly down",
+      "category": "paraphrase",
+      "relevantDocuments": [
+        {
+          "documentId": "polly-circuit-breaker",
+          "grade": 3,
+          "evidence": "rejects calls immediately"
+        }
+      ]
+    },
+    {
+      "id": "pa-12",
+      "query": "shrinking the container image that ships to production",
+      "category": "paraphrase",
+      "relevantDocuments": [
+        {
+          "documentId": "docker-multistage",
+          "grade": 3,
+          "evidence": "small runtime image"
+        }
+      ]
+    },
+    {
+      "id": "pa-13",
+      "query": "make sure the database accepts connections before the app starts",
+      "category": "paraphrase",
+      "relevantDocuments": [
+        {
+          "documentId": "compose-healthchecks",
+          "grade": 3,
+          "evidence": "accepts connections"
+        }
+      ]
+    },
+    {
+      "id": "pa-14",
+      "query": "grading a ranked list higher when the best item is on top",
+      "category": "paraphrase",
+      "relevantDocuments": [
+        {
+          "documentId": "ndcg",
+          "grade": 3,
+          "evidence": "discounted by the logarithm of the rank"
+        }
+      ]
+    },
+    {
+      "id": "pa-15",
+      "query": "text that tries to hijack the assistant",
+      "category": "paraphrase",
+      "relevantDocuments": [
+        {
+          "documentId": "prompt-injection",
+          "grade": 3,
+          "evidence": "instructions aimed at the model"
+        }
+      ]
+    },
+    {
+      "id": "pa-16",
+      "query": "why answers stay wrong after documents were re-uploaded",
+      "category": "paraphrase",
+      "relevantDocuments": [
+        {
+          "documentId": "cache-keys",
+          "grade": 3,
+          "evidence": "stale answers are served"
+        },
+        {
+          "documentId": "redis-eviction",
+          "grade": 1
+        }
+      ]
+    },
+    {
+      "id": "mr-01",
+      "query": "reduce the cost of calling the embedding API",
+      "category": "multi-relevant",
+      "relevantDocuments": [
+        {
+          "documentId": "embedding-cache",
+          "grade": 3,
+          "evidence": "wasted money"
+        },
+        {
+          "documentId": "embedding-dimensions",
+          "grade": 2,
+          "evidence": "truncated to save storage"
+        },
+        {
+          "documentId": "cache-keys",
+          "grade": 1
+        }
+      ]
+    },
+    {
+      "id": "mr-02",
+      "query": "improve recall of dense search for short queries",
+      "category": "multi-relevant",
+      "relevantDocuments": [
+        {
+          "documentId": "hyde",
+          "grade": 3,
+          "evidence": "short"
+        },
+        {
+          "documentId": "query-rewriting",
+          "grade": 3,
+          "evidence": "recall"
+        },
+        {
+          "documentId": "hybrid-search",
+          "grade": 2
+        }
+      ]
+    },
+    {
+      "id": "mr-03",
+      "query": "how are chunks sized and overlapped before embedding",
+      "category": "multi-relevant",
+      "relevantDocuments": [
+        {
+          "documentId": "chunking-fixed",
+          "grade": 3,
+          "evidence": "overlap"
+        },
+        {
+          "documentId": "chunking-semantic",
+          "grade": 2
+        },
+        {
+          "documentId": "chunking-parent-child",
+          "grade": 2
+        }
+      ]
+    },
+    {
+      "id": "mr-04",
+      "query": "observing a distributed request with traces and metrics",
+      "category": "multi-relevant",
+      "relevantDocuments": [
+        {
+          "documentId": "otel-tracing",
+          "grade": 3
+        },
+        {
+          "documentId": "prometheus-metrics",
+          "grade": 2
+        },
+        {
+          "documentId": "grafana-tempo",
+          "grade": 2
+        }
+      ]
+    },
+    {
+      "id": "mr-05",
+      "query": "handling transient failures when calling external services",
+      "category": "multi-relevant",
+      "relevantDocuments": [
+        {
+          "documentId": "polly-retry",
+          "grade": 3
+        },
+        {
+          "documentId": "polly-circuit-breaker",
+          "grade": 3
+        },
+        {
+          "documentId": "dotnet-cancellation",
+          "grade": 1
+        }
+      ]
+    },
+    {
+      "id": "mr-06",
+      "query": "combine lexical and semantic retrieval",
+      "category": "multi-relevant",
+      "relevantDocuments": [
+        {
+          "documentId": "hybrid-search",
+          "grade": 3,
+          "evidence": "dense vector query and a sparse lexical query"
+        },
+        {
+          "documentId": "bm25",
+          "grade": 2
+        },
+        {
+          "documentId": "rrf",
+          "grade": 3
+        }
+      ]
+    },
+    {
+      "id": "mr-07",
+      "query": "reliable message processing with duplicate delivery",
+      "category": "multi-relevant",
+      "relevantDocuments": [
+        {
+          "documentId": "rabbitmq-ack",
+          "grade": 3
+        },
+        {
+          "documentId": "rabbitmq-idempotency",
+          "grade": 3
+        },
+        {
+          "documentId": "rabbitmq-dlq",
+          "grade": 2
+        }
+      ]
+    },
+    {
+      "id": "co-01",
+      "query": "why approximate nearest neighbour search can miss the true best match",
+      "category": "conceptual",
+      "relevantDocuments": [
+        {
+          "documentId": "hnsw-index",
+          "grade": 3,
+          "evidence": "approximate"
+        },
+        {
+          "documentId": "pgvector-indexes",
+          "grade": 1
+        }
+      ]
+    },
+    {
+      "id": "co-02",
+      "query": "restricting vector search to documents with a given attribute",
+      "category": "conceptual",
+      "relevantDocuments": [
+        {
+          "documentId": "qdrant-filtering",
+          "grade": 3,
+          "evidence": "payload filters"
+        },
+        {
+          "documentId": "qdrant-overview",
+          "grade": 1
+        }
+      ]
+    },
+    {
+      "id": "co-03",
+      "query": "which distance function to choose for normalised embeddings",
+      "category": "conceptual",
+      "relevantDocuments": [
+        {
+          "documentId": "distance-metrics",
+          "grade": 3,
+          "evidence": "same ordering"
+        },
+        {
+          "documentId": "cosine-similarity",
+          "grade": 2,
+          "evidence": "equals the plain dot product"
+        }
+      ]
+    },
+    {
+      "id": "na-01",
+      "query": "how do I bake sourdough bread at home",
+      "category": "no-answer",
+      "relevantDocuments": []
+    },
+    {
+      "id": "na-02",
+      "query": "what is the capital city of Australia",
+      "category": "no-answer",
+      "relevantDocuments": []
+    },
+    {
+      "id": "na-03",
+      "query": "CUDA kernel fusion on a GPU",
+      "category": "no-answer",
+      "relevantDocuments": []
+    },
+    {
+      "id": "na-04",
+      "query": "history of the Ottoman Empire",
+      "category": "no-answer",
+      "relevantDocuments": []
+    }
+  ]
+}
