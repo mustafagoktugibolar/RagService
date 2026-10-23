@@ -24,6 +24,12 @@ public sealed class DenseBaselineHarness
 
     public required VectorSearchService Search { get; init; }
 
+    public required IVectorStore Store { get; init; }
+
+    public required IEmbeddingProvider Embedder { get; init; }
+
+    public required RagOptions RagSettings { get; init; }
+
     public required IReadOnlyList<ChunkRecord> ChunkCatalog { get; init; }
 
     public required HarnessConfiguration Configuration { get; init; }
@@ -89,15 +95,33 @@ public sealed class DenseBaselineHarness
         return new DenseBaselineHarness
         {
             Search = search,
+            Store = store,
+            Embedder = embedder,
+            RagSettings = RagOptionsFor(configuration, embedderSpec),
             ChunkCatalog = chunker.Produced,
             Configuration = configuration
         };
     }
 
-    /// <summary>The retriever under test, shaped for <see cref="RetrievalEvaluator"/>.</summary>
-    public RetrieveAsync Retriever => async (query, depth, ct) =>
+    /// <summary>The retriever under test (the harness configuration's strategy), shaped for <see cref="RetrievalEvaluator"/>.</summary>
+    public RetrieveAsync Retriever => ToRetriever(Search);
+
+    /// <summary>
+    /// A retriever over the same already-built index but with different retrieval options. Lets a tuning run compare many
+    /// configurations without re-chunking or re-embedding the corpus.
+    /// </summary>
+    public RetrieveAsync RetrieverFor(RetrievalOptions options) => ToRetriever(new VectorSearchService(
+        Embedder,
+        Store,
+        new MemoryDistributedCache(Microsoft.Extensions.Options.Options.Create(new MemoryDistributedCacheOptions())),
+        Microsoft.Extensions.Options.Options.Create(RagSettings),
+        Microsoft.Extensions.Options.Options.Create(new QueryCacheOptions { Enabled = false }),
+        NullLogger<VectorSearchService>.Instance,
+        Microsoft.Extensions.Options.Options.Create(options)));
+
+    private static RetrieveAsync ToRetriever(VectorSearchService search) => async (query, depth, ct) =>
     {
-        var response = await Search.SearchAsync(new QueryRequest
+        var response = await search.SearchAsync(new QueryRequest
         {
             RequestId = $"eval-{query.Id}",
             Collection = Collection,

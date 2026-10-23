@@ -6,6 +6,7 @@ using Rag.Core.Retrieval;
 using Rag.Evaluation.Dataset;
 using Rag.Evaluation.Evaluation;
 using Rag.Evaluation.Harness;
+using Rag.Evaluation.Tuning;
 
 // Usage: dotnet run --project src/Rag.Evaluation.Cli -- [--dataset <path>] [--out <dir>] [--label <name>]
 //                                                        [--chunk-size <n>] [--chunk-overlap <n>]
@@ -33,6 +34,18 @@ try
     var dataset = await DatasetLoader.LoadAsync(datasetPath, cts.Token);
     var embedder = BuildEmbedder(embedderName, options, configuration);
     var harness = await DenseBaselineHarness.BuildAsync(dataset, configuration, cts.Token, embedder);
+
+    if ((options.GetValueOrDefault("mode") ?? "run").Equals("tune", StringComparison.OrdinalIgnoreCase))
+    {
+        var tuning = await HybridTuningRun.RunAsync(dataset, harness, cts.Token);
+        Directory.CreateDirectory(outDirectory);
+        await File.WriteAllTextAsync(Path.Combine(outDirectory, $"{label}.md"), HybridTuningRun.ToMarkdown(tuning, embedder.Model), cts.Token);
+        await File.WriteAllTextAsync(Path.Combine(outDirectory, $"{label}.json"),
+            System.Text.Json.JsonSerializer.Serialize(tuning, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web) { WriteIndented = true }), cts.Token);
+        Console.WriteLine(HybridTuningRun.ToMarkdown(tuning, embedder.Model));
+        return 0;
+    }
+
     var report = await RetrievalEvaluator.EvaluateAsync(
         dataset, harness.Retriever, new EvaluationOptions(), harness.ChunkCatalog, cts.Token);
 
