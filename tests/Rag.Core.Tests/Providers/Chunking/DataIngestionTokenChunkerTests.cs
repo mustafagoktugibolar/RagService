@@ -145,4 +145,17 @@ public sealed class DataIngestionTokenChunkerTests
         Assert.True(result.Count > 1);
         Assert.All(result, chunk => Assert.Null(chunk.Metadata));
     }
+
+    [Theory]
+    [InlineData("my-azure-deployment")]
+    [InlineData("hashing-bow-v1")]
+    [InlineData("")]
+    public async Task ChunkAsync_ModelUnknownToTiktoken_FallsBackToDefaultEncoding(string model)
+    {
+        var sut = Build(model: model);
+
+        var result = await sut.ChunkAsync("doc1", "A short paragraph of text.", null, CancellationToken.None);
+
+        Assert.Single(result);
+    }
 }

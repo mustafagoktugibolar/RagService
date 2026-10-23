@@ -97,8 +97,9 @@ public sealed class DataIngestionTokenChunker(
             {
                 return TiktokenTokenizer.CreateForModel(model);
             }
-            catch (ArgumentException)
+            catch (Exception ex) when (ex is ArgumentException or NotSupportedException)
             {
+                // Unknown to Tiktoken (custom/Azure deployment names, non-OpenAI models): use the default encoding below.
             }
         }
 
