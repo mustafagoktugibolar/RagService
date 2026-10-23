@@ -1,6 +1,6 @@
 # Bölüm 7 — Retrieval Evaluation
 
-**Durum:** ✅ Implemented — metrikler, dataset, evaluator, offline harness, CLI (Faz 3) · 🔵 Planned — regression karşılaştırma ve quality gate (Faz 8) · 🟡 Partial — gerçek embedding modeliyle baseline **henüz koşulmadı**
+**Durum:** ✅ Implemented — metrikler, dataset, evaluator, offline harness, CLI (Faz 3) · 🔵 Planned — regression karşılaştırma ve quality gate (Faz 8) · ✅ gerçek embedding (`text-embedding-3-small`) ile baseline koşuldu (§7.7b)
 **Kod:** `src/Rag.Evaluation/` (`Metrics/RankingMetrics.cs`, `Dataset/`, `Evaluation/`, `Harness/`), `src/Rag.Evaluation.Cli/`, veri: `datasets/golden-v1/dataset.json`, çıktı: `docs/eval/`
 **Testler:** `tests/Rag.Evaluation.Tests/` (45 test)
 
@@ -101,7 +101,7 @@ Retriever exception fırlatırsa **evaluation başarısız olur** (yutulmaz): ek
 | Metin kaynağı | `CorpusTextExtractor` | `FileExtensionTextExtractor` + blob storage |
 | Chunker, indeksleme/sorgu servisleri | **gerçek** | gerçek |
 
-> ⚠️ **Dürüstlük notu:** `HashingEmbeddingProvider` **anlamsal bir model değildir**; yalnızca ortak yüzey token'larını görür. Bu yüzden aşağıdaki sayılar *harness'in ve datasetin* ölçümüdür, OpenAI embedding'lerinin kalitesi değildir. Gerçek-embedder koşusu planlıdır ama **yapılmamıştır** (PLAN.md Faz 3).
+> ⚠️ **Dürüstlük notu:** `HashingEmbeddingProvider` **anlamsal bir model değildir**; yalnızca ortak yüzey token'larını görür. Bu yüzden aşağıdaki sayılar *harness'in ve datasetin* ölçümüdür, OpenAI embedding'lerinin kalitesi değildir. Gerçek-embedder koşusu ayrıca yapıldı (§7.7b).
 
 Neden böyle? (1) CI'da ağsız ve tekrarlanabilir olması; (2) exact search, ANN yaklaşıklığını değişken olmaktan çıkarır; (3) stratejileri (hybrid, rerank) karşılaştırırken gürültüyü azaltır. Determinizm testi (`TwoRunsOverTheSameDatasetProduceIdenticalRankingsAndMetrics`) bunu doğrular. `string.GetHashCode` kullanılmaz (process başına rastgele); FNV-1a ile sabit.
 
@@ -125,6 +125,21 @@ Kategoriye göre K=10 (document-level): keyword Recall **1.000**, paraphrase Rec
 - ✔ Precision@K, K arttıkça düşüyor: ilgili doküman sayısı sorgu başına 1–3 olduğundan beklenen davranış (Precision@10 üst sınırı R/10).
 - ✘ **Hiçbir "iyileştirme" iddiası yoktur.** Baseline, ileride karşılaştırılacak referanstır.
 - ✘ Dataset tek anotatör (yazar) etiketli ve küçük (40 puanlanan sorgu). Küçük farklar gürültüdür; anlamlılık için sorgu sayısı artırılmalı ve koşular arası varyans ölçülmelidir (Faz 8).
+
+## 7.7b Gerçek embedding ile baseline
+
+Komut: `dotnet run --project src/Rag.Evaluation.Cli -- --embedder openai --label real-dense` (anahtar git'e girmeyen `.env`'den okunur; embedding'ler `.eval-cache/`'e yazılır, böylece strateji karşılaştırmaları aynı vektörleri kullanır). Çıktı: `docs/eval/real-dense.{md,json}`.
+
+Document-level, `text-embedding-3-small`, chunk 1000/200:
+
+| K | Hit | Precision | Recall | MRR | nDCG |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 0.875 | 0.875 | 0.671 | 0.875 | 0.832 |
+| 3 | 0.975 | 0.417 | 0.833 | 0.917 | 0.877 |
+| 5 | 0.975 | 0.275 | 0.887 | 0.917 | 0.887 |
+| 10 | 1.000 | 0.148 | 0.942 | 0.921 | 0.903 |
+
+Sentetik baseline ile (K=10 nDCG 0.717) kıyaslayınca gerçek model belirgin biçimde daha iyi, özellikle paraphrase kategorisinde (nDCG 0.568 → 0.871). Bu, sentetik koşunun neden sadece "harness testi" olduğunun kanıtıdır. **Bu, ileride karşılaştırılacak gerçek referanstır.** Aynı sınırlar geçerli: 40 sorgu, tek anotatör.
 
 ## 7.8 Ne ters gidebilir?
 

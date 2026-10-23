@@ -31,9 +31,12 @@ public sealed class DenseBaselineHarness
     public static async Task<DenseBaselineHarness> BuildAsync(
         EvalDataset dataset,
         HarnessConfiguration configuration,
-        CancellationToken ct)
+        CancellationToken ct,
+        EmbedderSpec? embedderSpec = null)
     {
-        var embedder = new HashingEmbeddingProvider(configuration.VectorSize);
+        embedderSpec ??= EmbedderSpec.Hashing(configuration.VectorSize);
+        configuration = configuration with { VectorSize = embedderSpec.VectorSize };
+        var embedder = embedderSpec.Provider;
         var store = new InMemoryCosineVectorStore();
         var chunker = new RecordingChunker(new DataIngestionTokenChunker(
             Microsoft.Extensions.Options.Options.Create(new ChunkingOptions
@@ -41,14 +44,14 @@ public sealed class DenseBaselineHarness
                 ChunkSize = configuration.ChunkSize,
                 ChunkOverlap = configuration.ChunkOverlap
             }),
-            Microsoft.Extensions.Options.Options.Create(RagOptionsFor(configuration))));
+            Microsoft.Extensions.Options.Options.Create(RagOptionsFor(configuration, embedderSpec))));
 
         var indexer = new IndexDocumentService(
             new CorpusTextExtractor(dataset.Corpus),
             chunker,
             embedder,
             store,
-            Microsoft.Extensions.Options.Options.Create(RagOptionsFor(configuration)),
+            Microsoft.Extensions.Options.Options.Create(RagOptionsFor(configuration, embedderSpec)),
             NullLogger<IndexDocumentService>.Instance);
 
         foreach (var document in dataset.Corpus)
@@ -73,7 +76,7 @@ public sealed class DenseBaselineHarness
             embedder,
             store,
             new MemoryDistributedCache(Microsoft.Extensions.Options.Options.Create(new MemoryDistributedCacheOptions())),
-            Microsoft.Extensions.Options.Options.Create(RagOptionsFor(configuration)),
+            Microsoft.Extensions.Options.Options.Create(RagOptionsFor(configuration, embedderSpec)),
             Microsoft.Extensions.Options.Options.Create(new QueryCacheOptions { Enabled = false }),
             NullLogger<VectorSearchService>.Instance,
             Microsoft.Extensions.Options.Options.Create(new RetrievalOptions
@@ -111,10 +114,10 @@ public sealed class DenseBaselineHarness
         return response.Results.Select(r => new RankedHit(r.DocumentId, r.ChunkId, r.Text)).ToArray();
     };
 
-    private static RagOptions RagOptionsFor(HarnessConfiguration configuration) => new()
+    private static RagOptions RagOptionsFor(HarnessConfiguration configuration, EmbedderSpec embedderSpec) => new()
     {
-        EmbeddingProvider = "Hashing",
-        EmbeddingModel = HashingEmbeddingProvider.ModelName,
+        EmbeddingProvider = embedderSpec.ProviderName,
+        EmbeddingModel = embedderSpec.Model,
         VectorSize = configuration.VectorSize,
         DefaultTopK = 5
     };

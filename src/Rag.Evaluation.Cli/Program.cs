@@ -1,5 +1,7 @@
 using System.Diagnostics;
+using Microsoft.Extensions.Options;
 using Rag.Core.Options;
+using Rag.Core.Providers.Embeddings;
 using Rag.Core.Retrieval;
 using Rag.Evaluation.Dataset;
 using Rag.Evaluation.Evaluation;
@@ -12,6 +14,7 @@ var options = ParseArgs(args);
 var datasetPath = options.GetValueOrDefault("dataset") ?? Path.Combine("datasets", "golden-v1", "dataset.json");
 var outDirectory = options.GetValueOrDefault("out") ?? Path.Combine("docs", "eval");
 var label = options.GetValueOrDefault("label") ?? "baseline-dense";
+var embedderName = options.GetValueOrDefault("embedder") ?? "hashing";
 
 var configuration = new HarnessConfiguration
 {
@@ -28,7 +31,8 @@ Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
 try
 {
     var dataset = await DatasetLoader.LoadAsync(datasetPath, cts.Token);
-    var harness = await DenseBaselineHarness.BuildAsync(dataset, configuration, cts.Token);
+    var embedder = BuildEmbedder(embedderName, options, configuration);
+    var harness = await DenseBaselineHarness.BuildAsync(dataset, configuration, cts.Token, embedder);
     var report = await RetrievalEvaluator.EvaluateAsync(
         dataset, harness.Retriever, new EvaluationOptions(), harness.ChunkCatalog, cts.Token);
 
@@ -38,8 +42,8 @@ try
         Strategy = RetrievalPlan.Resolve(
             new RetrievalOptions { Strategy = configuration.Strategy, CandidateK = configuration.CandidateK, RrfK = configuration.RrfK },
             RetrievalCapabilities.Dense | RetrievalCapabilities.Lexical).StrategyId,
-        Embedder = HashingEmbeddingProvider.ModelName,
-        EmbedderKind = "synthetic",
+        Embedder = embedder.Model,
+        EmbedderKind = embedder.Kind,
         Chunking = configuration,
         DatasetVersion = dataset.DatasetVersion,
         GitCommit = GitCommit(),
@@ -60,6 +64,54 @@ catch (DatasetValidationException ex)
 catch (OperationCanceledException)
 {
     return 130;
+}
+
+static EmbedderSpec BuildEmbedder(string name, Dictionary<string, string> options, HarnessConfiguration configuration)
+{
+    if (name.Equals("hashing", StringComparison.OrdinalIgnoreCase))
+    {
+        return EmbedderSpec.Hashing(configuration.VectorSize);
+    }
+
+    if (!name.Equals("openai", StringComparison.OrdinalIgnoreCase))
+    {
+        throw new ArgumentException($"Unknown --embedder '{name}'. Use hashing or openai.");
+    }
+
+    // The key is read from the git-ignored .env and is never printed.
+    var env = LoadEnv(options.GetValueOrDefault("env") ?? ".env");
+    var apiKey = env.GetValueOrDefault("OPENAI__APIKEY");
+    if (string.IsNullOrWhiteSpace(apiKey))
+    {
+        throw new InvalidOperationException("OPENAI__APIKEY is empty in the env file.");
+    }
+
+    var model = options.GetValueOrDefault("model") ?? env.GetValueOrDefault("RAG__EMBEDDINGMODEL") ?? "text-embedding-3-small";
+    var vectorSize = int.Parse(options.GetValueOrDefault("vector-size") ?? env.GetValueOrDefault("RAG__VECTORSIZE") ?? "1536");
+    var inner = new OpenAiEmbeddingProvider(
+        Microsoft.Extensions.Options.Options.Create(new OpenAiOptions { ApiKey = apiKey, MaxBatchSize = 128 }),
+        Microsoft.Extensions.Options.Options.Create(new RagOptions { EmbeddingProvider = "OpenAI", EmbeddingModel = model, VectorSize = vectorSize }));
+
+    var cached = new FileCachingEmbeddingProvider(inner, model, options.GetValueOrDefault("cache") ?? ".eval-cache");
+    return new EmbedderSpec(cached, "OpenAI", model, vectorSize, "real");
+}
+
+static Dictionary<string, string> LoadEnv(string path)
+{
+    var values = new Dictionary<string, string>(StringComparer.Ordinal);
+    foreach (var line in File.ReadAllLines(path))
+    {
+        var trimmed = line.Trim();
+        var separator = trimmed.IndexOf('=');
+        if (trimmed.StartsWith('#') || separator <= 0)
+        {
+            continue;
+        }
+
+        values[trimmed[..separator].Trim()] = trimmed[(separator + 1)..].Trim().Trim('"');
+    }
+
+    return values;
 }
 
 static Dictionary<string, string> ParseArgs(string[] args)

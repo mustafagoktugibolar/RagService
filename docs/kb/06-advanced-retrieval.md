@@ -6,7 +6,7 @@
 |---|---|
 | Dense (semantic) retrieval | ✅ Implemented |
 | Lexical retrieval, BM25 tf ağırlıklı sparse vector (Qdrant) | ✅ Implemented (Faz 4) |
-| Hybrid retrieval + RRF + source attribution + provider fallback | ✅ Implemented (Faz 4), 🧪 **varsayılan kapalı** — gerçek embedding ile kanıt yok |
+| Hybrid retrieval + RRF + source attribution + provider fallback | ✅ Implemented (Faz 4), 🧪 **varsayılan kapalı** — gerçek embedding ile ölçüldü, **dense'ten iyi değil** (§6.8) |
 | PgVector'da lexical/hybrid | ❌ Yok → hybrid, dense'e düşer (uyarıyla) |
 | Qdrant server-side fusion (Query API `Fusion.Rrf`) | 📖 Değerlendirildi, kullanılmıyor (§6.6) |
 | Cross-encoder reranking | 🔵 Planned (Faz 5) |
@@ -22,7 +22,7 @@
 
 Dense retrieval (Bölüm 4) anlam benzerliğini yakalar: "mesajlar sürekli hata veriyorsa ne olur" sorusu, "poison message" geçen dokümanı bulabilir. Ama **nadir ve tam eşleşme** gerektiren sorgularda zayıf kalabilir: hata kodları (`E1042`), identifier'lar (`x-dead-letter-exchange`), ürün adları. Embedding bu token'ı "ortalama bir anlam"a gömer; tam-token eşleşmesinin keskinliği kaybolur.
 
-Lexical retrieval (BM25) tersidir: tam token'a çok duyarlı, eş anlamlıya kördür. İkisinin hata profilleri farklı olduğu için birleştirmek (hybrid) mantıklıdır. Fakat **"mantıklı" bir kanıt değildir**; bu repoda hybrid, ölçüm gelene kadar kapalıdır (§6.8).
+Lexical retrieval (BM25) tersidir: tam token'a çok duyarlı, eş anlamlıya kördür. İkisinin hata profilleri farklı olduğu için birleştirmek (hybrid) mantıklıdır. Fakat **"mantıklı" bir kanıt değildir**: bu repoda gerçek embedding ile yapılan ölçümde hybrid dense'i geçmedi, bu yüzden varsayılan kapalıdır (§6.8).
 
 ## 6.2 BM25 — içeride nasıl çalışır?
 
@@ -153,11 +153,27 @@ Qdrant Query API'si `prefetch` + `Fusion.Rrf` ile fusion'u **sunucuda** yapabili
 
 ## 6.8 Ölçüm: ne söylüyor, ne söylemiyor
 
-`docs/eval/phase4-hybrid-comparison.md` (golden-v1, sentetik embedder): K=10 document-level nDCG — dense **0.717**, lexical **0.787**, hybrid **0.787**. Hybrid ≈ lexical; farklar 0.01–0.03, 40 sorguda tek bir sorgunun bir sıra oynaması metriği 0.025 değiştirir → **gürültü içinde**.
+`docs/eval/phase4-hybrid-comparison.md`. İki koşu seti var ve **ikincisi birincisini çürütüyor**; bu bölümün dersi budur.
 
-- ✔ Dense yolu Faz 3 baseline'ı ile **bire bir aynı** → yeni katman varsayılan davranışı bozmadı.
-- ✘ "Dense" bacak anlamsal değil (bag-of-words, IDF'siz); BM25'in onu yenmesi şaşırtıcı değil. **Gerçek bir embedding modeli ile hybrid kazancı bilinmiyor.**
-- **Karar:** `Retrieval:Strategy=Dense` varsayılan kalır. Hybrid'i varsayılan yapma kriteri: gerçek embedder ile aynı dataset'te gürültüyü aşan kazanç.
+**1) Sentetik embedder** (bag-of-words, IDF'siz): K=10 document nDCG — dense 0.717, lexical 0.787, hybrid 0.787. "Hybrid ≈ lexical > dense" gibi görünüyordu.
+
+**2) Gerçek embedding** (`text-embedding-3-small`, aynı dataset, aynı vektörler):
+
+| K=10 document | Hit | Recall | MRR | nDCG |
+|---|---:|---:|---:|---:|
+| **dense** | 1.000 | 0.942 | 0.921 | **0.903** |
+| lexical | 0.975 | 0.879 | 0.832 | 0.787 |
+| hybrid (RRF k=60, eşit ağırlık) | 1.000 | 0.954 | 0.877 | 0.857 |
+
+K=1'de nDCG: dense **0.832**, hybrid 0.768. Paraphrase kategorisinde K=10 nDCG: dense **0.871**, hybrid 0.767, lexical 0.630.
+
+**Sonuç: bu dataset'te hybrid, dense'i geçmiyor; nDCG ve MRR'da her K'da daha kötü.** İlk (sentetik) sonucun nedeni zayıf bir dense bacaktı: onu "hybrid işe yarıyor" kanıtı olarak sunmak yanıltıcı olurdu. Bu yüzden Faz 4'te hybrid'i varsayılan yapmama kararı doğru çıktı.
+
+*Olası açıklama (hipotez, test edilmedi):* gerçek dense zaten Recall@10 = 0.942 ve keyword nDCG 0.974'te; lexical'in ekleyeceği az. Eşit ağırlıklı RRF ise zayıf lexical sıralamanın paraphrase sorgularında iyi dense sonuçlarını aşağı çekmesine izin veriyor.
+
+**Bu ölçüm neyi kanıtlamaz:** 40 puanlanan sorgu, tek anotatör, 35 kısa doküman — ve doküman metinleri çoğunlukla düzyazı; çok sayıda kod/identifier içeren bir corpus lexical'e daha çok yer açabilir. Tek sorgu ±0.025 oynatır; güven aralığı hesaplanmadı. Lexical ağırlığı **ayarlanmadı**: aynı 40 sorguda ayar yapmak overfitting olur, önce held-out ayrımı gerekir.
+
+**Ders (mülakat için):** Sentetik/yetersiz bir bileşenle alınan olumlu sonuç, gerçek bileşenle tersine dönebilir. Bu yüzden "kapalı varsayılan + ölçüm kapısı" yaklaşımı pahalı bir hatayı önledi.
 
 ## 6.9 Planlanan: reranking, query rewriting, HyDE, parent-child (henüz uygulanmadı)
 
@@ -181,7 +197,7 @@ Bu alt bölümler **kavramsaldır**; repoda kod yoktur. Faz 5–7'de uygulandık
 
 ## 6.11 Mülakatta nasıl anlatırım?
 
-> "Dense retrieval anlamı yakalar ama identifier ve hata kodu gibi tam eşleşmelerde zayıf; BM25 tersi. İkisini birleştirdim ama skorları toplamadım, çünkü cosine ve BM25 farklı ölçeklerde; Reciprocal Rank Fusion yalnızca sıraları kullanıyor, k=60 ile baş sıraların baskınlığını sönümlüyor. Lexical bacak için kendi BM25'imi yazmak yerine Qdrant'ın sparse vector + IDF modifier'ını kullandım, fusion'u ise istemci tarafında bıraktım ki tek implementasyon ve tek test seti olsun, kaynak atfı korunsun. Yetenekleri açık modelledim: PgVector lexical desteklemiyor, hybrid dense'e uyarıyla düşüyor. Bir bacak düşerse sorgu diğeriyle devam ediyor ve degrade sonuç cache'lenmiyor. En önemlisi: hybrid'i varsayılan yapmadım, çünkü elimdeki ölçüm sentetik embedder ile ve farklar gürültü içinde; gerçek embedder ile kanıt gelene kadar opt-in."
+> "Dense retrieval anlamı yakalar ama identifier ve hata kodu gibi tam eşleşmelerde zayıf; BM25 tersi. İkisini birleştirdim ama skorları toplamadım, çünkü cosine ve BM25 farklı ölçeklerde; Reciprocal Rank Fusion yalnızca sıraları kullanıyor, k=60 ile baş sıraların baskınlığını sönümlüyor. Lexical bacak için kendi BM25'imi yazmak yerine Qdrant'ın sparse vector + IDF modifier'ını kullandım, fusion'u ise istemci tarafında bıraktım ki tek implementasyon ve tek test seti olsun, kaynak atfı korunsun. Yetenekleri açık modelledim: PgVector lexical desteklemiyor, hybrid dense'e uyarıyla düşüyor. Bir bacak düşerse sorgu diğeriyle devam ediyor ve degrade sonuç cache'lenmiyor. En önemlisi: hybrid'i ölçtüm. Sentetik embedder ile iyi görünüyordu, ama gerçek `text-embedding-3-small` ile dense'ten daha kötü çıktı (nDCG@10 0.857'ye karşı 0.903); o yüzden kapalı bıraktım ve lexical ağırlığını aynı 40 sorguda ayarlamadım, çünkü bu overfitting olurdu."
 
 ## Alıştırmalar
 

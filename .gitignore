@@ -8,3 +8,4 @@ riderModule.iml
 .env.local
 /.vs
 /src/Rag.Api/Properties/launchSettings.json
+.eval-cache/
