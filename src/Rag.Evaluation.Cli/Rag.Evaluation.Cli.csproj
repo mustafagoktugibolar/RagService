@@ -10,5 +10,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Rag.Evaluation\Rag.Evaluation.csproj" />
+        <ProjectReference Include="..\Rag.Reranking.Onnx\Rag.Reranking.Onnx.csproj" />
     </ItemGroup>
 </Project>

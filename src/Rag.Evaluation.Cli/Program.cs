@@ -32,6 +32,32 @@ Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
 try
 {
     var dataset = await DatasetLoader.LoadAsync(datasetPath, cts.Token);
+    if ((options.GetValueOrDefault("mode") ?? "run").Equals("bench-reranker", StringComparison.OrdinalIgnoreCase))
+    {
+        var benchmark = await Rag.Evaluation.Cli.RerankerBenchmark.RunAsync(
+            options.GetValueOrDefault("model-dir") ?? Path.Combine("models", "ms-marco-MiniLM-L6-v2"), dataset, cts.Token);
+        Directory.CreateDirectory(outDirectory);
+        await File.WriteAllTextAsync(Path.Combine(outDirectory, $"{label}.md"), benchmark, cts.Token);
+        Console.WriteLine(benchmark);
+        return 0;
+    }
+
+    if ((options.GetValueOrDefault("mode") ?? "run").Equals("bench-memory", StringComparison.OrdinalIgnoreCase))
+    {
+        Console.WriteLine(await Rag.Evaluation.Cli.RerankerBenchmark.MemoryAsync(
+            options.GetValueOrDefault("model-dir") ?? Path.Combine("models", "ms-marco-MiniLM-L6-v2"),
+            options.GetValueOrDefault("model-file") ?? "model.onnx", dataset, cts.Token));
+        return 0;
+    }
+
+    if ((options.GetValueOrDefault("mode") ?? "run").Equals("bench-memory", StringComparison.OrdinalIgnoreCase))
+    {
+        Console.WriteLine(await Rag.Evaluation.Cli.RerankerBenchmark.MemoryAsync(
+            options.GetValueOrDefault("model-dir") ?? Path.Combine("models", "ms-marco-MiniLM-L6-v2"),
+            options.GetValueOrDefault("model-file") ?? "model.onnx", dataset, cts.Token));
+        return 0;
+    }
+
     var embedder = BuildEmbedder(embedderName, options, configuration);
     var harness = await DenseBaselineHarness.BuildAsync(dataset, configuration, cts.Token, embedder);
 

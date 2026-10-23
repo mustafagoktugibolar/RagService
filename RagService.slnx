@@ -5,9 +5,11 @@
   <Project Path="src/Rag.Core/Rag.Core.csproj" />
   <Project Path="src/Rag.Evaluation/Rag.Evaluation.csproj" />
   <Project Path="src/Rag.Evaluation.Cli/Rag.Evaluation.Cli.csproj" />
+  <Project Path="src/Rag.Reranking.Onnx/Rag.Reranking.Onnx.csproj" />
   <Folder Name="/tests/">
     <Project Path="tests/Rag.IntegrationTests/Rag.IntegrationTests.csproj" />
     <Project Path="tests/Rag.Evaluation.Tests/Rag.Evaluation.Tests.csproj" />
+    <Project Path="tests/Rag.Reranking.Onnx.Tests/Rag.Reranking.Onnx.Tests.csproj" />
   </Folder>
   <Project Path="src/Rag.Api/Rag.Api.csproj" />
   <Project Path="src/Rag.IndexWorker/Rag.IndexWorker.csproj" />

@@ -9,3 +9,4 @@ riderModule.iml
 /.vs
 /src/Rag.Api/Properties/launchSettings.json
 .eval-cache/
+models/

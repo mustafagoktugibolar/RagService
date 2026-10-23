@@ -7,6 +7,7 @@ using Rag.Core.Abstractions;
 using Rag.Core.Contracts;
 using Rag.Core.Models;
 using Rag.Core.Options;
+using Rag.Core.Reranking;
 using Rag.Core.Retrieval;
 using Rag.Core.Telemetry;
 
@@ -19,7 +20,9 @@ public sealed class VectorSearchService(
     IOptions<RagOptions> options,
     IOptions<QueryCacheOptions> queryCacheOptions,
     ILogger<VectorSearchService> logger,
-    IOptions<RetrievalOptions>? retrievalOptions = null)
+    IOptions<RetrievalOptions>? retrievalOptions = null,
+    IReranker? reranker = null,
+    IOptions<RerankOptions>? rerankOptions = null)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -69,7 +72,14 @@ public sealed class VectorSearchService(
                 return Failure(request, plan.Error);
             }
 
-            activity?.SetTag("rag.strategy", plan.StrategyId);
+            var rerank = rerankOptions?.Value ?? new RerankOptions();
+            var rerankActive = reranker is not null && rerank.Enabled;
+            // The reranker's identity and candidate budget change the result list, so they are part of the strategy id
+            // that keys the query cache.
+            var strategyId = rerankActive
+                ? $"{plan.StrategyId}+{reranker!.Name}:budget{rerank.CandidateBudget}"
+                : plan.StrategyId;
+            activity?.SetTag("rag.strategy", strategyId);
 
             string? queryCacheKey = cacheOpts.Enabled
                 ? QueryCacheKeyBuilder.Build(new RetrievalFingerprint
@@ -79,7 +89,7 @@ public sealed class VectorSearchService(
                     EmbeddingProvider = expected.EmbeddingProvider,
                     EmbeddingModel = expected.EmbeddingModel,
                     VectorSize = expected.VectorSize,
-                    Strategy = plan.StrategyId,
+                    Strategy = strategyId,
                     TopK = topK,
                     Query = request.Query,
                     Filters = request.Filters
@@ -112,7 +122,13 @@ public sealed class VectorSearchService(
                 }
             }
 
-            var outcome = await CreateRetriever(plan.Strategy, retrieval)
+            IRetriever retriever = CreateRetriever(plan.Strategy, retrieval);
+            if (rerankActive)
+            {
+                retriever = new RerankingRetriever(retriever, reranker!, rerank, logger);
+            }
+
+            var outcome = await retriever
                 .RetrieveAsync(new RetrievalRequest(request.Collection, request.Query, embedding, topK, request.Filters), ct);
 
             var warnings = plan.Warnings.Concat(outcome.Warnings).ToList();
@@ -121,7 +137,7 @@ public sealed class VectorSearchService(
                 logger.LogWarning("Query {RequestId} on {Collection} degraded: {Warning}", request.RequestId, request.Collection, warning);
             }
 
-            var includeSources = plan.Strategy != RetrievalStrategy.Dense;
+            var includeSources = plan.Strategy != RetrievalStrategy.Dense || rerankActive;
             var resultDtos = outcome.Results
                 .Select(fused => new RetrievedChunkDto
                 {

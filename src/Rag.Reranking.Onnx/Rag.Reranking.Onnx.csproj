@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <RootNamespace>Rag.Reranking.Onnx</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.31.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Rag.Core\Rag.Core.csproj" />
+    </ItemGroup>
+</Project>
