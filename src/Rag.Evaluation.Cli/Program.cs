@@ -1,10 +1,13 @@
 using System.Diagnostics;
+using Rag.Core.Options;
+using Rag.Core.Retrieval;
 using Rag.Evaluation.Dataset;
 using Rag.Evaluation.Evaluation;
 using Rag.Evaluation.Harness;
 
 // Usage: dotnet run --project src/Rag.Evaluation.Cli -- [--dataset <path>] [--out <dir>] [--label <name>]
 //                                                        [--chunk-size <n>] [--chunk-overlap <n>]
+//                                                        [--strategy dense|lexical|hybrid] [--candidates <n>] [--rrf-k <n>]
 var options = ParseArgs(args);
 var datasetPath = options.GetValueOrDefault("dataset") ?? Path.Combine("datasets", "golden-v1", "dataset.json");
 var outDirectory = options.GetValueOrDefault("out") ?? Path.Combine("docs", "eval");
@@ -13,7 +16,10 @@ var label = options.GetValueOrDefault("label") ?? "baseline-dense";
 var configuration = new HarnessConfiguration
 {
     ChunkSize = int.Parse(options.GetValueOrDefault("chunk-size") ?? "1000"),
-    ChunkOverlap = int.Parse(options.GetValueOrDefault("chunk-overlap") ?? "200")
+    ChunkOverlap = int.Parse(options.GetValueOrDefault("chunk-overlap") ?? "200"),
+    Strategy = Enum.Parse<RetrievalStrategy>(options.GetValueOrDefault("strategy") ?? "Dense", ignoreCase: true),
+    CandidateK = int.Parse(options.GetValueOrDefault("candidates") ?? "50"),
+    RrfK = int.Parse(options.GetValueOrDefault("rrf-k") ?? "60")
 };
 
 using var cts = new CancellationTokenSource();
@@ -29,7 +35,9 @@ try
     var run = new RunRecord
     {
         Label = label,
-        Strategy = "dense",
+        Strategy = RetrievalPlan.Resolve(
+            new RetrievalOptions { Strategy = configuration.Strategy, CandidateK = configuration.CandidateK, RrfK = configuration.RrfK },
+            RetrievalCapabilities.Dense | RetrievalCapabilities.Lexical).StrategyId,
         Embedder = HashingEmbeddingProvider.ModelName,
         EmbedderKind = "synthetic",
         Chunking = configuration,

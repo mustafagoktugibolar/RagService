@@ -1,5 +1,6 @@
 using Rag.Core.Abstractions;
 using Rag.Core.Models;
+using Rag.Core.Retrieval;
 
 namespace Rag.Evaluation.Harness;
 
@@ -8,10 +9,11 @@ namespace Rag.Evaluation.Harness;
 /// Ties are broken by chunk id so rankings are reproducible. Exact search also removes ANN approximation as a
 /// variable when comparing retrieval strategies offline.
 /// </summary>
-public sealed class InMemoryCosineVectorStore : IVectorStore
+public sealed class InMemoryCosineVectorStore : IVectorStore, ILexicalSearchStore
 {
     private readonly Dictionary<string, List<VectorDocument>> _collections = new(StringComparer.Ordinal);
     private readonly Dictionary<string, CollectionMetadata> _metadata = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Bm25Index> _lexicalIndexes = new(StringComparer.Ordinal);
 
     public Task EnsureCollectionAsync(string collection, int vectorSize, CancellationToken ct)
     {
@@ -21,6 +23,7 @@ public sealed class InMemoryCosineVectorStore : IVectorStore
 
     public Task UpsertAsync(string collection, IReadOnlyList<VectorDocument> documents, CancellationToken ct)
     {
+        _lexicalIndexes.Remove(collection);
         var list = _collections.TryGetValue(collection, out var existing) ? existing : _collections[collection] = [];
         foreach (var document in documents)
         {
@@ -62,8 +65,47 @@ public sealed class InMemoryCosineVectorStore : IVectorStore
         return Task.FromResult(results);
     }
 
+    public Task<IReadOnlyList<VectorSearchResult>> LexicalSearchAsync(
+        string collection,
+        string query,
+        int topK,
+        Dictionary<string, string>? filters,
+        CancellationToken ct)
+    {
+        if (!_collections.TryGetValue(collection, out var list))
+        {
+            return Task.FromResult<IReadOnlyList<VectorSearchResult>>([]);
+        }
+
+        if (!_lexicalIndexes.TryGetValue(collection, out var index))
+        {
+            index = _lexicalIndexes[collection] = new Bm25Index(
+                list.Select(d => (d.ChunkId, (IReadOnlyList<string>)HashingEmbeddingProvider.Tokenize(d.Text).ToArray())));
+        }
+
+        var byChunk = list
+            .Where(d => filters is null || filters.All(f =>
+                d.Metadata is not null && d.Metadata.TryGetValue(f.Key, out var value) && value == f.Value))
+            .ToDictionary(d => d.ChunkId, StringComparer.Ordinal);
+
+        IReadOnlyList<VectorSearchResult> results = index
+            .Search(HashingEmbeddingProvider.Tokenize(query).ToArray(), byChunk.Keys.ToHashSet(StringComparer.Ordinal))
+            .Take(topK)
+            .Select(hit => new VectorSearchResult
+            {
+                DocumentId = byChunk[hit.Id].DocumentId,
+                ChunkId = hit.Id,
+                Text = byChunk[hit.Id].Text,
+                Score = hit.Score,
+                Metadata = byChunk[hit.Id].Metadata
+            })
+            .ToArray();
+        return Task.FromResult(results);
+    }
+
     public Task DeleteByDocumentIdAsync(string collection, string documentId, CancellationToken ct)
     {
+        _lexicalIndexes.Remove(collection);
         if (_collections.TryGetValue(collection, out var list))
         {
             list.RemoveAll(d => d.DocumentId == documentId);

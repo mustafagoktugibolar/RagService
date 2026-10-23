@@ -75,7 +75,13 @@ public sealed class DenseBaselineHarness
             new MemoryDistributedCache(Microsoft.Extensions.Options.Options.Create(new MemoryDistributedCacheOptions())),
             Microsoft.Extensions.Options.Options.Create(RagOptionsFor(configuration)),
             Microsoft.Extensions.Options.Options.Create(new QueryCacheOptions { Enabled = false }),
-            NullLogger<VectorSearchService>.Instance);
+            NullLogger<VectorSearchService>.Instance,
+            Microsoft.Extensions.Options.Options.Create(new RetrievalOptions
+            {
+                Strategy = configuration.Strategy,
+                CandidateK = configuration.CandidateK,
+                RrfK = configuration.RrfK
+            }));
 
         return new DenseBaselineHarness
         {
@@ -122,6 +128,12 @@ public sealed record HarnessConfiguration
     public int ChunkOverlap { get; init; } = 200;
 
     public int VectorSize { get; init; } = 256;
+
+    public RetrievalStrategy Strategy { get; init; } = RetrievalStrategy.Dense;
+
+    public int CandidateK { get; init; } = 50;
+
+    public int RrfK { get; init; } = 60;
 }
 
 internal sealed class CorpusTextExtractor(IReadOnlyList<CorpusDocument> corpus) : ITextExtractor

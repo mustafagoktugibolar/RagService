@@ -1,0 +1,4502 @@
+{
+  "label": "offline-hybrid",
+  "strategy": "hybrid:rrf60:cand50:w1/1",
+  "embedder": "hashing-bow-v1",
+  "embedderKind": "synthetic",
+  "chunking": {
+    "chunkSize": 1000,
+    "chunkOverlap": 200,
+    "vectorSize": 256,
+    "strategy": 2,
+    "candidateK": 50,
+    "rrfK": 60
+  },
+  "datasetVersion": "golden-v1.0.0",
+  "reranker": "none",
+  "queryTransformer": "none",
+  "indexVersion": "in-memory-per-run",
+  "gitCommit": "b7ec678",
+  "generatedAt": "2026-10-23T23:00:08.287967+00:00",
+  "report": {
+    "datasetVersion": "golden-v1.0.0",
+    "queryCount": 44,
+    "document": {
+      "scoredQueries": 40,
+      "skippedQueries": 4,
+      "byK": {
+        "1": {
+          "hit": 0.775,
+          "precision": 0.775,
+          "recall": 0.5874999999999998,
+          "mrr": 0.775,
+          "ndcg": 0.732142857142857,
+          "map": 0.775
+        },
+        "3": {
+          "hit": 0.875,
+          "precision": 0.35,
+          "recall": 0.725,
+          "mrr": 0.8208333333333332,
+          "ndcg": 0.7331736459734834,
+          "map": 0.6805555555555556
+        },
+        "5": {
+          "hit": 0.875,
+          "precision": 0.23000000000000004,
+          "recall": 0.7583333333333335,
+          "mrr": 0.8208333333333332,
+          "ndcg": 0.7556391751450465,
+          "map": 0.6963888888888888
+        },
+        "10": {
+          "hit": 0.975,
+          "precision": 0.13500000000000004,
+          "recall": 0.8791666666666667,
+          "mrr": 0.8329761904761905,
+          "ndcg": 0.7872248194071427,
+          "map": 0.7203769841269841
+        }
+      },
+      "byCategory": {
+        "keyword": {
+          "scoredQueries": 14,
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 0.9642857142857143,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.35714285714285715,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.21428571428571427,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.10714285714285714,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        "paraphrase": {
+          "scoredQueries": 16,
+          "byK": {
+            "1": {
+              "hit": 0.5625,
+              "precision": 0.5625,
+              "recall": 0.4375,
+              "mrr": 0.5625,
+              "ndcg": 0.5267857142857143,
+              "map": 0.5625
+            },
+            "3": {
+              "hit": 0.6875,
+              "precision": 0.22916666666666669,
+              "recall": 0.5625,
+              "mrr": 0.625,
+              "ndcg": 0.5763128067668886,
+              "map": 0.5
+            },
+            "5": {
+              "hit": 0.6875,
+              "precision": 0.13749999999999998,
+              "recall": 0.5625,
+              "mrr": 0.625,
+              "ndcg": 0.5763128067668886,
+              "map": 0.5
+            },
+            "10": {
+              "hit": 0.9375,
+              "precision": 0.10625000000000002,
+              "recall": 0.8125,
+              "mrr": 0.6553571428571429,
+              "ndcg": 0.6458785342802292,
+              "map": 0.5406249999999999
+            }
+          }
+        },
+        "multi-relevant": {
+          "scoredQueries": 7,
+          "byK": {
+            "1": {
+              "hit": 0.8571428571428571,
+              "precision": 0.8571428571428571,
+              "recall": 0.2857142857142857,
+              "mrr": 0.8571428571428571,
+              "ndcg": 0.6938775510204083,
+              "map": 0.8571428571428571
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.5714285714285714,
+              "recall": 0.5714285714285714,
+              "mrr": 0.9285714285714286,
+              "ndcg": 0.6100601835110903,
+              "map": 0.5317460317460317
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.45714285714285713,
+              "recall": 0.7619047619047619,
+              "mrr": 0.9285714285714286,
+              "ndcg": 0.7384346359200216,
+              "map": 0.6222222222222223
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.24285714285714283,
+              "recall": 0.8095238095238095,
+              "mrr": 0.9285714285714286,
+              "ndcg": 0.743852274877202,
+              "map": 0.6460317460317461
+            }
+          }
+        },
+        "conceptual": {
+          "scoredQueries": 3,
+          "byK": {
+            "1": {
+              "hit": 0.6666666666666666,
+              "precision": 0.6666666666666666,
+              "recall": 0.3333333333333333,
+              "mrr": 0.6666666666666666,
+              "ndcg": 0.6666666666666666,
+              "map": 0.6666666666666666
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.4444444444444444,
+              "recall": 0.6666666666666666,
+              "mrr": 0.7777777777777777,
+              "ndcg": 0.6118398820304981,
+              "map": 0.5
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.26666666666666666,
+              "recall": 0.6666666666666666,
+              "mrr": 0.7777777777777777,
+              "ndcg": 0.6118398820304981,
+              "map": 0.5
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.16666666666666666,
+              "recall": 0.8333333333333334,
+              "mrr": 0.7777777777777777,
+              "ndcg": 0.6493234345538776,
+              "map": 0.5476190476190476
+            }
+          }
+        }
+      },
+      "perQuery": [
+        {
+          "queryId": "kw-01",
+          "category": "keyword",
+          "ranked": [
+            "rabbitmq-dlq",
+            "rabbitmq-ack",
+            "distance-metrics",
+            "minio-s3",
+            "hyde",
+            "dotnet-backgroundservice",
+            "ndcg",
+            "cosine-similarity",
+            "qdrant-overview",
+            "rabbitmq-idempotency"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-02",
+          "category": "keyword",
+          "ranked": [
+            "hnsw-index",
+            "compose-healthchecks",
+            "bm25",
+            "cache-keys",
+            "chunking-fixed",
+            "chunking-semantic",
+            "cosine-similarity",
+            "cross-encoder-reranking",
+            "distance-metrics",
+            "docker-multistage"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-03",
+          "category": "keyword",
+          "ranked": [
+            "rabbitmq-ack",
+            "rabbitmq-dlq",
+            "prompt-injection",
+            "dotnet-cancellation",
+            "distance-metrics",
+            "rrf",
+            "prometheus-metrics",
+            "bm25",
+            "cache-keys",
+            "chunking-fixed"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-04",
+          "category": "keyword",
+          "ranked": [
+            "pgvector-indexes",
+            "hybrid-search",
+            "redis-eviction",
+            "distance-metrics",
+            "chunking-parent-child",
+            "cosine-similarity",
+            "qdrant-filtering",
+            "bm25",
+            "cache-keys",
+            "chunking-fixed"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-05",
+          "category": "keyword",
+          "ranked": [
+            "polly-retry",
+            "cosine-similarity",
+            "pgvector-indexes",
+            "hybrid-search",
+            "bm25",
+            "cache-keys",
+            "chunking-fixed",
+            "chunking-parent-child",
+            "chunking-semantic",
+            "compose-healthchecks"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-06",
+          "category": "keyword",
+          "ranked": [
+            "polly-circuit-breaker",
+            "cosine-similarity",
+            "grafana-tempo",
+            "compose-healthchecks",
+            "cache-keys",
+            "redis-eviction",
+            "dotnet-cancellation",
+            "otel-tracing",
+            "distance-metrics",
+            "polly-retry"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-07",
+          "category": "keyword",
+          "ranked": [
+            "compose-healthchecks",
+            "polly-retry",
+            "embedding-dimensions",
+            "cache-keys",
+            "rabbitmq-prefetch",
+            "bm25",
+            "chunking-fixed",
+            "chunking-parent-child",
+            "chunking-semantic",
+            "cosine-similarity"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-08",
+          "category": "keyword",
+          "ranked": [
+            "dotnet-cancellation",
+            "bm25",
+            "cache-keys",
+            "chunking-fixed",
+            "chunking-parent-child",
+            "compose-healthchecks",
+            "cosine-similarity",
+            "cross-encoder-reranking",
+            "distance-metrics",
+            "docker-multistage"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-09",
+          "category": "keyword",
+          "ranked": [
+            "dotnet-backgroundservice",
+            "compose-healthchecks",
+            "otel-tracing",
+            "rabbitmq-ack",
+            "rabbitmq-idempotency",
+            "rabbitmq-dlq",
+            "cache-keys",
+            "chunking-parent-child",
+            "chunking-semantic",
+            "dotnet-cancellation"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-10",
+          "category": "keyword",
+          "ranked": [
+            "bm25",
+            "hnsw-index",
+            "rrf",
+            "embedding-cache",
+            "docker-multistage",
+            "hybrid-search",
+            "rabbitmq-dlq",
+            "qdrant-filtering",
+            "pgvector-indexes",
+            "cache-keys"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-11",
+          "category": "keyword",
+          "ranked": [
+            "redis-eviction",
+            "polly-circuit-breaker",
+            "dotnet-backgroundservice",
+            "pgvector-indexes",
+            "hnsw-index",
+            "bm25",
+            "cache-keys",
+            "chunking-fixed",
+            "chunking-parent-child",
+            "chunking-semantic"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-12",
+          "category": "keyword",
+          "ranked": [
+            "pgvector-indexes",
+            "cosine-similarity",
+            "qdrant-overview",
+            "hnsw-index",
+            "distance-metrics",
+            "embedding-dimensions",
+            "hybrid-search",
+            "grafana-tempo",
+            "polly-retry",
+            "cross-encoder-reranking"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-13",
+          "category": "keyword",
+          "ranked": [
+            "qdrant-overview",
+            "qdrant-filtering",
+            "minio-s3",
+            "embedding-dimensions",
+            "distance-metrics",
+            "query-rewriting",
+            "rabbitmq-dlq",
+            "bm25",
+            "chunking-fixed",
+            "chunking-semantic"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-14",
+          "category": "keyword",
+          "ranked": [
+            "otel-tracing",
+            "grafana-tempo",
+            "compose-healthchecks",
+            "dotnet-cancellation",
+            "polly-circuit-breaker",
+            "polly-retry",
+            "chunking-parent-child",
+            "cosine-similarity",
+            "docker-multistage",
+            "rabbitmq-idempotency"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.6666666666666666,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.4,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "pa-01",
+          "category": "paraphrase",
+          "ranked": [
+            "rabbitmq-dlq",
+            "rabbitmq-prefetch",
+            "qdrant-filtering",
+            "compose-healthchecks",
+            "rrf",
+            "chunking-fixed",
+            "rabbitmq-ack",
+            "bm25",
+            "dotnet-backgroundservice",
+            "dotnet-cancellation"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 0.9173194127129571,
+              "map": 0.5
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 0.9173194127129571,
+              "map": 0.5
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 0.9610012895088121,
+              "map": 0.6428571428571428
+            }
+          }
+        },
+        {
+          "queryId": "pa-02",
+          "category": "paraphrase",
+          "ranked": [
+            "dotnet-backgroundservice",
+            "rabbitmq-prefetch",
+            "dotnet-cancellation",
+            "grafana-tempo",
+            "bm25",
+            "cross-encoder-reranking",
+            "prompt-injection",
+            "docker-multistage",
+            "query-rewriting",
+            "cache-keys"
+          ],
+          "byK": {
+            "1": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 0.5,
+              "ndcg": 0.6309297535714575,
+              "map": 0.5
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 0.5,
+              "ndcg": 0.6309297535714575,
+              "map": 0.5
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 0.5,
+              "ndcg": 0.6309297535714575,
+              "map": 0.5
+            }
+          }
+        },
+        {
+          "queryId": "pa-03",
+          "category": "paraphrase",
+          "ranked": [
+            "rabbitmq-idempotency",
+            "embedding-cache",
+            "minio-s3",
+            "distance-metrics",
+            "cosine-similarity",
+            "rrf",
+            "otel-tracing",
+            "dotnet-backgroundservice",
+            "prometheus-metrics",
+            "query-rewriting"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 0.7871546029909718,
+              "map": 0.5
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 0.7871546029909718,
+              "map": 0.5
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 0.7871546029909718,
+              "map": 0.5
+            }
+          }
+        },
+        {
+          "queryId": "pa-04",
+          "category": "paraphrase",
+          "ranked": [
+            "rrf",
+            "cosine-similarity",
+            "dotnet-cancellation",
+            "cache-keys",
+            "redis-eviction",
+            "rabbitmq-dlq",
+            "chunking-fixed",
+            "polly-retry",
+            "ndcg",
+            "pgvector-indexes"
+          ],
+          "byK": {
+            "1": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "3": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "5": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 0.5,
+              "mrr": 0.1,
+              "ndcg": 0.09751658939953338,
+              "map": 0.05
+            }
+          }
+        },
+        {
+          "queryId": "pa-05",
+          "category": "paraphrase",
+          "ranked": [
+            "distance-metrics",
+            "hyde",
+            "cross-encoder-reranking",
+            "embedding-cache",
+            "embedding-dimensions",
+            "prompt-injection",
+            "cosine-similarity",
+            "cache-keys",
+            "chunking-parent-child",
+            "hybrid-search"
+          ],
+          "byK": {
+            "1": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "3": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "5": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 0.14285714285714285,
+              "ndcg": 0.33333333333333337,
+              "map": 0.14285714285714285
+            }
+          }
+        },
+        {
+          "queryId": "pa-06",
+          "category": "paraphrase",
+          "ranked": [
+            "hybrid-search",
+            "ndcg",
+            "distance-metrics",
+            "cross-encoder-reranking",
+            "cosine-similarity",
+            "cache-keys",
+            "docker-multistage",
+            "bm25",
+            "rabbitmq-dlq",
+            "pgvector-indexes"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 0.42857142857142855,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 0.3373519727104165,
+              "map": 0.5
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 0.3373519727104165,
+              "map": 0.5
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 0.3373519727104165,
+              "map": 0.5
+            }
+          }
+        },
+        {
+          "queryId": "pa-07",
+          "category": "paraphrase",
+          "ranked": [
+            "hyde",
+            "chunking-parent-child",
+            "polly-retry",
+            "prompt-injection",
+            "embedding-dimensions",
+            "qdrant-overview",
+            "embedding-cache",
+            "query-rewriting",
+            "cache-keys",
+            "cross-encoder-reranking"
+          ],
+          "byK": {
+            "1": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "3": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "5": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 0.1,
+              "ndcg": 0.2890648263178878,
+              "map": 0.1
+            }
+          }
+        },
+        {
+          "queryId": "pa-08",
+          "category": "paraphrase",
+          "ranked": [
+            "hyde",
+            "query-rewriting",
+            "embedding-dimensions",
+            "cache-keys",
+            "prompt-injection",
+            "embedding-cache",
+            "hnsw-index",
+            "polly-circuit-breaker",
+            "dotnet-backgroundservice",
+            "bm25"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "pa-09",
+          "category": "paraphrase",
+          "ranked": [
+            "query-rewriting",
+            "hyde",
+            "dotnet-backgroundservice",
+            "pgvector-indexes",
+            "hybrid-search",
+            "chunking-fixed",
+            "prometheus-metrics",
+            "hnsw-index",
+            "qdrant-filtering",
+            "docker-multistage"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "pa-10",
+          "category": "paraphrase",
+          "ranked": [
+            "polly-retry",
+            "compose-healthchecks",
+            "embedding-dimensions",
+            "distance-metrics",
+            "cosine-similarity",
+            "qdrant-overview",
+            "polly-circuit-breaker",
+            "dotnet-cancellation",
+            "minio-s3",
+            "ndcg"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 0.9173194127129571,
+              "map": 0.5
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 0.9173194127129571,
+              "map": 0.5
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 0.9610012895088121,
+              "map": 0.6428571428571428
+            }
+          }
+        },
+        {
+          "queryId": "pa-11",
+          "category": "paraphrase",
+          "ranked": [
+            "polly-circuit-breaker",
+            "bm25",
+            "dotnet-cancellation",
+            "prompt-injection",
+            "hyde",
+            "cache-keys",
+            "docker-multistage",
+            "chunking-parent-child",
+            "cosine-similarity",
+            "embedding-cache"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "pa-12",
+          "category": "paraphrase",
+          "ranked": [
+            "docker-multistage",
+            "compose-healthchecks",
+            "dotnet-cancellation",
+            "polly-circuit-breaker",
+            "grafana-tempo",
+            "query-rewriting",
+            "hnsw-index",
+            "dotnet-backgroundservice",
+            "chunking-semantic",
+            "chunking-parent-child"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "pa-13",
+          "category": "paraphrase",
+          "ranked": [
+            "compose-healthchecks",
+            "qdrant-overview",
+            "rabbitmq-idempotency",
+            "chunking-semantic",
+            "rabbitmq-ack",
+            "dotnet-backgroundservice",
+            "prompt-injection",
+            "docker-multistage",
+            "cache-keys",
+            "hyde"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "pa-14",
+          "category": "paraphrase",
+          "ranked": [
+            "hnsw-index",
+            "rrf",
+            "rabbitmq-ack",
+            "chunking-fixed",
+            "dotnet-cancellation",
+            "chunking-semantic",
+            "chunking-parent-child",
+            "qdrant-overview",
+            "qdrant-filtering",
+            "pgvector-indexes"
+          ],
+          "byK": {
+            "1": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "3": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "5": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "10": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            }
+          }
+        },
+        {
+          "queryId": "pa-15",
+          "category": "paraphrase",
+          "ranked": [
+            "embedding-cache",
+            "prompt-injection",
+            "chunking-fixed",
+            "embedding-dimensions",
+            "rabbitmq-dlq",
+            "rabbitmq-ack",
+            "rabbitmq-idempotency",
+            "redis-eviction",
+            "distance-metrics",
+            "polly-retry"
+          ],
+          "byK": {
+            "1": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 0.5,
+              "ndcg": 0.6309297535714575,
+              "map": 0.5
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 0.5,
+              "ndcg": 0.6309297535714575,
+              "map": 0.5
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 0.5,
+              "ndcg": 0.6309297535714575,
+              "map": 0.5
+            }
+          }
+        },
+        {
+          "queryId": "pa-16",
+          "category": "paraphrase",
+          "ranked": [
+            "polly-retry",
+            "hyde",
+            "minio-s3",
+            "rabbitmq-prefetch",
+            "prompt-injection",
+            "rabbitmq-dlq",
+            "cache-keys",
+            "polly-circuit-breaker",
+            "ndcg",
+            "rabbitmq-idempotency"
+          ],
+          "byK": {
+            "1": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "3": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "5": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 0.5,
+              "mrr": 0.14285714285714285,
+              "ndcg": 0.30577313757098573,
+              "map": 0.07142857142857142
+            }
+          }
+        },
+        {
+          "queryId": "mr-01",
+          "category": "multi-relevant",
+          "ranked": [
+            "cross-encoder-reranking",
+            "embedding-dimensions",
+            "chunking-semantic",
+            "embedding-cache",
+            "chunking-fixed",
+            "cache-keys",
+            "minio-s3",
+            "hnsw-index",
+            "bm25",
+            "qdrant-filtering"
+          ],
+          "byK": {
+            "1": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 0.3333333333333333,
+              "mrr": 0.5,
+              "ndcg": 0.20151514190050243,
+              "map": 0.16666666666666666
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.4,
+              "recall": 0.6666666666666666,
+              "mrr": 0.5,
+              "ndcg": 0.5224779382365149,
+              "map": 0.3333333333333333
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.3,
+              "recall": 1,
+              "mrr": 0.5,
+              "ndcg": 0.5604014109367775,
+              "map": 0.5
+            }
+          }
+        },
+        {
+          "queryId": "mr-02",
+          "category": "multi-relevant",
+          "ranked": [
+            "query-rewriting",
+            "hybrid-search",
+            "hyde",
+            "hnsw-index",
+            "chunking-semantic",
+            "cosine-similarity",
+            "cache-keys",
+            "bm25",
+            "pgvector-indexes",
+            "qdrant-filtering"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 0.3333333333333333,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 0.9594535145926796,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.6,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 0.9594535145926796,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.3,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 0.9594535145926796,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "mr-03",
+          "category": "multi-relevant",
+          "ranked": [
+            "chunking-semantic",
+            "chunking-parent-child",
+            "embedding-cache",
+            "compose-healthchecks",
+            "chunking-fixed",
+            "prompt-injection",
+            "embedding-dimensions",
+            "docker-multistage",
+            "rabbitmq-ack",
+            "cache-keys"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 0.3333333333333333,
+              "mrr": 1,
+              "ndcg": 0.42857142857142855,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.6666666666666666,
+              "recall": 0.6666666666666666,
+              "mrr": 1,
+              "ndcg": 0.47078692139073114,
+              "map": 0.6666666666666666
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.6,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 0.7313492769537508,
+              "map": 0.8666666666666667
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.3,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 0.7313492769537508,
+              "map": 0.8666666666666667
+            }
+          }
+        },
+        {
+          "queryId": "mr-04",
+          "category": "multi-relevant",
+          "ranked": [
+            "grafana-tempo",
+            "distance-metrics",
+            "otel-tracing",
+            "cross-encoder-reranking",
+            "hnsw-index",
+            "qdrant-filtering",
+            "compose-healthchecks",
+            "ndcg",
+            "chunking-fixed",
+            "rabbitmq-ack"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 0.3333333333333333,
+              "mrr": 1,
+              "ndcg": 0.42857142857142855,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.6666666666666666,
+              "recall": 0.6666666666666666,
+              "mrr": 1,
+              "ndcg": 0.6254336383564085,
+              "map": 0.5555555555555555
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.4,
+              "recall": 0.6666666666666666,
+              "mrr": 1,
+              "ndcg": 0.6254336383564085,
+              "map": 0.5555555555555555
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 0.6666666666666666,
+              "mrr": 1,
+              "ndcg": 0.6254336383564085,
+              "map": 0.5555555555555555
+            }
+          }
+        },
+        {
+          "queryId": "mr-05",
+          "category": "multi-relevant",
+          "ranked": [
+            "polly-circuit-breaker",
+            "otel-tracing",
+            "compose-healthchecks",
+            "dotnet-backgroundservice",
+            "polly-retry",
+            "chunking-parent-child",
+            "bm25",
+            "chunking-semantic",
+            "cache-keys",
+            "rabbitmq-idempotency"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 0.3333333333333333,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 0.3333333333333333,
+              "mrr": 1,
+              "ndcg": 0.5874203951744313,
+              "map": 0.3333333333333333
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.4,
+              "recall": 0.6666666666666666,
+              "mrr": 1,
+              "ndcg": 0.8146656240744838,
+              "map": 0.4666666666666666
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 0.6666666666666666,
+              "mrr": 1,
+              "ndcg": 0.8146656240744838,
+              "map": 0.4666666666666666
+            }
+          }
+        },
+        {
+          "queryId": "mr-06",
+          "category": "multi-relevant",
+          "ranked": [
+            "hybrid-search",
+            "chunking-semantic",
+            "chunking-parent-child",
+            "hyde",
+            "bm25",
+            "query-rewriting",
+            "prompt-injection",
+            "polly-retry",
+            "chunking-fixed",
+            "compose-healthchecks"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 0.3333333333333333,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 0.3333333333333333,
+              "mrr": 1,
+              "ndcg": 0.541942129480027,
+              "map": 0.3333333333333333
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.4,
+              "recall": 0.6666666666666666,
+              "mrr": 1,
+              "ndcg": 0.6317929155434615,
+              "map": 0.4666666666666666
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 0.6666666666666666,
+              "mrr": 1,
+              "ndcg": 0.6317929155434615,
+              "map": 0.4666666666666666
+            }
+          }
+        },
+        {
+          "queryId": "mr-07",
+          "category": "multi-relevant",
+          "ranked": [
+            "rabbitmq-ack",
+            "rabbitmq-idempotency",
+            "otel-tracing",
+            "qdrant-filtering",
+            "compose-healthchecks",
+            "polly-circuit-breaker",
+            "dotnet-backgroundservice",
+            "chunking-fixed",
+            "bm25",
+            "cache-keys"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 0.3333333333333333,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.6666666666666666,
+              "recall": 0.6666666666666666,
+              "mrr": 1,
+              "ndcg": 0.8838695436828513,
+              "map": 0.6666666666666666
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.4,
+              "recall": 0.6666666666666666,
+              "mrr": 1,
+              "ndcg": 0.8838695436828513,
+              "map": 0.6666666666666666
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 0.6666666666666666,
+              "mrr": 1,
+              "ndcg": 0.8838695436828513,
+              "map": 0.6666666666666666
+            }
+          }
+        },
+        {
+          "queryId": "co-01",
+          "category": "conceptual",
+          "ranked": [
+            "hnsw-index",
+            "qdrant-filtering",
+            "pgvector-indexes",
+            "hybrid-search",
+            "query-rewriting",
+            "chunking-parent-child",
+            "rabbitmq-ack",
+            "cosine-similarity",
+            "embedding-dimensions",
+            "cross-encoder-reranking"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.6666666666666666,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 0.9828422279067397,
+              "map": 0.8333333333333333
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.4,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 0.9828422279067397,
+              "map": 0.8333333333333333
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 0.9828422279067397,
+              "map": 0.8333333333333333
+            }
+          }
+        },
+        {
+          "queryId": "co-02",
+          "category": "conceptual",
+          "ranked": [
+            "hnsw-index",
+            "pgvector-indexes",
+            "qdrant-overview",
+            "rrf",
+            "embedding-dimensions",
+            "ndcg",
+            "minio-s3",
+            "hybrid-search",
+            "query-rewriting",
+            "prompt-injection"
+          ],
+          "byK": {
+            "1": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 0.5,
+              "mrr": 0.3333333333333333,
+              "ndcg": 0.06552281519378265,
+              "map": 0.16666666666666666
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 0.5,
+              "mrr": 0.3333333333333333,
+              "ndcg": 0.06552281519378265,
+              "map": 0.16666666666666666
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 0.5,
+              "mrr": 0.3333333333333333,
+              "ndcg": 0.06552281519378265,
+              "map": 0.16666666666666666
+            }
+          }
+        },
+        {
+          "queryId": "co-03",
+          "category": "conceptual",
+          "ranked": [
+            "distance-metrics",
+            "pgvector-indexes",
+            "bm25",
+            "ndcg",
+            "embedding-cache",
+            "hyde",
+            "cosine-similarity",
+            "chunking-parent-child",
+            "qdrant-overview",
+            "cross-encoder-reranking"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 0.7871546029909718,
+              "map": 0.5
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 0.7871546029909718,
+              "map": 0.5
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 0.8996052605611106,
+              "map": 0.6428571428571428
+            }
+          }
+        },
+        {
+          "queryId": "na-01",
+          "category": "no-answer",
+          "ranked": [
+            "rabbitmq-dlq",
+            "ndcg",
+            "minio-s3",
+            "hyde",
+            "prompt-injection",
+            "embedding-dimensions",
+            "distance-metrics",
+            "rrf",
+            "prometheus-metrics",
+            "rabbitmq-prefetch"
+          ],
+          "byK": {
+            "1": null,
+            "3": null,
+            "5": null,
+            "10": null
+          }
+        },
+        {
+          "queryId": "na-02",
+          "category": "no-answer",
+          "ranked": [
+            "prompt-injection",
+            "distance-metrics",
+            "dotnet-backgroundservice",
+            "rrf",
+            "rabbitmq-ack",
+            "rabbitmq-idempotency",
+            "bm25",
+            "chunking-fixed",
+            "chunking-parent-child",
+            "compose-healthchecks"
+          ],
+          "byK": {
+            "1": null,
+            "3": null,
+            "5": null,
+            "10": null
+          }
+        },
+        {
+          "queryId": "na-03",
+          "category": "no-answer",
+          "ranked": [
+            "rrf",
+            "grafana-tempo",
+            "otel-tracing",
+            "distance-metrics",
+            "rabbitmq-prefetch",
+            "bm25",
+            "cache-keys",
+            "chunking-fixed",
+            "chunking-parent-child",
+            "chunking-semantic"
+          ],
+          "byK": {
+            "1": null,
+            "3": null,
+            "5": null,
+            "10": null
+          }
+        },
+        {
+          "queryId": "na-04",
+          "category": "no-answer",
+          "ranked": [
+            "rrf",
+            "bm25",
+            "cache-keys",
+            "chunking-fixed",
+            "chunking-parent-child",
+            "chunking-semantic",
+            "cosine-similarity",
+            "cross-encoder-reranking",
+            "distance-metrics",
+            "docker-multistage"
+          ],
+          "byK": {
+            "1": null,
+            "3": null,
+            "5": null,
+            "10": null
+          }
+        }
+      ]
+    },
+    "chunk": {
+      "scoredQueries": 37,
+      "skippedQueries": 7,
+      "byK": {
+        "1": {
+          "hit": 0.7297297297297297,
+          "precision": 0.7297297297297297,
+          "recall": 0.6756756756756757,
+          "mrr": 0.7297297297297297,
+          "ndcg": 0.7142857142857142,
+          "map": 0.7297297297297297
+        },
+        "3": {
+          "hit": 0.8108108108108109,
+          "precision": 0.27927927927927926,
+          "recall": 0.7567567567567568,
+          "mrr": 0.7702702702702703,
+          "ndcg": 0.7380023478916888,
+          "map": 0.7184684684684685
+        },
+        "5": {
+          "hit": 0.8378378378378378,
+          "precision": 0.17837837837837847,
+          "recall": 0.7972972972972973,
+          "mrr": 0.7756756756756756,
+          "ndcg": 0.7576202355220217,
+          "map": 0.7306306306306306
+        },
+        "10": {
+          "hit": 0.918918918918919,
+          "precision": 0.10000000000000005,
+          "recall": 0.8918918918918919,
+          "mrr": 0.7861003861003861,
+          "ndcg": 0.7864900233748513,
+          "map": 0.7449163449163448
+        }
+      },
+      "byCategory": {
+        "keyword": {
+          "scoredQueries": 14,
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        "paraphrase": {
+          "scoredQueries": 16,
+          "byK": {
+            "1": {
+              "hit": 0.5625,
+              "precision": 0.5625,
+              "recall": 0.5,
+              "mrr": 0.5625,
+              "ndcg": 0.5267857142857143,
+              "map": 0.5625
+            },
+            "3": {
+              "hit": 0.6875,
+              "precision": 0.22916666666666669,
+              "recall": 0.625,
+              "mrr": 0.625,
+              "ndcg": 0.586647880177769,
+              "map": 0.5625
+            },
+            "5": {
+              "hit": 0.6875,
+              "precision": 0.13749999999999998,
+              "recall": 0.625,
+              "mrr": 0.625,
+              "ndcg": 0.586647880177769,
+              "map": 0.5625
+            },
+            "10": {
+              "hit": 0.875,
+              "precision": 0.08750000000000001,
+              "recall": 0.8125,
+              "mrr": 0.6491071428571429,
+              "ndcg": 0.6463810984893037,
+              "map": 0.5866071428571429
+            }
+          }
+        },
+        "multi-relevant": {
+          "scoredQueries": 4,
+          "byK": {
+            "1": {
+              "hit": 0.5,
+              "precision": 0.5,
+              "recall": 0.375,
+              "mrr": 0.5,
+              "ndcg": 0.5,
+              "map": 0.5
+            },
+            "3": {
+              "hit": 0.75,
+              "precision": 0.3333333333333333,
+              "recall": 0.625,
+              "mrr": 0.625,
+              "ndcg": 0.5331415465393039,
+              "map": 0.5208333333333333
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.3,
+              "recall": 1,
+              "mrr": 0.675,
+              "ndcg": 0.7146070071198843,
+              "map": 0.6333333333333333
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.15,
+              "recall": 1,
+              "mrr": 0.675,
+              "ndcg": 0.7146070071198843,
+              "map": 0.6333333333333333
+            }
+          }
+        },
+        "conceptual": {
+          "scoredQueries": 3,
+          "byK": {
+            "1": {
+              "hit": 0.6666666666666666,
+              "precision": 0.6666666666666666,
+              "recall": 0.5,
+              "mrr": 0.6666666666666666,
+              "ndcg": 0.6666666666666666,
+              "map": 0.6666666666666666
+            },
+            "3": {
+              "hit": 0.6666666666666666,
+              "precision": 0.2222222222222222,
+              "recall": 0.5,
+              "mrr": 0.6666666666666666,
+              "ndcg": 0.5957182009969907,
+              "map": 0.5
+            },
+            "5": {
+              "hit": 0.6666666666666666,
+              "precision": 0.13333333333333333,
+              "recall": 0.5,
+              "mrr": 0.6666666666666666,
+              "ndcg": 0.5957182009969907,
+              "map": 0.5
+            },
+            "10": {
+              "hit": 0.6666666666666666,
+              "precision": 0.10000000000000002,
+              "recall": 0.6666666666666666,
+              "mrr": 0.6666666666666666,
+              "ndcg": 0.6332017535203702,
+              "map": 0.5476190476190476
+            }
+          }
+        }
+      },
+      "perQuery": [
+        {
+          "queryId": "kw-01",
+          "category": "keyword",
+          "ranked": [
+            "rabbitmq-dlq:000000",
+            "rabbitmq-ack:000000",
+            "distance-metrics:000000",
+            "minio-s3:000000",
+            "hyde:000000",
+            "dotnet-backgroundservice:000000",
+            "ndcg:000000",
+            "cosine-similarity:000000",
+            "qdrant-overview:000000",
+            "rabbitmq-idempotency:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-02",
+          "category": "keyword",
+          "ranked": [
+            "hnsw-index:000000",
+            "compose-healthchecks:000000",
+            "bm25:000000",
+            "cache-keys:000000",
+            "chunking-fixed:000000",
+            "chunking-semantic:000000",
+            "cosine-similarity:000000",
+            "cross-encoder-reranking:000000",
+            "distance-metrics:000000",
+            "docker-multistage:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-03",
+          "category": "keyword",
+          "ranked": [
+            "rabbitmq-ack:000000",
+            "rabbitmq-dlq:000000",
+            "prompt-injection:000000",
+            "dotnet-cancellation:000000",
+            "distance-metrics:000000",
+            "rrf:000000",
+            "prometheus-metrics:000000",
+            "bm25:000000",
+            "cache-keys:000000",
+            "chunking-fixed:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-04",
+          "category": "keyword",
+          "ranked": [
+            "pgvector-indexes:000000",
+            "hybrid-search:000000",
+            "redis-eviction:000000",
+            "distance-metrics:000000",
+            "chunking-parent-child:000000",
+            "cosine-similarity:000000",
+            "qdrant-filtering:000000",
+            "bm25:000000",
+            "cache-keys:000000",
+            "chunking-fixed:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-05",
+          "category": "keyword",
+          "ranked": [
+            "polly-retry:000000",
+            "cosine-similarity:000000",
+            "pgvector-indexes:000000",
+            "hybrid-search:000000",
+            "bm25:000000",
+            "cache-keys:000000",
+            "chunking-fixed:000000",
+            "chunking-parent-child:000000",
+            "chunking-semantic:000000",
+            "compose-healthchecks:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-06",
+          "category": "keyword",
+          "ranked": [
+            "polly-circuit-breaker:000000",
+            "cosine-similarity:000000",
+            "grafana-tempo:000000",
+            "compose-healthchecks:000000",
+            "cache-keys:000000",
+            "redis-eviction:000000",
+            "dotnet-cancellation:000000",
+            "otel-tracing:000000",
+            "distance-metrics:000000",
+            "polly-retry:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-07",
+          "category": "keyword",
+          "ranked": [
+            "compose-healthchecks:000000",
+            "polly-retry:000000",
+            "embedding-dimensions:000000",
+            "cache-keys:000000",
+            "rabbitmq-prefetch:000000",
+            "bm25:000000",
+            "chunking-fixed:000000",
+            "chunking-parent-child:000000",
+            "chunking-semantic:000000",
+            "cosine-similarity:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-08",
+          "category": "keyword",
+          "ranked": [
+            "dotnet-cancellation:000000",
+            "bm25:000000",
+            "cache-keys:000000",
+            "chunking-fixed:000000",
+            "chunking-parent-child:000000",
+            "compose-healthchecks:000000",
+            "cosine-similarity:000000",
+            "cross-encoder-reranking:000000",
+            "distance-metrics:000000",
+            "docker-multistage:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-09",
+          "category": "keyword",
+          "ranked": [
+            "dotnet-backgroundservice:000000",
+            "compose-healthchecks:000000",
+            "otel-tracing:000000",
+            "rabbitmq-ack:000000",
+            "rabbitmq-idempotency:000000",
+            "rabbitmq-dlq:000000",
+            "cache-keys:000000",
+            "chunking-parent-child:000000",
+            "chunking-semantic:000000",
+            "dotnet-cancellation:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-10",
+          "category": "keyword",
+          "ranked": [
+            "bm25:000000",
+            "hnsw-index:000000",
+            "rrf:000000",
+            "embedding-cache:000000",
+            "docker-multistage:000000",
+            "hybrid-search:000000",
+            "rabbitmq-dlq:000000",
+            "qdrant-filtering:000000",
+            "pgvector-indexes:000000",
+            "cache-keys:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-11",
+          "category": "keyword",
+          "ranked": [
+            "redis-eviction:000000",
+            "polly-circuit-breaker:000000",
+            "dotnet-backgroundservice:000000",
+            "pgvector-indexes:000000",
+            "hnsw-index:000000",
+            "bm25:000000",
+            "cache-keys:000000",
+            "chunking-fixed:000000",
+            "chunking-parent-child:000000",
+            "chunking-semantic:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-12",
+          "category": "keyword",
+          "ranked": [
+            "pgvector-indexes:000000",
+            "cosine-similarity:000000",
+            "qdrant-overview:000000",
+            "hnsw-index:000000",
+            "distance-metrics:000000",
+            "embedding-dimensions:000000",
+            "hybrid-search:000000",
+            "grafana-tempo:000000",
+            "polly-retry:000000",
+            "cross-encoder-reranking:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-13",
+          "category": "keyword",
+          "ranked": [
+            "qdrant-overview:000000",
+            "qdrant-filtering:000000",
+            "minio-s3:000000",
+            "embedding-dimensions:000000",
+            "distance-metrics:000000",
+            "query-rewriting:000000",
+            "rabbitmq-dlq:000000",
+            "bm25:000000",
+            "chunking-fixed:000000",
+            "chunking-semantic:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "kw-14",
+          "category": "keyword",
+          "ranked": [
+            "otel-tracing:000000",
+            "grafana-tempo:000000",
+            "compose-healthchecks:000000",
+            "dotnet-cancellation:000000",
+            "polly-circuit-breaker:000000",
+            "polly-retry:000000",
+            "chunking-parent-child:000000",
+            "cosine-similarity:000000",
+            "docker-multistage:000000",
+            "rabbitmq-idempotency:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "pa-01",
+          "category": "paraphrase",
+          "ranked": [
+            "rabbitmq-dlq:000000",
+            "rabbitmq-prefetch:000000",
+            "qdrant-filtering:000000",
+            "compose-healthchecks:000000",
+            "rrf:000000",
+            "chunking-fixed:000000",
+            "rabbitmq-ack:000000",
+            "bm25:000000",
+            "dotnet-backgroundservice:000000",
+            "dotnet-cancellation:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "pa-02",
+          "category": "paraphrase",
+          "ranked": [
+            "dotnet-backgroundservice:000000",
+            "rabbitmq-prefetch:000000",
+            "dotnet-cancellation:000000",
+            "grafana-tempo:000000",
+            "bm25:000000",
+            "cross-encoder-reranking:000000",
+            "prompt-injection:000000",
+            "docker-multistage:000000",
+            "query-rewriting:000000",
+            "cache-keys:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 0.5,
+              "ndcg": 0.6309297535714575,
+              "map": 0.5
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 0.5,
+              "ndcg": 0.6309297535714575,
+              "map": 0.5
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 0.5,
+              "ndcg": 0.6309297535714575,
+              "map": 0.5
+            }
+          }
+        },
+        {
+          "queryId": "pa-03",
+          "category": "paraphrase",
+          "ranked": [
+            "rabbitmq-idempotency:000000",
+            "embedding-cache:000000",
+            "minio-s3:000000",
+            "distance-metrics:000000",
+            "cosine-similarity:000000",
+            "rrf:000000",
+            "otel-tracing:000000",
+            "dotnet-backgroundservice:000000",
+            "prometheus-metrics:000000",
+            "query-rewriting:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 0.7871546029909718,
+              "map": 0.5
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 0.7871546029909718,
+              "map": 0.5
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 0.7871546029909718,
+              "map": 0.5
+            }
+          }
+        },
+        {
+          "queryId": "pa-04",
+          "category": "paraphrase",
+          "ranked": [
+            "rrf:000000",
+            "cosine-similarity:000000",
+            "dotnet-cancellation:000000",
+            "cache-keys:000000",
+            "redis-eviction:000000",
+            "rabbitmq-dlq:000000",
+            "chunking-fixed:000000",
+            "polly-retry:000000",
+            "ndcg:000000",
+            "pgvector-indexes:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "3": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "5": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "10": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            }
+          }
+        },
+        {
+          "queryId": "pa-05",
+          "category": "paraphrase",
+          "ranked": [
+            "distance-metrics:000000",
+            "hyde:000000",
+            "cross-encoder-reranking:000000",
+            "embedding-cache:000000",
+            "embedding-dimensions:000000",
+            "prompt-injection:000000",
+            "cosine-similarity:000000",
+            "cache-keys:000000",
+            "chunking-parent-child:000000",
+            "hybrid-search:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "3": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "5": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 0.14285714285714285,
+              "ndcg": 0.33333333333333337,
+              "map": 0.14285714285714285
+            }
+          }
+        },
+        {
+          "queryId": "pa-06",
+          "category": "paraphrase",
+          "ranked": [
+            "hybrid-search:000000",
+            "ndcg:000000",
+            "distance-metrics:000000",
+            "cross-encoder-reranking:000000",
+            "cosine-similarity:000000",
+            "cache-keys:000000",
+            "docker-multistage:000000",
+            "bm25:000000",
+            "rabbitmq-dlq:000000",
+            "pgvector-indexes:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 0.42857142857142855,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 0.3373519727104165,
+              "map": 0.5
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 0.3373519727104165,
+              "map": 0.5
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 0.3373519727104165,
+              "map": 0.5
+            }
+          }
+        },
+        {
+          "queryId": "pa-07",
+          "category": "paraphrase",
+          "ranked": [
+            "hyde:000000",
+            "chunking-parent-child:000000",
+            "polly-retry:000000",
+            "prompt-injection:000000",
+            "embedding-dimensions:000000",
+            "qdrant-overview:000000",
+            "embedding-cache:000000",
+            "query-rewriting:000000",
+            "cache-keys:000000",
+            "cross-encoder-reranking:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "3": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "5": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 0.1,
+              "ndcg": 0.2890648263178878,
+              "map": 0.1
+            }
+          }
+        },
+        {
+          "queryId": "pa-08",
+          "category": "paraphrase",
+          "ranked": [
+            "hyde:000000",
+            "query-rewriting:000000",
+            "embedding-dimensions:000000",
+            "cache-keys:000000",
+            "prompt-injection:000000",
+            "embedding-cache:000000",
+            "hnsw-index:000000",
+            "polly-circuit-breaker:000000",
+            "dotnet-backgroundservice:000000",
+            "bm25:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "pa-09",
+          "category": "paraphrase",
+          "ranked": [
+            "query-rewriting:000000",
+            "hyde:000000",
+            "dotnet-backgroundservice:000000",
+            "pgvector-indexes:000000",
+            "hybrid-search:000000",
+            "chunking-fixed:000000",
+            "prometheus-metrics:000000",
+            "hnsw-index:000000",
+            "qdrant-filtering:000000",
+            "docker-multistage:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "pa-10",
+          "category": "paraphrase",
+          "ranked": [
+            "polly-retry:000000",
+            "compose-healthchecks:000000",
+            "embedding-dimensions:000000",
+            "distance-metrics:000000",
+            "cosine-similarity:000000",
+            "qdrant-overview:000000",
+            "polly-circuit-breaker:000000",
+            "dotnet-cancellation:000000",
+            "minio-s3:000000",
+            "ndcg:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "pa-11",
+          "category": "paraphrase",
+          "ranked": [
+            "polly-circuit-breaker:000000",
+            "bm25:000000",
+            "dotnet-cancellation:000000",
+            "prompt-injection:000000",
+            "hyde:000000",
+            "cache-keys:000000",
+            "docker-multistage:000000",
+            "chunking-parent-child:000000",
+            "cosine-similarity:000000",
+            "embedding-cache:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "pa-12",
+          "category": "paraphrase",
+          "ranked": [
+            "docker-multistage:000000",
+            "compose-healthchecks:000000",
+            "dotnet-cancellation:000000",
+            "polly-circuit-breaker:000000",
+            "grafana-tempo:000000",
+            "query-rewriting:000000",
+            "hnsw-index:000000",
+            "dotnet-backgroundservice:000000",
+            "chunking-semantic:000000",
+            "chunking-parent-child:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "pa-13",
+          "category": "paraphrase",
+          "ranked": [
+            "compose-healthchecks:000000",
+            "qdrant-overview:000000",
+            "rabbitmq-idempotency:000000",
+            "chunking-semantic:000000",
+            "rabbitmq-ack:000000",
+            "dotnet-backgroundservice:000000",
+            "prompt-injection:000000",
+            "docker-multistage:000000",
+            "cache-keys:000000",
+            "hyde:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "pa-14",
+          "category": "paraphrase",
+          "ranked": [
+            "hnsw-index:000000",
+            "rrf:000000",
+            "rabbitmq-ack:000000",
+            "chunking-fixed:000000",
+            "dotnet-cancellation:000000",
+            "chunking-semantic:000000",
+            "chunking-parent-child:000000",
+            "qdrant-overview:000000",
+            "qdrant-filtering:000000",
+            "pgvector-indexes:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "3": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "5": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "10": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            }
+          }
+        },
+        {
+          "queryId": "pa-15",
+          "category": "paraphrase",
+          "ranked": [
+            "embedding-cache:000000",
+            "prompt-injection:000000",
+            "chunking-fixed:000000",
+            "embedding-dimensions:000000",
+            "rabbitmq-dlq:000000",
+            "rabbitmq-ack:000000",
+            "rabbitmq-idempotency:000000",
+            "redis-eviction:000000",
+            "distance-metrics:000000",
+            "polly-retry:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 0.5,
+              "ndcg": 0.6309297535714575,
+              "map": 0.5
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 0.5,
+              "ndcg": 0.6309297535714575,
+              "map": 0.5
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 0.5,
+              "ndcg": 0.6309297535714575,
+              "map": 0.5
+            }
+          }
+        },
+        {
+          "queryId": "pa-16",
+          "category": "paraphrase",
+          "ranked": [
+            "polly-retry:000000",
+            "hyde:000000",
+            "minio-s3:000000",
+            "rabbitmq-prefetch:000000",
+            "prompt-injection:000000",
+            "rabbitmq-dlq:000000",
+            "cache-keys:000000",
+            "polly-circuit-breaker:000000",
+            "ndcg:000000",
+            "rabbitmq-idempotency:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "3": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "5": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 0.14285714285714285,
+              "ndcg": 0.33333333333333337,
+              "map": 0.14285714285714285
+            }
+          }
+        },
+        {
+          "queryId": "mr-01",
+          "category": "multi-relevant",
+          "ranked": [
+            "cross-encoder-reranking:000000",
+            "embedding-dimensions:000000",
+            "chunking-semantic:000000",
+            "embedding-cache:000000",
+            "chunking-fixed:000000",
+            "cache-keys:000000",
+            "minio-s3:000000",
+            "hnsw-index:000000",
+            "bm25:000000",
+            "qdrant-filtering:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 0.5,
+              "mrr": 0.5,
+              "ndcg": 0.2128453970090281,
+              "map": 0.25
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.4,
+              "recall": 1,
+              "mrr": 0.5,
+              "ndcg": 0.5518544320968081,
+              "map": 0.5
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 0.5,
+              "ndcg": 0.5518544320968081,
+              "map": 0.5
+            }
+          }
+        },
+        {
+          "queryId": "mr-02",
+          "category": "multi-relevant",
+          "ranked": [
+            "query-rewriting:000000",
+            "hybrid-search:000000",
+            "hyde:000000",
+            "hnsw-index:000000",
+            "chunking-semantic:000000",
+            "cosine-similarity:000000",
+            "cache-keys:000000",
+            "bm25:000000",
+            "pgvector-indexes:000000",
+            "qdrant-filtering:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.6666666666666666,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 0.9197207891481876,
+              "map": 0.8333333333333333
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.4,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 0.9197207891481876,
+              "map": 0.8333333333333333
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 0.9197207891481876,
+              "map": 0.8333333333333333
+            }
+          }
+        },
+        {
+          "queryId": "mr-03",
+          "category": "multi-relevant",
+          "ranked": [
+            "chunking-semantic:000000",
+            "chunking-parent-child:000000",
+            "embedding-cache:000000",
+            "compose-healthchecks:000000",
+            "chunking-fixed:000000",
+            "prompt-injection:000000",
+            "embedding-dimensions:000000",
+            "docker-multistage:000000",
+            "rabbitmq-ack:000000",
+            "cache-keys:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "3": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 0.2,
+              "ndcg": 0.38685280723454163,
+              "map": 0.2
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 0.2,
+              "ndcg": 0.38685280723454163,
+              "map": 0.2
+            }
+          }
+        },
+        {
+          "queryId": "mr-04",
+          "category": "multi-relevant",
+          "ranked": [
+            "grafana-tempo:000000",
+            "distance-metrics:000000",
+            "otel-tracing:000000",
+            "cross-encoder-reranking:000000",
+            "hnsw-index:000000",
+            "qdrant-filtering:000000",
+            "compose-healthchecks:000000",
+            "ndcg:000000",
+            "chunking-fixed:000000",
+            "rabbitmq-ack:000000"
+          ],
+          "byK": {
+            "1": null,
+            "3": null,
+            "5": null,
+            "10": null
+          }
+        },
+        {
+          "queryId": "mr-05",
+          "category": "multi-relevant",
+          "ranked": [
+            "polly-circuit-breaker:000000",
+            "otel-tracing:000000",
+            "compose-healthchecks:000000",
+            "dotnet-backgroundservice:000000",
+            "polly-retry:000000",
+            "chunking-parent-child:000000",
+            "bm25:000000",
+            "chunking-semantic:000000",
+            "cache-keys:000000",
+            "rabbitmq-idempotency:000000"
+          ],
+          "byK": {
+            "1": null,
+            "3": null,
+            "5": null,
+            "10": null
+          }
+        },
+        {
+          "queryId": "mr-06",
+          "category": "multi-relevant",
+          "ranked": [
+            "hybrid-search:000000",
+            "chunking-semantic:000000",
+            "chunking-parent-child:000000",
+            "hyde:000000",
+            "bm25:000000",
+            "query-rewriting:000000",
+            "prompt-injection:000000",
+            "polly-retry:000000",
+            "chunking-fixed:000000",
+            "compose-healthchecks:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "mr-07",
+          "category": "multi-relevant",
+          "ranked": [
+            "rabbitmq-ack:000000",
+            "rabbitmq-idempotency:000000",
+            "otel-tracing:000000",
+            "qdrant-filtering:000000",
+            "compose-healthchecks:000000",
+            "polly-circuit-breaker:000000",
+            "dotnet-backgroundservice:000000",
+            "chunking-fixed:000000",
+            "bm25:000000",
+            "cache-keys:000000"
+          ],
+          "byK": {
+            "1": null,
+            "3": null,
+            "5": null,
+            "10": null
+          }
+        },
+        {
+          "queryId": "co-01",
+          "category": "conceptual",
+          "ranked": [
+            "hnsw-index:000000",
+            "qdrant-filtering:000000",
+            "pgvector-indexes:000000",
+            "hybrid-search:000000",
+            "query-rewriting:000000",
+            "chunking-parent-child:000000",
+            "rabbitmq-ack:000000",
+            "cosine-similarity:000000",
+            "embedding-dimensions:000000",
+            "cross-encoder-reranking:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.1,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            }
+          }
+        },
+        {
+          "queryId": "co-02",
+          "category": "conceptual",
+          "ranked": [
+            "hnsw-index:000000",
+            "pgvector-indexes:000000",
+            "qdrant-overview:000000",
+            "rrf:000000",
+            "embedding-dimensions:000000",
+            "ndcg:000000",
+            "minio-s3:000000",
+            "hybrid-search:000000",
+            "query-rewriting:000000",
+            "prompt-injection:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "3": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "5": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            },
+            "10": {
+              "hit": 0,
+              "precision": 0,
+              "recall": 0,
+              "mrr": 0,
+              "ndcg": 0,
+              "map": 0
+            }
+          }
+        },
+        {
+          "queryId": "co-03",
+          "category": "conceptual",
+          "ranked": [
+            "distance-metrics:000000",
+            "pgvector-indexes:000000",
+            "bm25:000000",
+            "ndcg:000000",
+            "embedding-cache:000000",
+            "hyde:000000",
+            "cosine-similarity:000000",
+            "chunking-parent-child:000000",
+            "qdrant-overview:000000",
+            "cross-encoder-reranking:000000"
+          ],
+          "byK": {
+            "1": {
+              "hit": 1,
+              "precision": 1,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 1,
+              "map": 1
+            },
+            "3": {
+              "hit": 1,
+              "precision": 0.3333333333333333,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 0.7871546029909718,
+              "map": 0.5
+            },
+            "5": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 0.5,
+              "mrr": 1,
+              "ndcg": 0.7871546029909718,
+              "map": 0.5
+            },
+            "10": {
+              "hit": 1,
+              "precision": 0.2,
+              "recall": 1,
+              "mrr": 1,
+              "ndcg": 0.8996052605611106,
+              "map": 0.6428571428571428
+            }
+          }
+        },
+        {
+          "queryId": "na-01",
+          "category": "no-answer",
+          "ranked": [
+            "rabbitmq-dlq:000000",
+            "ndcg:000000",
+            "minio-s3:000000",
+            "hyde:000000",
+            "prompt-injection:000000",
+            "embedding-dimensions:000000",
+            "distance-metrics:000000",
+            "rrf:000000",
+            "prometheus-metrics:000000",
+            "rabbitmq-prefetch:000000"
+          ],
+          "byK": {
+            "1": null,
+            "3": null,
+            "5": null,
+            "10": null
+          }
+        },
+        {
+          "queryId": "na-02",
+          "category": "no-answer",
+          "ranked": [
+            "prompt-injection:000000",
+            "distance-metrics:000000",
+            "dotnet-backgroundservice:000000",
+            "rrf:000000",
+            "rabbitmq-ack:000000",
+            "rabbitmq-idempotency:000000",
+            "bm25:000000",
+            "chunking-fixed:000000",
+            "chunking-parent-child:000000",
+            "compose-healthchecks:000000"
+          ],
+          "byK": {
+            "1": null,
+            "3": null,
+            "5": null,
+            "10": null
+          }
+        },
+        {
+          "queryId": "na-03",
+          "category": "no-answer",
+          "ranked": [
+            "rrf:000000",
+            "grafana-tempo:000000",
+            "otel-tracing:000000",
+            "distance-metrics:000000",
+            "rabbitmq-prefetch:000000",
+            "bm25:000000",
+            "cache-keys:000000",
+            "chunking-fixed:000000",
+            "chunking-parent-child:000000",
+            "chunking-semantic:000000"
+          ],
+          "byK": {
+            "1": null,
+            "3": null,
+            "5": null,
+            "10": null
+          }
+        },
+        {
+          "queryId": "na-04",
+          "category": "no-answer",
+          "ranked": [
+            "rrf:000000",
+            "bm25:000000",
+            "cache-keys:000000",
+            "chunking-fixed:000000",
+            "chunking-parent-child:000000",
+            "chunking-semantic:000000",
+            "cosine-similarity:000000",
+            "cross-encoder-reranking:000000",
+            "distance-metrics:000000",
+            "docker-multistage:000000"
+          ],
+          "byK": {
+            "1": null,
+            "3": null,
+            "5": null,
+            "10": null
+          }
+        }
+      ]
+    },
+    "latency": {
+      "meanMs": 0.5937522727272728,
+      "p50Ms": 0.1054,
+      "p95Ms": 0.2095,
+      "maxMs": 21.0562
+    }
+  }
+}

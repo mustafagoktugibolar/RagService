@@ -32,3 +32,15 @@ public static class StoreCapabilities
         RetrievalCapabilities.Dense
         | (store is ILexicalSearchStore ? RetrievalCapabilities.Lexical : RetrievalCapabilities.None);
 }
+
+/// <summary>
+/// The store supports lexical search in general, but this particular collection was created without the structures it
+/// needs (for example a Qdrant collection from before sparse vectors). Retrievers treat it as a failed leg and degrade.
+/// </summary>
+public sealed class LexicalSearchUnavailableException(string collection)
+    : InvalidOperationException(
+        $"Collection '{collection}' has no lexical index. It was created before lexical search existed; create a new " +
+        "collection and re-index its documents to enable lexical and hybrid retrieval.")
+{
+    public string Collection { get; } = collection;
+}

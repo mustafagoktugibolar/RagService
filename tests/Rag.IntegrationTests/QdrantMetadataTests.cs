@@ -2,6 +2,8 @@ using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Qdrant.Client;
+using Qdrant.Client.Grpc;
 using Rag.Core.Models;
 using Rag.Core.Options;
 using Rag.Core.Providers.VectorStores;
@@ -21,9 +23,13 @@ public sealed class QdrantOnlyFixture : IAsyncLifetime
 
     public QdrantVectorStore Store { get; private set; } = null!;
 
+    /// <summary>Raw client, for arranging states the store itself would never create (e.g. a legacy collection).</summary>
+    public QdrantClient RawClient { get; private set; } = null!;
+
     public async Task InitializeAsync()
     {
         await _container.StartAsync();
+        RawClient = new QdrantClient(_container.Hostname, _container.GetMappedPublicPort(6334));
         Store = new QdrantVectorStore(
             Microsoft.Extensions.Options.Options.Create(new QdrantOptions
             {
@@ -35,6 +41,7 @@ public sealed class QdrantOnlyFixture : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
+        RawClient?.Dispose();
         Store?.Dispose();
         await _container.DisposeAsync();
     }

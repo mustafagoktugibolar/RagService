@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
 using Grpc.Core;
@@ -9,13 +10,18 @@ using Rag.Core.Abstractions;
 using Rag.Core.Models;
 using Rag.Core.Options;
 using Rag.Core.Resilience;
+using Rag.Core.Retrieval;
 
 namespace Rag.Core.Providers.VectorStores;
 
-public sealed class QdrantVectorStore : IVectorStore, IDisposable
+public sealed class QdrantVectorStore : IVectorStore, ILexicalSearchStore, IDisposable
 {
+    /// <summary>Name of the sparse vector that holds BM25-style term weights next to the default dense vector.</summary>
+    public const string SparseVectorName = "text";
+
     private readonly QdrantClient _client;
     private readonly QdrantOptions _options;
+    private readonly ConcurrentDictionary<string, bool> _hasSparse = new(StringComparer.Ordinal);
 
     public QdrantVectorStore(
         IOptions<QdrantOptions> options,
@@ -39,7 +45,7 @@ public sealed class QdrantVectorStore : IVectorStore, IDisposable
 
     public async Task EnsureCollectionAsync(string collection, int vectorSize, CancellationToken ct)
     {
-        await EnsureCollectionInternalAsync(collection, vectorSize, ct);
+        await EnsureCollectionInternalAsync(collection, vectorSize, withSparse: true, ct);
     }
 
     public async Task UpsertAsync(
@@ -52,10 +58,11 @@ public sealed class QdrantVectorStore : IVectorStore, IDisposable
             return;
         }
 
+        var includeSparse = await HasSparseVectorAsync(collection, ct);
         var points = documents.Select(document => new PointStruct
         {
             Id = CreatePointId($"{collection}:{document.ChunkId}"),
-            Vectors = document.Embedding,
+            Vectors = CreateVectors(document, includeSparse),
             Payload =
             {
                 ["documentId"] = document.DocumentId,
@@ -76,29 +83,88 @@ public sealed class QdrantVectorStore : IVectorStore, IDisposable
         Dictionary<string, string>? filters,
         CancellationToken ct)
     {
-        Filter? filter = null;
-        if (filters is not null && filters.Count > 0)
-        {
-            filter = new Filter();
-            foreach (var (key, value) in filters)
-                filter.Must.Add(Conditions.MatchKeyword($"metadata.{key}", value));
-        }
+        var filter = BuildFilter(filters);
 
         var results = await RagPipelines.Qdrant.ExecuteAsync(
             async token => await _client.SearchAsync(
                 collection, embedding, filter: filter, limit: (ulong)topK,
                 payloadSelector: true, vectorsSelector: false, cancellationToken: token), ct);
 
-        return results
-            .Select(point => new VectorSearchResult
-            {
-                DocumentId = GetString(point.Payload, "documentId"),
-                ChunkId = GetString(point.Payload, "chunkId"),
-                Text = GetString(point.Payload, "text"),
-                Metadata = GetMetadata(point.Payload),
-                Score = point.Score
-            })
-            .ToArray();
+        return results.Select(ToResult).ToArray();
+    }
+
+    private static Filter? BuildFilter(Dictionary<string, string>? filters)
+    {
+        if (filters is null || filters.Count == 0)
+        {
+            return null;
+        }
+
+        var filter = new Filter();
+        foreach (var (key, value) in filters)
+            filter.Must.Add(Conditions.MatchKeyword($"metadata.{key}", value));
+        return filter;
+    }
+
+    private static VectorSearchResult ToResult(ScoredPoint point) => new()
+    {
+        DocumentId = GetString(point.Payload, "documentId"),
+        ChunkId = GetString(point.Payload, "chunkId"),
+        Text = GetString(point.Payload, "text"),
+        Metadata = GetMetadata(point.Payload),
+        Score = point.Score
+    };
+
+    /// <summary>
+    /// The dense embedding stays the collection's default (unnamed) vector, so existing dense queries are unaffected.
+    /// The sparse term vector is added under <see cref="SparseVectorName"/> when the text has indexable terms.
+    /// </summary>
+    private static Vectors CreateVectors(VectorDocument document, bool includeSparse)
+    {
+        var sparse = includeSparse ? SparseTextEncoder.EncodeDocument(document.Text) : default;
+        if (!includeSparse || sparse.IsEmpty)
+        {
+            return document.Embedding;
+        }
+
+        return new Dictionary<string, Vector>
+        {
+            [string.Empty] = document.Embedding,
+            [SparseVectorName] = new Vector { Sparse = ToSparse(sparse) }
+        };
+    }
+
+    public async Task<IReadOnlyList<VectorSearchResult>> LexicalSearchAsync(
+        string collection,
+        string query,
+        int topK,
+        Dictionary<string, string>? filters,
+        CancellationToken ct)
+    {
+        if (!await HasSparseVectorAsync(collection, ct))
+        {
+            throw new LexicalSearchUnavailableException(collection);
+        }
+
+        var encoded = SparseTextEncoder.EncodeQuery(query);
+        if (encoded.IsEmpty)
+        {
+            return [];
+        }
+
+        var filter = BuildFilter(filters);
+        var results = await RagPipelines.Qdrant.ExecuteAsync(
+            async token => await _client.QueryAsync(
+                collection,
+                query: new VectorInput { Sparse = ToSparse(encoded) },
+                usingVector: SparseVectorName,
+                filter: filter,
+                limit: (ulong)topK,
+                payloadSelector: true,
+                vectorsSelector: false,
+                cancellationToken: token), ct);
+
+        return results.Select(ToResult).ToArray();
     }
 
     public async Task DeleteByDocumentIdAsync(string collection, string documentId, CancellationToken ct)
@@ -153,7 +219,7 @@ public sealed class QdrantVectorStore : IVectorStore, IDisposable
 
     public async Task SetCollectionMetadataAsync(CollectionMetadata metadata, CancellationToken ct)
     {
-        await EnsureCollectionInternalAsync(_options.MetadataCollection, 1, ct);
+        await EnsureCollectionInternalAsync(_options.MetadataCollection, 1, withSparse: false, ct);
 
         var point = new PointStruct
         {
@@ -178,7 +244,7 @@ public sealed class QdrantVectorStore : IVectorStore, IDisposable
         _client.Dispose();
     }
 
-    private async Task EnsureCollectionInternalAsync(string collection, int vectorSize, CancellationToken ct)
+    private async Task EnsureCollectionInternalAsync(string collection, int vectorSize, bool withSparse, CancellationToken ct)
     {
         if (await _client.CollectionExistsAsync(collection, ct))
         {
@@ -194,12 +260,47 @@ public sealed class QdrantVectorStore : IVectorStore, IDisposable
                     Size = (ulong)vectorSize,
                     Distance = Distance.Cosine
                 },
+                sparseVectorsConfig: withSparse ? SparseConfig() : null,
                 cancellationToken: ct);
+            _hasSparse[collection] = withSparse;
         }
         catch (RpcException ex) when (ex.StatusCode == StatusCode.AlreadyExists)
         {
         }
     }
+
+    /// <summary>
+    /// Whether the collection defines the sparse vector. Qdrant cannot add a vector to an existing collection, so a
+    /// collection created before lexical search existed stays dense-only for its lifetime: indexing keeps working
+    /// (dense vector only) and lexical search reports <see cref="LexicalSearchUnavailableException"/>.
+    /// The answer for a collection never changes, so it is cached per process.
+    /// </summary>
+    private async Task<bool> HasSparseVectorAsync(string collection, CancellationToken ct)
+    {
+        if (_hasSparse.TryGetValue(collection, out var known))
+        {
+            return known;
+        }
+
+        var info = await RagPipelines.Qdrant.ExecuteAsync(
+            async token => await _client.GetCollectionInfoAsync(collection, token), ct);
+        var has = info.Config.Params.SparseVectorsConfig?.Map.ContainsKey(SparseVectorName) == true;
+        _hasSparse[collection] = has;
+        return has;
+    }
+
+    private static Qdrant.Client.Grpc.SparseVector ToSparse(Rag.Core.Retrieval.SparseVector vector)
+    {
+        var sparse = new Qdrant.Client.Grpc.SparseVector();
+        sparse.Values.AddRange(vector.Values);
+        sparse.Indices.AddRange(vector.Indices);
+        return sparse;
+    }
+
+    private static SparseVectorConfig SparseConfig() => new()
+    {
+        Map = { [SparseVectorName] = new SparseVectorParams { Modifier = Modifier.Idf } }
+    };
 
     private static Guid CreatePointId(string value)
     {
