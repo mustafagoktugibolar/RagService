@@ -13,8 +13,10 @@ namespace Rag.IntegrationTests;
 public sealed class QdrantOnlyFixture : IAsyncLifetime
 {
     private readonly IContainer _container = new ContainerBuilder("qdrant/qdrant")
+        .WithPortBinding(6333, true)
         .WithPortBinding(6334, true)
-        .WithWaitStrategy(Wait.ForUnixContainer().UntilExternalTcpPortIsAvailable(6334))
+        // A bare TCP check passes while Docker's proxy is up but Qdrant isn't listening yet (HTTP/2 handshake fails).
+        .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(r => r.ForPort(6333).ForPath("/healthz")))
         .Build();
 
     public QdrantVectorStore Store { get; private set; } = null!;

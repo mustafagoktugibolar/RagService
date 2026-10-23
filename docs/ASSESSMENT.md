@@ -29,7 +29,7 @@ IndexWorker ─┘                                  └► IVectorStore (Qdrant 
 | Query-result cache (Redis, TTL 5 min, **off by default**) | Implemented, **incorrect keying** | `VectorSearchService.BuildQueryCacheKey` |
 | Collection compatibility guard (provider/model/dim) | Implemented | `IsCompatible` in both services |
 | RabbitMQ workers, manual ack, DLQ via `rag.dlx`, prefetch+semaphore | Implemented | `*/Worker.cs` |
-| Polly: retry+jitter, breaker, timeout (OpenAI, Qdrant, MinIO) | Implemented, partially applied | `RagPipelines.cs` |
+| Resilience (in-house; Polly removed): retry+jitter, breaker, timeout (OpenAI, Qdrant, object storage) | Implemented, partially applied | `RagPipelines.cs` |
 | OpenTelemetry traces+metrics, Prometheus/Tempo/Grafana | Implemented | `RagTelemetry`, `OpenTelemetryExtensions`, `infra/` |
 | Health checks (live/ready) | Implemented (Api only) | `Rag.Api/Program.cs:90-94` |
 | Unit tests (72) / Testcontainers integration tests | Implemented | `tests/` |

@@ -52,9 +52,13 @@ public static class ServiceCollectionExtensions
 
         switch (Normalize(provider))
         {
+            // One S3 client for every S3-compatible store; "minio"/"seaweedfs" are accepted as aliases.
+            case "s3":
+            case "seaweedfs":
             case "minio":
-                services.Configure<MinioOptions>(configuration.GetSection("Minio"));
-                services.AddSingleton<IBlobStorage, MinioBlobStorage>();
+                services.Configure<S3Options>(configuration.GetSection("S3"));
+                services.AddSingleton<S3BlobStorage>();
+                services.AddSingleton<IBlobStorage>(sp => sp.GetRequiredService<S3BlobStorage>());
                 break;
 
             case "local":

@@ -132,5 +132,5 @@ sequenceDiagram
 
 1. `IndexVersion` yerine koleksiyonun chunk sayısını kullansaydık hangi senaryoda stale kalırdı? (Aynı sayıda chunk, farklı içerik.)
 2. Hybrid retrieval'da `Strategy="hybrid"` ve RRF `k` değeri anahtara girmezse hangi hata oluşur? Bunu kırmızı gösteren bir test yaz.
-3. Redis çökerse sorgunun yine de cevap vermesi için `VectorSearchService`'te cache çağrılarını nasıl izole edersin? Polly'nin hangi stratejisi uygun? (Bölüm 10)
+3. Redis çökerse sorgunun yine de cevap vermesi için `VectorSearchService`'te cache çağrılarını nasıl izole edersin? resilience katmanının hangi strateji (circuit breaker + fallback) uygun? (Bölüm 10)
 4. Cache stampede'i engellemek için single-flight (aynı anahtara tek hesaplama) tasarla; çok-instance'ta neden yetersiz kalır?

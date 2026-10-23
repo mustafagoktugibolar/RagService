@@ -2,6 +2,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Rag.Api.Health;
 using Rag.Core.Contracts;
 using Rag.Core.Extensions;
 using Rag.Core.Options;
@@ -65,8 +66,6 @@ try
     builder.Services.AddOpenApi();
 
     var qdrantOpts = builder.Configuration.GetSection("Qdrant").Get<QdrantOptions>() ?? new QdrantOptions();
-    var minioOpts = builder.Configuration.GetSection("Minio").Get<MinioOptions>() ?? new MinioOptions();
-    var minioScheme = minioOpts.WithSsl ? "https" : "http";
 
     builder.Services.AddHealthChecks()
         .AddUrlGroup(
@@ -74,9 +73,8 @@ try
             name: "qdrant",
             failureStatus: HealthStatus.Unhealthy,
             tags: ["ready"])
-        .AddUrlGroup(
-            new Uri($"{minioScheme}://{minioOpts.Endpoint}/minio/health/live"),
-            name: "minio",
+        .AddCheck<ObjectStorageHealthCheck>(
+            "object-storage",
             failureStatus: HealthStatus.Unhealthy,
             tags: ["ready"]);
 

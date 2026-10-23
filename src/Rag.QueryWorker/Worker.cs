@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
-using Polly.CircuitBreaker;
+using Rag.Core.Resilience;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using Rag.Core.Contracts;

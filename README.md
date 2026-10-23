@@ -11,7 +11,7 @@ sequenceDiagram
     participant S as WikipediaSeeder
     participant MQ as RabbitMQ<br/>rag.index
     participant IW as IndexWorker
-    participant MS as MinIO<br/>(rag-documents)
+    participant MS as Object storage<br/>(S3 API, rag-documents)
     participant RD as Redis<br/>(embedding cache)
     participant OAI as OpenAI<br/>text-embedding-3-small
     participant QD as Qdrant<br/>(vector store)
@@ -43,7 +43,7 @@ sequenceDiagram
         IW->>MQ: BasicAck
     else BrokenCircuitException
         IW->>MQ: BasicNack (requeue=true)
-    else Failure (after Polly retries)
+    else Failure (after retries)
         IW->>MQ: BasicNack (requeue=false)
         MQ->>DLQ: Route via rag.dlx exchange
     end
@@ -81,7 +81,7 @@ sequenceDiagram
         QW->>MQ: BasicAck
     else BrokenCircuitException
         QW->>MQ: BasicNack (requeue=true)
-    else Failure (after Polly retries)
+    else Failure (after retries)
         QW->>MQ: BasicNack (requeue=false)
         MQ->>DLQ: Route via rag.dlx exchange
     end
@@ -122,11 +122,11 @@ sequenceDiagram
 | `rag.api` | Dev/test REST API (Scalar UI at `/scalar/v1`) | 8080 |
 | `rag.indexworker` | Consumes `rag.index` queue, embeds and upserts documents | — |
 | `rag.queryworker` | Consumes `rag.query` queue, runs semantic search | — |
-| `rag.wikipedia-seeder` | One-shot seeder: downloads HuggingFace dataset → MinIO → RabbitMQ | — |
+| `rag.wikipedia-seeder` | One-shot seeder: downloads HuggingFace dataset → object storage (S3) → RabbitMQ | — |
 | `rabbitmq` | Message broker (management UI at `:15672`) | 5672 / 15672 |
 | `qdrant` | Vector database (gRPC `:6334`, HTTP `:6333`) | 6333 / 6334 |
 | `redis` | Embedding cache (append-only persistence) | 6379 |
-| `minio` | S3-compatible object storage (console at `:9001`) | 9000 / 9001 |
+| `seaweedfs` | S3-compatible object storage (S3 API `:8333`, master UI `:9333`) | 8333 / 9333 |
 | `tempo` | Distributed tracing backend (OTLP gRPC receiver) | 4317 / 3200 |
 | `prometheus` | Metrics scraping and storage | 9090 |
 | `grafana` | Observability UI (traces, metrics, dashboards) | 3000 |
@@ -139,9 +139,9 @@ src/
 ├── Rag.Core/               # Shared library: abstractions, services, providers, resilience
 │   ├── Abstractions/       # IBlobStorage, IEmbeddingProvider, IVectorStore, ITextExtractor, IChunker
 │   ├── Services/           # IndexDocumentService, VectorSearchService
-│   ├── Providers/          # OpenAI, AzureOpenAI, Qdrant, PgVector, MinIO, PDF/DOCX/text extractors
+│   ├── Providers/          # OpenAI, AzureOpenAI, Qdrant, PgVector, S3-compatible storage (SeaweedFS, MinIO, AWS S3, ...), PDF/DOCX/text extractors
 │   ├── Options/            # Typed config: RagOptions, EmbeddingCacheOptions, QdrantOptions, ...
-│   ├── Resilience/         # Polly pipelines (ExternalApi, Qdrant, Storage)
+│   ├── Resilience/         # In-house retry + circuit breaker + timeout pipelines (ExternalApi, Qdrant, Storage)
 │   ├── Telemetry/          # ActivitySource + Meters (rag.documents.indexed, rag.queries.executed, ...)
 │   └── Extensions/         # AddRagCore, AddBlobStorage, AddEmbeddingProvider, AddVectorStore
 ├── Rag.IndexWorker/        # BackgroundService consuming rag.index queue
@@ -150,20 +150,24 @@ src/
 └── Rag.WikipediaSeeder/    # One-shot console app seeding Wikipedia dataset
 ```
 
+## Object storage
+
+`IBlobStorage` has a single remote implementation, `S3BlobStorage` (official AWS SDK), so any S3-compatible store works by configuration only. The bundled `compose.yaml` runs **SeaweedFS**; to use MinIO, Ceph RGW, Cloudflare R2 or AWS S3, point the `S3__*` settings at it (`S3__SERVICEURL`, `S3__ACCESSKEY`, `S3__SECRETKEY`, `S3__FORCEPATHSTYLE=true` for self-hosted stores, `false` for AWS/R2). MinIO's Community Edition no longer publishes container images, so bring your own MinIO deployment. Azure Blob Storage would be a second `IBlobStorage` implementation selected via `Rag:StorageProvider`.
+
 ## Resilience
 
-Each external call is wrapped in a dedicated Polly pipeline:
+Each external call is wrapped in a dedicated resilience pipeline (retry → circuit breaker → per-attempt timeout; no third-party dependency):
 
 | Pipeline | Targets | Retry | Timeout |
 |---|---|---|---|
 | `ExternalApi` | OpenAI embeddings | 3× exponential backoff + jitter | 60s |
 | `Qdrant` | Vector store operations | 3× exponential backoff + jitter | 30s |
-| `Storage` | MinIO get/put | 3× exponential backoff + jitter | 30s |
+| `Storage` | S3 get/put/list | 3× exponential backoff + jitter | 30s |
 
 **Message acknowledgement:**
 - **Success** → `BasicAck`
 - **BrokenCircuitException** (circuit open, transient infra failure) → `BasicNack(requeue=true)` — message returns to queue and is retried automatically when the circuit closes
-- **Other failure** (after all Polly retries exhausted) → `BasicNack(requeue=false)` → routed to Dead Letter Queue via `rag.dlx` exchange
+- **Other failure** (after all retries exhausted) → `BasicNack(requeue=false)` → routed to Dead Letter Queue via `rag.dlx` exchange
 
 ## Observability
 
@@ -173,7 +177,7 @@ Each external call is wrapped in a dedicated Polly pipeline:
 | Distributed traces | OpenTelemetry → Tempo (OTLP gRPC) | `http://localhost:3000` (Grafana) |
 | Metrics | OpenTelemetry → Prometheus scrape | `http://localhost:3000` (Grafana) |
 | Health — liveness | Always 200 | `GET /health/live` |
-| Health — readiness | Checks Qdrant + MinIO | `GET /health/ready` |
+| Health — readiness | Checks Qdrant + object storage (one authenticated S3 call, store-agnostic) | `GET /health/ready` |
 
 Custom metrics:
 - `rag.documents.indexed` — counter, tagged by collection
@@ -189,7 +193,7 @@ Custom metrics:
 docker compose up -d
 ```
 
-**Seed the Wikipedia dataset** (downloads ~3200 passages from HuggingFace, uploads to MinIO, publishes to `rag.index` queue):
+**Seed the Wikipedia dataset** (downloads ~3200 passages from HuggingFace, uploads to object storage, publishes to `rag.index` queue):
 ```bash
 docker compose --profile seed run --rm rag.wikipedia-seeder
 ```
@@ -220,7 +224,7 @@ Key environment variables (see `.env.template`):
 ```env
 RAG__EMBEDDINGPROVIDER=OpenAI          # OpenAI | AzureOpenAI
 RAG__VECTORSTOREPROVIDER=Qdrant        # Qdrant | PgVector
-RAG__STORAGEPROVIDER=Minio             # Minio | Local
+RAG__STORAGEPROVIDER=S3                # S3 (SeaweedFS, MinIO, AWS S3, ...) | Local   ("Minio"/"SeaweedFS" accepted as aliases)
 RAG__VECTORSIZE=1536
 RAG__DEFAULTTOPK=5
 

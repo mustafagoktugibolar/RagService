@@ -16,7 +16,7 @@ public class ProviderTests : IClassFixture<IntegrationTestWebAppFactory>
     }
 
     [Fact]
-    public async Task MinioBlobStorage_UploadAndRead_Works()
+    public async Task BlobStorage_UploadAndRead_Works()
     {
         // Arrange
         using var scope = _factory.Services.CreateScope();

@@ -35,7 +35,7 @@ flowchart LR
       VS[IVectorStore<br/>Qdrant / PgVector]
       CH[IChunker]
       TX[ITextExtractor]
-      BL[IBlobStorage<br/>MinIO / Local]
+      BL[IBlobStorage<br/>S3-compatible / Local]
     end
     MQ[(RabbitMQ)]
     RD[(Redis)]
@@ -113,7 +113,7 @@ Index tarafı için kuyruk kesinlikle yerindedir. **Query tarafı için tartış
 
 | Senaryo | Sonuç | Nerede ele alınıyor |
 |---|---|---|
-| OpenAI down | Polly retry → breaker açılır → `BrokenCircuitException` → mesaj requeue | `RagPipelines.ExternalApi` |
+| OpenAI down | retry → breaker açılır → `BrokenCircuitException` → mesaj requeue | `RagPipelines.ExternalApi` |
 | Bozuk doküman | `Success=false` → DLQ | worker nack(requeue:false) |
 | Embedding modeli config'te değişti | Collection guard hata verir (sessiz bozulma yok) | `IsCompatible` |
 | Reindex sonrası eski sorgu cache'i | **Stale sonuç** (düzeltilecek, Faz 2) | Bölüm 8 |
@@ -123,7 +123,7 @@ Index tarafı için kuyruk kesinlikle yerindedir. **Query tarafı için tartış
 
 | Konu | Durum |
 |---|---|
-| Dense retrieval, filtre, cache, worker'lar, DLQ, Polly, OTel | ✅ Implemented |
+| Dense retrieval, filtre, cache, worker'lar, DLQ, resilience layer, OTel | ✅ Implemented |
 | Index version / cache doğruluğu | 🔵 Planned (Faz 2) |
 | Evaluation, hybrid, RRF, reranking, query rewriting | 🔵 Planned (Faz 3–6) |
 | `Rag.DefinitionSeeder` (`plan.md`) | 🔵 Planned, solution'da yok |

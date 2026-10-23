@@ -29,7 +29,7 @@ Her bölümün başında ve her kavramın yanında şu etiketlerden biri bulunur
 | 7 | [Retrieval Evaluation](07-retrieval-evaluation.md) | ✅ yazıldı (Faz 3) | Recall/Precision/MRR/nDCG/AP, golden dataset, harness, ilk baseline; quality gate 🔵 planned |
 | 8 | [Redis ve Caching](08-redis-caching.md) | ✅ yazıldı | Embedding cache, query cache, cache key, stale sorunu |
 | 9 | [Storage Sistemleri](09-storage-systems.md) | ⬜ | MinIO, Qdrant, PostgreSQL, persistent vs derived data |
-| 10 | [Resilience ve Observability](10-resilience-observability.md) | ⬜ | Polly, OpenTelemetry, Prometheus, Grafana, Tempo |
+| 10 | [Resilience ve Observability](10-resilience-observability.md) | ⬜ | Resilience katmanı (retry/breaker/timeout), OpenTelemetry, Prometheus, Grafana, Tempo |
 | 11 | [Docker ve Deployment](11-docker-deployment.md) | ⬜ | Dockerfile, compose, health check, secrets |
 | 12 | [Test ve Kalite](12-testing-quality.md) | ⬜ | Unit/integration, fake vs mock, deterministic retrieval testing |
 | 13 | [Güvenlik](13-security.md) | ⬜ | Prompt injection, retrieval authorization, filter validation |
