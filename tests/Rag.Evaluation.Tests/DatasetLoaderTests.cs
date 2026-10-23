@@ -85,4 +85,15 @@ public sealed class DatasetLoaderTests
         Assert.Equal("j1", dataset.DatasetVersion);
         Assert.Equal(2, dataset.Queries[0].RelevantDocuments[0].Grade);
     }
+
+    [Fact]
+    public void UnknownSplit_IsRejected()
+    {
+        var ex = Assert.Throws<DatasetValidationException>(() => DatasetLoader.Validate(Valid with
+        {
+            Queries = [Valid.Queries[1] with { Split = "dev" }]
+        }));
+
+        Assert.Contains(ex.Errors, e => e.Contains("unknown split 'dev'"));
+    }
 }

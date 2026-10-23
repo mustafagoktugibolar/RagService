@@ -1,5 +1,11 @@
 namespace Rag.Evaluation.Dataset;
 
+public static class Splits
+{
+    public const string Tune = "tune";
+    public const string HeldOut = "heldout";
+}
+
 /// <summary>A versioned, self-contained labeled dataset: the corpus to index plus judged queries.</summary>
 public sealed record EvalDataset
 {
@@ -32,6 +38,12 @@ public sealed record EvalQuery
     public string? Category { get; init; }
 
     public Dictionary<string, string>? Filters { get; init; }
+
+    /// <summary>
+    /// "tune" queries may be used to choose configuration; "heldout" queries are touched only to validate the chosen
+    /// configuration once. Null means unassigned (usable for neither purpose in a tuning protocol).
+    /// </summary>
+    public string? Split { get; init; }
 
     /// <summary>Graded document-level judgments. An empty list marks a deliberate no-answer query.</summary>
     public IReadOnlyList<RelevantDocument> RelevantDocuments { get; init; } = [];

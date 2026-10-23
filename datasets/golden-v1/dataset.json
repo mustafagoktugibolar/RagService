@@ -1,5 +1,5 @@
 {
-  "datasetVersion": "golden-v1.0.0",
+  "datasetVersion": "golden-v1.1.0",
   "name": "RagService technical notes (author-judged, single annotator)",
   "corpus": [
     {
@@ -253,6 +253,7 @@
       "id": "kw-01",
       "query": "x-dead-letter-exchange argument",
       "category": "keyword",
+      "split": "tune",
       "relevantDocuments": [
         {
           "documentId": "rabbitmq-dlq",
@@ -265,6 +266,7 @@
       "id": "kw-02",
       "query": "ef_construction",
       "category": "keyword",
+      "split": "heldout",
       "relevantDocuments": [
         {
           "documentId": "hnsw-index",
@@ -277,6 +279,7 @@
       "id": "kw-03",
       "query": "BasicNackAsync requeue",
       "category": "keyword",
+      "split": "tune",
       "relevantDocuments": [
         {
           "documentId": "rabbitmq-ack",
@@ -289,6 +292,7 @@
       "id": "kw-04",
       "query": "ivfflat lists probes",
       "category": "keyword",
+      "split": "heldout",
       "relevantDocuments": [
         {
           "documentId": "pgvector-indexes",
@@ -301,6 +305,7 @@
       "id": "kw-05",
       "query": "UseJitter",
       "category": "keyword",
+      "split": "tune",
       "relevantDocuments": [
         {
           "documentId": "polly-retry",
@@ -313,6 +318,7 @@
       "id": "kw-06",
       "query": "FailureRatio BrokenCircuitException",
       "category": "keyword",
+      "split": "heldout",
       "relevantDocuments": [
         {
           "documentId": "polly-circuit-breaker",
@@ -325,6 +331,7 @@
       "id": "kw-07",
       "query": "service_healthy depends_on",
       "category": "keyword",
+      "split": "tune",
       "relevantDocuments": [
         {
           "documentId": "compose-healthchecks",
@@ -337,6 +344,7 @@
       "id": "kw-08",
       "query": "ThrowIfCancellationRequested",
       "category": "keyword",
+      "split": "heldout",
       "relevantDocuments": [
         {
           "documentId": "dotnet-cancellation",
@@ -349,6 +357,7 @@
       "id": "kw-09",
       "query": "IServiceScopeFactory scoped services",
       "category": "keyword",
+      "split": "tune",
       "relevantDocuments": [
         {
           "documentId": "dotnet-backgroundservice",
@@ -361,6 +370,7 @@
       "id": "kw-10",
       "query": "BM25 k1 parameter",
       "category": "keyword",
+      "split": "heldout",
       "relevantDocuments": [
         {
           "documentId": "bm25",
@@ -373,6 +383,7 @@
       "id": "kw-11",
       "query": "allkeys-lru",
       "category": "keyword",
+      "split": "tune",
       "relevantDocuments": [
         {
           "documentId": "redis-eviction",
@@ -385,6 +396,7 @@
       "id": "kw-12",
       "query": "vector_cosine_ops",
       "category": "keyword",
+      "split": "heldout",
       "relevantDocuments": [
         {
           "documentId": "pgvector-indexes",
@@ -397,6 +409,7 @@
       "id": "kw-13",
       "query": "Qdrant gRPC port 6334",
       "category": "keyword",
+      "split": "tune",
       "relevantDocuments": [
         {
           "documentId": "qdrant-overview",
@@ -409,6 +422,7 @@
       "id": "kw-14",
       "query": "ActivitySource OTLP Tempo",
       "category": "keyword",
+      "split": "heldout",
       "relevantDocuments": [
         {
           "documentId": "otel-tracing",
@@ -425,6 +439,7 @@
       "id": "pa-01",
       "query": "what happens to messages that keep failing forever",
       "category": "paraphrase",
+      "split": "tune",
       "relevantDocuments": [
         {
           "documentId": "rabbitmq-dlq",
@@ -441,6 +456,7 @@
       "id": "pa-02",
       "query": "how do I stop a slow worker from being flooded",
       "category": "paraphrase",
+      "split": "heldout",
       "relevantDocuments": [
         {
           "documentId": "rabbitmq-prefetch",
@@ -453,6 +469,7 @@
       "id": "pa-03",
       "query": "why can the same job run twice and how to make that harmless",
       "category": "paraphrase",
+      "split": "tune",
       "relevantDocuments": [
         {
           "documentId": "rabbitmq-idempotency",
@@ -470,6 +487,7 @@
       "id": "pa-04",
       "query": "finding similar items without checking every single one",
       "category": "paraphrase",
+      "split": "heldout",
       "relevantDocuments": [
         {
           "documentId": "hnsw-index",
@@ -486,6 +504,7 @@
       "id": "pa-05",
       "query": "comparing direction of two embeddings regardless of text length",
       "category": "paraphrase",
+      "split": "tune",
       "relevantDocuments": [
         {
           "documentId": "cosine-similarity",
@@ -498,6 +517,7 @@
       "id": "pa-06",
       "query": "combining two ranked result lists without comparing their scores",
       "category": "paraphrase",
+      "split": "heldout",
       "relevantDocuments": [
         {
           "documentId": "rrf",
@@ -515,6 +535,7 @@
       "id": "pa-07",
       "query": "a second more precise model that re-orders the shortlist",
       "category": "paraphrase",
+      "split": "tune",
       "relevantDocuments": [
         {
           "documentId": "cross-encoder-reranking",
@@ -527,6 +548,7 @@
       "id": "pa-08",
       "query": "having a language model guess an answer and searching with that guess",
       "category": "paraphrase",
+      "split": "heldout",
       "relevantDocuments": [
         {
           "documentId": "hyde",
@@ -539,6 +561,7 @@
       "id": "pa-09",
       "query": "turn a chat follow-up into a standalone search question",
       "category": "paraphrase",
+      "split": "tune",
       "relevantDocuments": [
         {
           "documentId": "query-rewriting",
@@ -551,6 +574,7 @@
       "id": "pa-10",
       "query": "waiting longer between attempts so a struggling service can recover",
       "category": "paraphrase",
+      "split": "heldout",
       "relevantDocuments": [
         {
           "documentId": "polly-retry",
@@ -567,6 +591,7 @@
       "id": "pa-11",
       "query": "stop calling a dependency that is clearly down",
       "category": "paraphrase",
+      "split": "tune",
       "relevantDocuments": [
         {
           "documentId": "polly-circuit-breaker",
@@ -579,6 +604,7 @@
       "id": "pa-12",
       "query": "shrinking the container image that ships to production",
       "category": "paraphrase",
+      "split": "heldout",
       "relevantDocuments": [
         {
           "documentId": "docker-multistage",
@@ -591,6 +617,7 @@
       "id": "pa-13",
       "query": "make sure the database accepts connections before the app starts",
       "category": "paraphrase",
+      "split": "tune",
       "relevantDocuments": [
         {
           "documentId": "compose-healthchecks",
@@ -603,6 +630,7 @@
       "id": "pa-14",
       "query": "grading a ranked list higher when the best item is on top",
       "category": "paraphrase",
+      "split": "heldout",
       "relevantDocuments": [
         {
           "documentId": "ndcg",
@@ -615,6 +643,7 @@
       "id": "pa-15",
       "query": "text that tries to hijack the assistant",
       "category": "paraphrase",
+      "split": "tune",
       "relevantDocuments": [
         {
           "documentId": "prompt-injection",
@@ -627,6 +656,7 @@
       "id": "pa-16",
       "query": "why answers stay wrong after documents were re-uploaded",
       "category": "paraphrase",
+      "split": "heldout",
       "relevantDocuments": [
         {
           "documentId": "cache-keys",
@@ -643,6 +673,7 @@
       "id": "mr-01",
       "query": "reduce the cost of calling the embedding API",
       "category": "multi-relevant",
+      "split": "tune",
       "relevantDocuments": [
         {
           "documentId": "embedding-cache",
@@ -664,6 +695,7 @@
       "id": "mr-02",
       "query": "improve recall of dense search for short queries",
       "category": "multi-relevant",
+      "split": "heldout",
       "relevantDocuments": [
         {
           "documentId": "hyde",
@@ -685,6 +717,7 @@
       "id": "mr-03",
       "query": "how are chunks sized and overlapped before embedding",
       "category": "multi-relevant",
+      "split": "tune",
       "relevantDocuments": [
         {
           "documentId": "chunking-fixed",
@@ -705,6 +738,7 @@
       "id": "mr-04",
       "query": "observing a distributed request with traces and metrics",
       "category": "multi-relevant",
+      "split": "heldout",
       "relevantDocuments": [
         {
           "documentId": "otel-tracing",
@@ -724,6 +758,7 @@
       "id": "mr-05",
       "query": "handling transient failures when calling external services",
       "category": "multi-relevant",
+      "split": "tune",
       "relevantDocuments": [
         {
           "documentId": "polly-retry",
@@ -743,6 +778,7 @@
       "id": "mr-06",
       "query": "combine lexical and semantic retrieval",
       "category": "multi-relevant",
+      "split": "heldout",
       "relevantDocuments": [
         {
           "documentId": "hybrid-search",
@@ -763,6 +799,7 @@
       "id": "mr-07",
       "query": "reliable message processing with duplicate delivery",
       "category": "multi-relevant",
+      "split": "tune",
       "relevantDocuments": [
         {
           "documentId": "rabbitmq-ack",
@@ -782,6 +819,7 @@
       "id": "co-01",
       "query": "why approximate nearest neighbour search can miss the true best match",
       "category": "conceptual",
+      "split": "tune",
       "relevantDocuments": [
         {
           "documentId": "hnsw-index",
@@ -798,6 +836,7 @@
       "id": "co-02",
       "query": "restricting vector search to documents with a given attribute",
       "category": "conceptual",
+      "split": "heldout",
       "relevantDocuments": [
         {
           "documentId": "qdrant-filtering",
@@ -814,6 +853,7 @@
       "id": "co-03",
       "query": "which distance function to choose for normalised embeddings",
       "category": "conceptual",
+      "split": "tune",
       "relevantDocuments": [
         {
           "documentId": "distance-metrics",
@@ -831,24 +871,28 @@
       "id": "na-01",
       "query": "how do I bake sourdough bread at home",
       "category": "no-answer",
+      "split": "tune",
       "relevantDocuments": []
     },
     {
       "id": "na-02",
       "query": "what is the capital city of Australia",
       "category": "no-answer",
+      "split": "heldout",
       "relevantDocuments": []
     },
     {
       "id": "na-03",
       "query": "CUDA kernel fusion on a GPU",
       "category": "no-answer",
+      "split": "tune",
       "relevantDocuments": []
     },
     {
       "id": "na-04",
       "query": "history of the Ottoman Empire",
       "category": "no-answer",
+      "split": "heldout",
       "relevantDocuments": []
     }
   ]

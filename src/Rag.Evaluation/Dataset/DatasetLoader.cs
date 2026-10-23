@@ -79,6 +79,11 @@ public static class DatasetLoader
                 errors.Add($"Query '{query.Id}' has no text.");
             }
 
+            if (query.Split is not null && query.Split is not (Splits.Tune or Splits.HeldOut))
+            {
+                errors.Add($"Query '{query.Id}' has unknown split '{query.Split}' (use '{Splits.Tune}' or '{Splits.HeldOut}').");
+            }
+
             var judged = new HashSet<string>(StringComparer.Ordinal);
             foreach (var relevant in query.RelevantDocuments)
             {
