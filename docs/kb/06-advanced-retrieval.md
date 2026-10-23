@@ -173,6 +173,8 @@ K=1'de nDCG: dense **0.832**, hybrid 0.768. Paraphrase kategorisinde K=10 nDCG: 
 
 **Bu ölçüm neyi kanıtlamaz:** 40 puanlanan sorgu, tek anotatör, 35 kısa doküman — ve doküman metinleri çoğunlukla düzyazı; çok sayıda kod/identifier içeren bir corpus lexical'e daha çok yer açabilir. Tek sorgu ±0.025 oynatır; güven aralığı hesaplanmadı. Lexical ağırlığı **ayarlanmadı**: aynı 40 sorguda ayar yapmak overfitting olur, önce held-out ayrımı gerekir.
 
+**3) Tuning + held-out (ölçüm disiplini, Bölüm 7 §7.7c):** lexical ağırlığı, RRF k ve aday sayısı 36 konfigürasyonluk bir gridde **yalnız tune setinde** arandı. Seçilen (0.5 / k=30 / 20 aday) tune setinde dense'i sadece 0.006 geçti; **held-out'ta nDCG@10 dense 0.861, hybrid 0.785 (fark −0.076, %95 aralık [−0.155, −0.010])**. Önceden yazılmış kabul kuralının üç koşulu da başarısız: hybrid kabul edilmedi. Yani ayarlama da hybrid'i kurtarmadı.
+
 **Ders (mülakat için):** Sentetik/yetersiz bir bileşenle alınan olumlu sonuç, gerçek bileşenle tersine dönebilir. Bu yüzden "kapalı varsayılan + ölçüm kapısı" yaklaşımı pahalı bir hatayı önledi.
 
 ## 6.9 Planlanan: reranking, query rewriting, HyDE, parent-child (henüz uygulanmadı)

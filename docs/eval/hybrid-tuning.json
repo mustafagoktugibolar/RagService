@@ -1,0 +1,417 @@
+{
+  "datasetVersion": "golden-v1.1.0",
+  "tuneQueries": 23,
+  "heldOutQueries": 21,
+  "denseOnTune": {
+    "config": {
+      "lexicalWeight": 0,
+      "rrfK": 0,
+      "candidateK": 0
+    },
+    "ndcg10": 0.9400821480976299,
+    "ndcg5": 0.9216964768297993
+  },
+  "defaultHybridOnTune": {
+    "config": {
+      "lexicalWeight": 1,
+      "rrfK": 60,
+      "candidateK": 50
+    },
+    "ndcg10": 0.941837357188466,
+    "ndcg5": 0.9193829124041829
+  },
+  "grid": [
+    {
+      "config": {
+        "lexicalWeight": 0.25,
+        "rrfK": 10,
+        "candidateK": 10
+      },
+      "ndcg10": 0.9399728147146024,
+      "ndcg5": 0.936417967326347
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.25,
+        "rrfK": 10,
+        "candidateK": 20
+      },
+      "ndcg10": 0.9399728147146024,
+      "ndcg5": 0.936417967326347
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.25,
+        "rrfK": 10,
+        "candidateK": 50
+      },
+      "ndcg10": 0.9399728147146024,
+      "ndcg5": 0.936417967326347
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.25,
+        "rrfK": 30,
+        "candidateK": 10
+      },
+      "ndcg10": 0.9420761199838319,
+      "ndcg5": 0.9385212725955764
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.25,
+        "rrfK": 30,
+        "candidateK": 20
+      },
+      "ndcg10": 0.9439019664150805,
+      "ndcg5": 0.9385212725955764
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.25,
+        "rrfK": 30,
+        "candidateK": 50
+      },
+      "ndcg10": 0.9439019664150805,
+      "ndcg5": 0.9385212725955764
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.25,
+        "rrfK": 60,
+        "candidateK": 10
+      },
+      "ndcg10": 0.9420761199838319,
+      "ndcg5": 0.9385212725955764
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.25,
+        "rrfK": 60,
+        "candidateK": 20
+      },
+      "ndcg10": 0.9440134703747154,
+      "ndcg5": 0.9385212725955764
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.25,
+        "rrfK": 60,
+        "candidateK": 50
+      },
+      "ndcg10": 0.9440134703747154,
+      "ndcg5": 0.9385212725955764
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.5,
+        "rrfK": 10,
+        "candidateK": 10
+      },
+      "ndcg10": 0.9440674614257654,
+      "ndcg5": 0.9405126140375099
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.5,
+        "rrfK": 10,
+        "candidateK": 20
+      },
+      "ndcg10": 0.945893307857014,
+      "ndcg5": 0.9405126140375099
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.5,
+        "rrfK": 10,
+        "candidateK": 50
+      },
+      "ndcg10": 0.945893307857014,
+      "ndcg5": 0.9405126140375099
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.5,
+        "rrfK": 30,
+        "candidateK": 10
+      },
+      "ndcg10": 0.9440674614257654,
+      "ndcg5": 0.9405126140375099
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.5,
+        "rrfK": 30,
+        "candidateK": 20
+      },
+      "ndcg10": 0.9460048118166489,
+      "ndcg5": 0.9405126140375099
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.5,
+        "rrfK": 30,
+        "candidateK": 50
+      },
+      "ndcg10": 0.9455201192278446,
+      "ndcg5": 0.9400279214487055
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.5,
+        "rrfK": 60,
+        "candidateK": 10
+      },
+      "ndcg10": 0.9440674614257654,
+      "ndcg5": 0.9405126140375099
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.5,
+        "rrfK": 60,
+        "candidateK": 20
+      },
+      "ndcg10": 0.9460048118166489,
+      "ndcg5": 0.9405126140375099
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.5,
+        "rrfK": 60,
+        "candidateK": 50
+      },
+      "ndcg10": 0.9455201192278446,
+      "ndcg5": 0.9400279214487055
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.75,
+        "rrfK": 10,
+        "candidateK": 10
+      },
+      "ndcg10": 0.9403846993863865,
+      "ndcg5": 0.9198676049929873
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.75,
+        "rrfK": 10,
+        "candidateK": 20
+      },
+      "ndcg10": 0.9422105458176353,
+      "ndcg5": 0.9198676049929873
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.75,
+        "rrfK": 10,
+        "candidateK": 50
+      },
+      "ndcg10": 0.9416357757004421,
+      "ndcg5": 0.9193829124041829
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.75,
+        "rrfK": 30,
+        "candidateK": 10
+      },
+      "ndcg10": 0.9418440146305065,
+      "ndcg5": 0.9382891672422511
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.75,
+        "rrfK": 30,
+        "candidateK": 20
+      },
+      "ndcg10": 0.9437813650213901,
+      "ndcg5": 0.9382891672422511
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.75,
+        "rrfK": 30,
+        "candidateK": 50
+      },
+      "ndcg10": 0.9432966724325857,
+      "ndcg5": 0.9378044746534467
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.75,
+        "rrfK": 60,
+        "candidateK": 10
+      },
+      "ndcg10": 0.9418440146305065,
+      "ndcg5": 0.9382891672422511
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.75,
+        "rrfK": 60,
+        "candidateK": 20
+      },
+      "ndcg10": 0.9437813650213901,
+      "ndcg5": 0.9382891672422511
+    },
+    {
+      "config": {
+        "lexicalWeight": 0.75,
+        "rrfK": 60,
+        "candidateK": 50
+      },
+      "ndcg10": 0.9432966724325857,
+      "ndcg5": 0.9378044746534467
+    },
+    {
+      "config": {
+        "lexicalWeight": 1,
+        "rrfK": 10,
+        "candidateK": 10
+      },
+      "ndcg10": 0.9397572678172347,
+      "ndcg5": 0.9193829124041829
+    },
+    {
+      "config": {
+        "lexicalWeight": 1,
+        "rrfK": 10,
+        "candidateK": 20
+      },
+      "ndcg10": 0.941837357188466,
+      "ndcg5": 0.9193829124041829
+    },
+    {
+      "config": {
+        "lexicalWeight": 1,
+        "rrfK": 10,
+        "candidateK": 50
+      },
+      "ndcg10": 0.941725853228831,
+      "ndcg5": 0.9193829124041829
+    },
+    {
+      "config": {
+        "lexicalWeight": 1,
+        "rrfK": 30,
+        "candidateK": 10
+      },
+      "ndcg10": 0.9397572678172347,
+      "ndcg5": 0.9193829124041829
+    },
+    {
+      "config": {
+        "lexicalWeight": 1,
+        "rrfK": 30,
+        "candidateK": 20
+      },
+      "ndcg10": 0.941837357188466,
+      "ndcg5": 0.9193829124041829
+    },
+    {
+      "config": {
+        "lexicalWeight": 1,
+        "rrfK": 30,
+        "candidateK": 50
+      },
+      "ndcg10": 0.941837357188466,
+      "ndcg5": 0.9193829124041829
+    },
+    {
+      "config": {
+        "lexicalWeight": 1,
+        "rrfK": 60,
+        "candidateK": 10
+      },
+      "ndcg10": 0.9397572678172347,
+      "ndcg5": 0.9193829124041829
+    },
+    {
+      "config": {
+        "lexicalWeight": 1,
+        "rrfK": 60,
+        "candidateK": 20
+      },
+      "ndcg10": 0.941837357188466,
+      "ndcg5": 0.9193829124041829
+    },
+    {
+      "config": {
+        "lexicalWeight": 1,
+        "rrfK": 60,
+        "candidateK": 50
+      },
+      "ndcg10": 0.941837357188466,
+      "ndcg5": 0.9193829124041829
+    }
+  ],
+  "selected": {
+    "lexicalWeight": 0.5,
+    "rrfK": 30,
+    "candidateK": 20
+  },
+  "heldOut": {
+    "hybrid": {
+      "lexicalWeight": 0.5,
+      "rrfK": 30,
+      "candidateK": 20
+    },
+    "dense": {
+      "hit": 1,
+      "precision": 0.1473684210526316,
+      "recall": 0.9298245614035089,
+      "mrr": 0.8771929824561402,
+      "ndcg": 0.8609680654263756,
+      "map": 0.8070175438596492
+    },
+    "hybridMetrics": {
+      "hit": 1,
+      "precision": 0.15263157894736845,
+      "recall": 0.9561403508771931,
+      "mrr": 0.7982456140350878,
+      "ndcg": 0.7851835691206117,
+      "map": 0.7296783625730994
+    },
+    "ndcg10Difference": {
+      "meanDifference": -0.07578449630576395,
+      "lower": -0.15472055519600003,
+      "upper": -0.010360696150543443,
+      "samples": 19
+    },
+    "ndcg1Difference": {
+      "meanDifference": -0.13533834586466165,
+      "lower": -0.2932330827067669,
+      "upper": 0,
+      "samples": 19
+    },
+    "categories": {
+      "conceptual": {
+        "queries": 1,
+        "denseNdcg10": 0.6182127765566526,
+        "hybridNdcg10": 0.4417473627042749
+      },
+      "keyword": {
+        "queries": 7,
+        "denseNdcg10": 0.9472756790816368,
+        "hybridNdcg10": 0.9472756790816368
+      },
+      "multi-relevant": {
+        "queries": 3,
+        "denseNdcg10": 0.7610853371207442,
+        "hybridNdcg10": 0.7543521980931981
+      },
+      "paraphrase": {
+        "queries": 8,
+        "denseNdcg10": 0.8532493377013495,
+        "hybridNdcg10": 0.6978442628420372
+      }
+    },
+    "verdict": {
+      "intervalLowerBoundAboveZero": false,
+      "topRankNotWorse": false,
+      "noLargeCategoryLoss": false,
+      "candidate": false
+    }
+  }
+}

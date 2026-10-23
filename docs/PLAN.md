@@ -80,7 +80,8 @@ Companion docs: [ASSESSMENT.md](ASSESSMENT.md) · [Knowledge Base](kb/README.md)
 - [x] Offline BM25 leg + `--strategy` CLI; dense/lexical/hybrid comparison recorded in `docs/eval/phase4-hybrid-comparison.md`
 - [ ] **PgVector lexical leg (`tsvector`)** — not built; hybrid on Pg falls back to dense (tested at service level with a dense-only fake, not against Postgres)
 - [x] Real-embedder comparison done (`real-dense/lexical/hybrid`): **hybrid is worse than dense on golden-v1** (document nDCG@10 0.857 vs 0.903; nDCG@1 0.768 vs 0.832). Hybrid stays off by default — the evidence is negative, not merely missing
-- [ ] Lexical weight / RRF k sensitivity — not run; needs a held-out split first (tuning on the same 40 queries would overfit)
+- [x] Lexical weight / RRF k / candidate-count tuning with a held-out check, following the pre-registered protocol (`docs/eval/protocol-hybrid-tuning.md`, committed before any result): selected config (0.5 / k=30 / 20 cand.) beat dense on the tuning split by only 0.006 nDCG@10 and was **worse on the held-out split** (−0.076, 95 % bootstrap interval [−0.155, −0.010]); all three adoption conditions failed → hybrid not adopted (`docs/eval/hybrid-tuning.md`)
+- [ ] Re-test hybrid candidate sets after a reranker exists (a reranker may rescue extra recall from hybrid) — Phase 5
 - [ ] Capability cache per collection (a legacy Qdrant collection costs one failing lexical RPC per hybrid query)
 **Findings that changed the design**
 - Qdrant (version used in tests) cannot add a sparse vector to an existing collection → legacy collections stay dense-only; enabling lexical/hybrid needs a new collection + reindex. Indexing into legacy collections keeps working.
@@ -115,6 +116,7 @@ Perf pass, README/KB/plan consistency, doc reference checker, diagram accuracy c
 | 2026-10-24 | 4 | RRF, retriever layer, strategy/capability model, filter allow-list, Qdrant sparse lexical leg (real container), offline BM25 + comparison; 166 unit + 12 integration tests |
 | 2026-10-24 | 4 | **Discovery:** Qdrant cannot add a sparse vector to an existing collection; first design (in-place upgrade) was disproved by a failing integration test and replaced by "legacy collections stay dense-only" |
 | 2026-10-24 | 3/4 | Real-embedder runs (`text-embedding-3-small`): dense nDCG@10 0.903, lexical 0.787, hybrid 0.857 — hybrid not adopted |
+| 2026-10-24 | 4 | Dataset `golden-v1.1.0` (tune/heldout split), pre-registered protocol, paired bootstrap, tuning run: hybrid fails all three adoption conditions on held-out |
 | 2026-10-24 | coord | The in-house resilience layer (replacing Polly) landed in commits `066182a`/`f128474`; full suite green afterwards |
 | 2026-10-24 | env | Pre-existing: `IntegrationTestWebAppFactory` fails to start here (`minio/minio` pull denied) → 6 of the older integration tests cannot run in this environment; unrelated to Phase 2 |
 

@@ -141,6 +141,33 @@ Document-level, `text-embedding-3-small`, chunk 1000/200:
 
 Sentetik baseline ile (K=10 nDCG 0.717) kıyaslayınca gerçek model belirgin biçimde daha iyi, özellikle paraphrase kategorisinde (nDCG 0.568 → 0.871). Bu, sentetik koşunun neden sadece "harness testi" olduğunun kanıtıdır. **Bu, ileride karşılaştırılacak gerçek referanstır.** Aynı sınırlar geçerli: 40 sorgu, tek anotatör.
 
+## 7.7c Tuning disiplini: tune / held-out ayrımı, önceden kayıt, bootstrap
+
+Bir konfigürasyonu aynı sorgularda hem seçip hem "kanıtlamak" yanıltıcıdır. Bu repoda hybrid ayarı şu sırayla yapıldı (`docs/eval/protocol-hybrid-tuning.md`):
+
+1. **Split, sonuçlara bakmadan sabitlendi:** kategori içinde id sırasına göre çift pozisyon → `tune`, tek → `heldout` (puanlanan sorgu: 21 / 19).
+2. **Protokol, kod ve sonuçtan önce commit'lendi:** arama uzayı (36 konfigürasyon), seçim sırası, istatistik ve **kabul kuralı** yazılıp commit'lendi. Sonuca bakıp kuralı oynamak mümkün olmasın diye.
+3. **Seçim yalnız tune setinde** yapıldı (nDCG@10 ↓, nDCG@5 ↓, daha küçük aday sayısı…).
+4. **Held-out bir kez** okundu: dense vs seçilen hybrid, **paired bootstrap** (10 000 yeniden örnekleme, sabit seed, %95 aralık).
+5. **Kabul kuralı:** (a) aralığın alt sınırı > 0, (b) nDCG@1 farkı ≥ 0, (c) ≥3 sorgulu hiçbir kategori 0.05'ten fazla kaybetmesin.
+
+**Neden paired bootstrap?** Aynı sorgular iki sistemde de koştuğu için her sorgunun farkı (hybrid − dense) alınır; sorgular yerine konarak çekilip ortalama fark yeniden hesaplanır. Aralık, "başka benzer sorgular gelseydi bu fark ne kadar oynardı" sorusunu yanıtlar. Küçük örneklemde tek sorguluk şans eseri farkları eler.
+
+**Kabul kuralındaki bir hata testle yakalandı:** `0.75 − 0.80` kayan noktada `−0.05000000000000004` verir; tam sınırdaki kayıp yanlışlıkla reddediliyordu. Karşılaştırma 6 basamağa yuvarlandı. Ders: eşik karşılaştırmaları kayan nokta hatasına açıktır, sınır değerini ayrı test et.
+
+**Sonuç (`docs/eval/hybrid-tuning.md`):**
+
+| | tune nDCG@10 | held-out nDCG@10 |
+|---|---:|---:|
+| dense | 0.940 | **0.861** |
+| tuned hybrid (ağırlık 0.5, k=30, 20 aday) | 0.946 | 0.785 |
+
+- Tune setinde seçilen konfigürasyon dense'i yalnız **0.006** geçti; 36 deneme arasından en iyiyi seçmenin **winner's curse**'ü (iyimser sapma) tam bu.
+- Held-out farkı **−0.076**, %95 aralık **[−0.155, −0.010]**: sıfırı dışarıda bırakan *negatif* aralık, yani sadece "kanıt yok" değil, **zarar kanıtı**. En çok paraphrase kaybetti (−0.155). Üç kabul koşulu da başarısız → hybrid kabul edilmedi.
+- Dense'in kendi skoru bile iki set arasında 0.940 → 0.861 oynadı: bu, 19–21 sorguluk setlerin gürültüsünün somut ölçüsü.
+
+**Sınırlar:** held-out 19 sorgu, tek anotatör; aralık geniş. Sonuç "hybrid bu corpus'ta işe yaramıyor" demek için yeterince tutarlı ama "hybrid asla işe yaramaz" demek için yetersiz. Reranking sonrası yeniden test planlı.
+
 ## 7.8 Ne ters gidebilir?
 
 | Risk | Açıklama / önlem |
