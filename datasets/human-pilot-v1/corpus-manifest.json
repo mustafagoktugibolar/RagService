@@ -1,0 +1,147 @@
+{
+  "corpusVersion": "human-pilot-corpus-v1",
+  "sourceCommit": "04e616f8c66f6ca929545c908c02dfafb1e57e44",
+  "chunking": {
+    "chunkSize": 250,
+    "chunkOverlap": 40,
+    "tokenizerModel": "text-embedding-3-small"
+  },
+  "files": [
+    {
+      "path": "README.md",
+      "documentId": "readme",
+      "sha256": "DE60FD496ECB3BA41734F5A78C3D1FB5BC8D676108968A037BDF910FF13546B3",
+      "bytes": 9535,
+      "language": "en",
+      "includedBecause": "project overview"
+    },
+    {
+      "path": "docs/ASSESSMENT.md",
+      "documentId": "assessment",
+      "sha256": "EFE2BA8AA84929B6E9369AC04DE88D819BCD0BEBF2D08B30D2FC3B08CE04D4F2",
+      "bytes": 7566,
+      "language": "en",
+      "includedBecause": "architecture assessment"
+    },
+    {
+      "path": "docs/kb/README.md",
+      "documentId": "kb-readme",
+      "sha256": "D4ECB1932FA51CAA5BE3CB35DBCCF633BBF7905BE19DF7BB400324DB9E461677",
+      "bytes": 4091,
+      "language": "tr",
+      "includedBecause": "knowledge base index"
+    },
+    {
+      "path": "docs/kb/01-system-architecture.md",
+      "documentId": "kb-01-system-architecture",
+      "sha256": "C9D4EE4F00F065FB5228CE3599EEB88B4A9315385C0546A3B84059C22F5AAED7",
+      "bytes": 8715,
+      "language": "tr",
+      "includedBecause": "technical documentation (Turkish)"
+    },
+    {
+      "path": "docs/kb/06-advanced-retrieval.md",
+      "documentId": "kb-06-advanced-retrieval",
+      "sha256": "C3CDDAEF55473BB175D7588742683199032283450F91D1E63A12F08D878593EC",
+      "bytes": 17964,
+      "language": "tr",
+      "includedBecause": "technical documentation (Turkish)"
+    },
+    {
+      "path": "docs/kb/06b-reranking.md",
+      "documentId": "kb-06b-reranking",
+      "sha256": "9E032920EDFC73F7127E0A2E3EA21CBB29FF672D40624A802D634AAF938AF9D3",
+      "bytes": 31245,
+      "language": "tr",
+      "includedBecause": "technical documentation (Turkish)"
+    },
+    {
+      "path": "docs/kb/07-retrieval-evaluation.md",
+      "documentId": "kb-07-retrieval-evaluation",
+      "sha256": "6EAFCCE157DFC5872AC68F4FC8E5D5D72DA0D69C06822F87A0F2608D76168633",
+      "bytes": 24407,
+      "language": "tr",
+      "includedBecause": "technical documentation (Turkish)"
+    },
+    {
+      "path": "docs/kb/08-redis-caching.md",
+      "documentId": "kb-08-redis-caching",
+      "sha256": "E00B06782A085E110FCDD1620E37716BB55FECFBC335E4D604974E7D5AA88324",
+      "bytes": 10603,
+      "language": "tr",
+      "includedBecause": "technical documentation (Turkish)"
+    },
+    {
+      "path": "docs/adr/0001-hybrid-search-not-default.md",
+      "documentId": "adr-0001-hybrid-search-not-default",
+      "sha256": "8E1DD408DBD87873EDF7C9B36A2E02CC30B28D0AE11C9A601F5B07870EFA12A4",
+      "bytes": 1466,
+      "language": "en",
+      "includedBecause": "architecture decision record"
+    },
+    {
+      "path": "docs/adr/0002-index-versioned-query-cache.md",
+      "documentId": "adr-0002-index-versioned-query-cache",
+      "sha256": "234ED813BC9DF08ABD5100E343B6487F349216F611C497DAC7ED5597F3FD0E5B",
+      "bytes": 1039,
+      "language": "en",
+      "includedBecause": "architecture decision record"
+    },
+    {
+      "path": "docs/adr/0003-reranking-provider-abstraction.md",
+      "documentId": "adr-0003-reranking-provider-abstraction",
+      "sha256": "95EABD975564347620A0F393DF1750257950D1F5CFF89C13E7BEF820980CE822",
+      "bytes": 4366,
+      "language": "en",
+      "includedBecause": "architecture decision record"
+    },
+    {
+      "path": "docs/research/reranking-providers.md",
+      "documentId": "research-reranking-providers",
+      "sha256": "E6FBE51D14A573C090B6F4AD84DF1BA556E83D432D9E26CB24247C6088D329AD",
+      "bytes": 9892,
+      "language": "en",
+      "includedBecause": "provider research notes"
+    }
+  ],
+  "excluded": [
+    {
+      "path": "plan.md",
+      "reason": "company-specific Definition Seeder plan; may carry proprietary names and domain details"
+    },
+    {
+      "path": ".env / .env.template",
+      "reason": "credentials and default passwords"
+    },
+    {
+      "path": "docs/PLAN.md",
+      "reason": "living document that changes with the work under evaluation"
+    },
+    {
+      "path": "docs/eval/**",
+      "reason": "generated reports and protocols about the experiments themselves: circular, and they change"
+    },
+    {
+      "path": "datasets/**",
+      "reason": "evaluation data"
+    },
+    {
+      "path": "src/** and tests/**",
+      "reason": "source code is out of scope for this pilot (a possible later growth of the corpus)"
+    },
+    {
+      "path": "compose*.yaml, infra/**, Dockerfiles",
+      "reason": "deployment files with default credentials"
+    },
+    {
+      "path": "models/**",
+      "reason": "downloaded model files"
+    }
+  ],
+  "chunkCount": 213,
+  "safety": {
+    "scanner": "SafetyScanner: clean",
+    "findings": 0,
+    "ownerSignoff": null
+  }
+}
