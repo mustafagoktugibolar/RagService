@@ -118,7 +118,7 @@ public sealed class OpenAiDecisionsReranker : ProviderReranker
             ReadInt(usage?["input_tokens"]),
             ReadInt(usage?["input_tokens_details"]?["cached_tokens"]),
             ReadInt(usage?["output_tokens"]),
-            ResolvedModel: null);
+            ResolvedModel: (json["model"] as JsonValue)?.TryGetValue<string>(out var model) == true ? model : null);   // recorded when the response carries one
     }
 
     internal static double? ReadNumber(JsonNode? node) =>

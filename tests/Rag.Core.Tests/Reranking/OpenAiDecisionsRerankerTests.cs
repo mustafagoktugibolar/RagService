@@ -436,4 +436,22 @@ public sealed class OpenAiDecisionsRerankerTests
         Assert.Empty(await Build(handler).RerankAsync("q", [], CancellationToken.None));
         Assert.Empty(handler.Calls);
     }
+
+    [Fact]
+    public async Task AResolvedModel_IsRecorded_WhenTheResponseCarriesOne_AndNullWhenItDoesNot()
+    {
+        var withModel = JsonNode.Parse(Answers([3, 2, 1]))!.AsObject();
+        withModel["model"] = "gpt-6-luna-2026-10-01";
+        var handler = new ScriptedHandler().Reply(HttpStatusCode.OK, withModel.ToJsonString());
+        var reranker = Build(handler);
+
+        await reranker.RerankAsync("q", Three, CancellationToken.None);
+
+        Assert.Equal("gpt-6-luna-2026-10-01", reranker.Usage.ResolvedModel);
+
+        var without = new ScriptedHandler().Reply(HttpStatusCode.OK, Answers([3, 2, 1]));
+        var other = Build(without);
+        await other.RerankAsync("q", Three, CancellationToken.None);
+        Assert.Null(other.Usage.ResolvedModel);
+    }
 }
