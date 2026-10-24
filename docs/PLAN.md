@@ -106,7 +106,7 @@ Companion docs: [ASSESSMENT.md](ASSESSMENT.md) · [Knowledge Base](kb/README.md)
 - [x] Budget-10 diagnostic arm (0 live requests): hybrid candidates differ from dense at this budget (42 hybrid-only pairs in 21/40 queries), yet hybrid+rerank − dense+rerank = +0.002 [0.000, +0.007] → no measurable advantage from hybrid candidate diversity
 - [ ] Optional free reference arm: the local ONNX reranker through the same experiment (not in the current protocol; would be added to it before running)
 - [x] OpenAI Decisions stays an **optional production provider**: hosts already call `AddRagCore`, so it turns on by environment configuration alone (verified through the real registration with env vars); `.env.template` ships it disabled and a test keeps it that way. Default unchanged: Dense, reranking off
-- [x] Spend guard hardened after the cost overrun: per-request reservation, reconciliation with billed tokens (also for failed calls), learned calibration factor; 100 evaluation tests incl. billed > estimated, concurrency and first-request overshoot
+- [x] Spend guard hardened after the cost overrun: per-request reservation, reconciliation with billed tokens (also for failed calls), learned calibration factor, 2× initial safety factor for the first request; documented as a **best-effort stop-loss, not an absolute billing cap** (residual risks listed in KB 6B and the protocol; provider-side limit is the real ceiling); 103 evaluation tests incl. billed > estimated, concurrency and first-request overshoot
 - [x] Plan (not executed) for an independent human-labeled validation set and batch-isolation testing: `docs/eval/plan-independent-validation.md`
 - [ ] Execute the plan above — **needs approval of plan numbers; no paid call is made without it**
 - [ ] Jev evaluation — blocked: no credential configured, not run
@@ -115,6 +115,26 @@ Companion docs: [ASSESSMENT.md](ASSESSMENT.md) · [Knowledge Base](kb/README.md)
 **Limits** judgments are LLM-authored (shared-bias risk with an LLM reranker); 35-chunk corpus shows ceiling effects; 19 held-out queries; one run (no provider variance measured); OpenAI question isolation unverified; resolved model not captured.
 **Acceptance** ⬜ partially met: the held-out improvement criterion passed for dense+OpenAI Decisions; **Jev unevaluated; production default unchanged** pending an explicit decision that also weighs cost, data egress and the limits above.
 **Plan numbers (no API call produced them)** 40 scored queries, 800 unique pairs, 40 batched requests per provider, ≈190 k input tokens → ≈ $0.019 (OpenAI, $0.10/M) and ≈ $0.008 (Jev, $0.042/M). Estimates only (≈4 chars/token + rubric).
+
+## Phase 5b — Independent human-labeled validation pilot — 🟦 (tooling ready; **human labeling not started**)
+**Owner decisions (recorded):** own technical documentation, safe-to-send subset only (no confidential or proprietary material); δ = 0.05 nDCG@10 is an *engineering acceptance threshold*, not a universal truth; start with a 20–30 query pilot, **not** the 160-query effort; pilot kept separate from the final held-out set; no LLM-produced relevance labels; Dense stays the default with reranking off; no paid call and no Jev run without separate approval; the spend guard is **not** an absolute billing cap.
+**Goal** Learn corpus difficulty, annotation quality, disagreement and real effort before committing human time to the final dataset.
+**Design** `datasets/human-pilot-v1/` (corpus frozen from an allow-list, scanned before any byte is written, owner sign-off bound to the manifest hash); queries written by people from topic titles only; pools from free offline systems (BM25, hashing-dense, BM25 + local ONNX) plus random passages; **blinded** per-annotator sheets; two independent annotators; adjudication of every difference; report against pre-registered criteria P1–P10. Protocol `docs/eval/protocol-human-pilot.md`, guidelines `docs/eval/annotation-guidelines.md`, policy `docs/eval/send-safety-policy.md`, KB 7 §7.7d.
+**Tasks**
+- [x] Send-safety scanner (12 rules, findings never carry the matched text) + allow-list corpus freezer (blocks before writing, frozen copies, hashes, sign-off bound to content) — 39 tests
+- [x] Schema + validators (human-attested annotators, query quotas, `pilot-` ids, judgment checks) and split isolation against golden-v1 / final sets — 25 tests
+- [x] Agreement metrics (quadratic-weighted and binary Cohen's kappa, exact/adjacent, confusion, query-cluster bootstrap), hand-checked against an independent computation — 12 tests
+- [x] Pool builder + blinded annotator sheets (no system, rank or score recoverable; per-annotator order) + CSV round trip, adjudication assembly (a tool never decides), report with criteria P1–P10 — 54 tests
+- [x] Offline CLI modes `pilot-corpus|signoff|queries|pool|adjudication|report` (no credential read, no embedder, no provider call) and an end-to-end workflow test over a synthetic repository — 9 tests
+- [x] Spend guard: documented as best-effort stop-loss, 2× initial safety factor for the first request, residual risks tested (see Phase 5)
+- [ ] Freeze the real pilot corpus and review its manifest (**owner**)
+- [ ] Owner sign-off (**owner**)
+- [ ] Write ~24 queries and fill `annotators.json` (**people**)
+- [ ] Two annotators grade their blinded sheets; adjudicator resolves differences (**people**)
+- [ ] Run `pilot-report`; decide GO / REVISE / NO-GO; propose the next phase
+- [ ] Top-up judging round if an OpenAI-embedding dense run is ever to be scored on these labels (needs approval: it is a paid call)
+**Acceptance** Criteria P1–P10 as pre-registered. Pilot findings do **not** exist yet and none are claimed.
+**Risks** Corpus is AI-assisted writing (labels are human); small corpus even at 250/40; Turkish/English mix vs English-only local models; two annotators give a wide kappa interval; annotator availability (fallback: test–retest, chosen beforehand).
 
 ## Phase 6 — Query rewriting and expansion — ⬜
 `IQueryTransformer` (original / LLM rewrite / expansion / multi-query), intent-preservation guard (reject rewrites that drop or add named entities/numbers; fallback to original), skip heuristic to avoid LLM calls, original+transformed recorded on the span. HyDE only if evaluation justifies it.
@@ -144,6 +164,7 @@ Perf pass, README/KB/plan consistency, doc reference checker, diagram accuracy c
 | 2026-10-24 | 5 | Provider-independent reranking implemented: OpenAI Decisions + Jev adapters, optional ONNX, 111 + 30 deterministic tests; security-review fix (random fence); protocol + ADRs 0001-0003 committed; **no live provider call made** |
 | 2026-10-24 | 5 | **Live OpenAI Decisions run (approved):** dense+rerank passes the pre-registered rule on held-out (nDCG@10 0.861 → 0.979); hybrid candidates add nothing after reranking; observed cost $0.0306 > approved $0.024 (estimator 61 % low) — guard fixed, deviation recorded |
 | 2026-10-24 | 5 | Owner decision: keep Dense + reranking off; OpenAI Decisions preserved as optional provider; no further paid calls and no Jev run. Spend guard hardened; host/env-var and template tests added; validation + batch-isolation plan written (not executed) |
+| 2026-10-24 | 5b | Pilot tooling implemented offline: scanner, corpus freezer, schema/validators, kappa, pooling, blinded sheets, adjudication, report, CLI modes; guideline/protocol/policy written; **no human labeling yet, no paid call** |
 | 2026-10-24 | coord | The in-house resilience layer (replacing Polly) landed in commits `066182a`/`f128474`; full suite green afterwards |
 | 2026-10-24 | env | Pre-existing: `IntegrationTestWebAppFactory` fails to start here (`minio/minio` pull denied) → 6 of the older integration tests cannot run in this environment; unrelated to Phase 2 |
 

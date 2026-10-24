@@ -1,0 +1,25 @@
+﻿id,text,category,language,written_by,hint
+pilot-001,,keyword,,,"Build the query around an exact term, setting or identifier you expect in the text"
+pilot-002,,keyword,,,"Build the query around an exact term, setting or identifier you expect in the text"
+pilot-003,,keyword,,,"Build the query around an exact term, setting or identifier you expect in the text"
+pilot-004,,keyword,,,"Build the query around an exact term, setting or identifier you expect in the text"
+pilot-005,,keyword,,,"Build the query around an exact term, setting or identifier you expect in the text"
+pilot-006,,paraphrase,,,Express the need in words a document is unlikely to use
+pilot-007,,paraphrase,,,Express the need in words a document is unlikely to use
+pilot-008,,paraphrase,,,Express the need in words a document is unlikely to use
+pilot-009,,paraphrase,,,Express the need in words a document is unlikely to use
+pilot-010,,paraphrase,,,Express the need in words a document is unlikely to use
+pilot-011,,paraphrase,,,Express the need in words a document is unlikely to use
+pilot-012,,multi-relevant,,,"A question needing more than one passage, or answered differently by several"
+pilot-013,,multi-relevant,,,"A question needing more than one passage, or answered differently by several"
+pilot-014,,multi-relevant,,,"A question needing more than one passage, or answered differently by several"
+pilot-015,,multi-relevant,,,"A question needing more than one passage, or answered differently by several"
+pilot-016,,conceptual,,,"A why / how-does-it-work question, not a lookup"
+pilot-017,,conceptual,,,"A why / how-does-it-work question, not a lookup"
+pilot-018,,conceptual,,,"A why / how-does-it-work question, not a lookup"
+pilot-019,,conceptual,,,"A why / how-does-it-work question, not a lookup"
+pilot-020,,cross-lingual,,,Write in one language; best passages are probably in the other (corpus mixes TR and EN)
+pilot-021,,cross-lingual,,,Write in one language; best passages are probably in the other (corpus mixes TR and EN)
+pilot-022,,cross-lingual,,,Write in one language; best passages are probably in the other (corpus mixes TR and EN)
+pilot-023,,no-answer,,,A plausible question about this project that the documents do NOT answer
+pilot-024,,no-answer,,,A plausible question about this project that the documents do NOT answer

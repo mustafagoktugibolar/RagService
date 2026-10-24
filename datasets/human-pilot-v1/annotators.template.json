@@ -1,0 +1,19 @@
+[
+  {
+    "id": "REPLACE-WITH-YOUR-ID",
+    "kind": "human",
+    "roles": [
+      "query-writer",
+      "annotator",
+      "adjudicator"
+    ]
+  },
+  {
+    "id": "REPLACE-WITH-SECOND-PERSON-ID",
+    "kind": "human",
+    "roles": [
+      "query-writer",
+      "annotator"
+    ]
+  }
+]

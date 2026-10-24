@@ -33,6 +33,12 @@ Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
 
 try
 {
+    // The human-labeling pilot is fully offline: it branches before anything reads credentials or builds an embedder.
+    if ((options.GetValueOrDefault("mode") ?? "run").StartsWith("pilot-", StringComparison.OrdinalIgnoreCase))
+    {
+        return await Rag.Evaluation.Cli.PilotCommands.RunAsync(options["mode"].ToLowerInvariant(), options, cts.Token);
+    }
+
     var dataset = await DatasetLoader.LoadAsync(datasetPath, cts.Token);
     if ((options.GetValueOrDefault("mode") ?? "run").Equals("bench-reranker", StringComparison.OrdinalIgnoreCase))
     {

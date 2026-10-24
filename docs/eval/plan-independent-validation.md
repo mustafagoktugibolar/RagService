@@ -4,6 +4,14 @@ Status: **plan only. Nothing here has been executed and no paid call has been ma
 (the `rerank-plan` / approval-gated pattern already in the CLI). Numbers marked *estimate* come from the one live run (383 billed input tokens per question,
 ≈ 7 655 per 20-question request, ≈ $0.00077 per query at $0.10 per million tokens) and from the sizes of the current data.
 
+## Decisions recorded (owner, 2026-10-24)
+1. **Corpus:** RagService's own technical documentation — only documents safe to send to an external model provider; confidential or proprietary material excluded (`send-safety-policy.md`).
+2. **Effect size:** δ = 0.05 nDCG@10 stays as the initial *engineering acceptance threshold*, not a universal statistical truth.
+3. **Pilot first:** a 20–30 query human-labeling pilot before any 160-query effort (`protocol-human-pilot.md`); the pilot is kept separate from the final held-out set.
+4. **No LLM labels:** relevance labels are never produced by a model.
+5. **Defaults and spend:** Dense stays the default, reranking off; no paid call and no Jev run without separate approval; the spend guard is a best-effort stop-loss, not an absolute billing cap.
+Parts A (§1) and B (§2) below remain the plan for what follows the pilot; §1.3's corpus recommendation is superseded by decision 1.
+
 ## 0. Why this is needed
 
 The OpenAI Decisions result (held-out nDCG@10 0.861 → 0.979) is promising but rests on judgments written in the same LLM-assisted process that produced the corpus and
@@ -111,7 +119,7 @@ Based on 40 scored queries × 20 candidates = 800 pairs, 383 billed tokens per q
 | **Total** | **≈ 900** | **≈ 1.0 M** | **≈ $0.10** |
 
 Arm I is the only one with a large request count; it needs bounded concurrency (the experiment pins it to 1 today) and attention to rate limits, which the guide does not state.
-The spend guard now reserves per request, reconciles with billed tokens and learns the estimator's error, so any of these arms would be stopped at its approved cap (the first request can still overshoot by its own under-estimate; approve headroom).
+The spend guard is a **best-effort stop-loss, not an absolute billing cap**: it reserves per request, reconciles with billed tokens, learns the estimator's error and applies a 2× safety factor to the first request. It can still be exceeded if the first-request estimate is off by more than that factor, or if the provider bills something it does not report. Approve amounts with headroom and **set a budget/usage limit in the provider console**, which is the real ceiling.
 
 ### 2.5 If isolation fails — consequences
 Production would use `QuestionsPerRequest = 1`: ≈ 20× the requests per query, parallelised up to `MaxConcurrentRequests`; token cost rises only by the repeated shared query (a few percent), so dollars barely change but **rate-limit pressure and tail latency do**.

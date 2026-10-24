@@ -27,7 +27,7 @@ Her bölümün başında ve her kavramın yanında şu etiketlerden biri bulunur
 | 5 | [Ingestion ve Chunking](05-ingestion-chunking.md) | ⬜ | Extractor'lar, tokenization, overlap, chunk identity |
 | 6 | [İleri Seviye Retrieval](06-advanced-retrieval.md) | ✅ yazıldı (hybrid/RRF); rerank, rewriting 🔵 planned | BM25, sparse vector, hybrid, RRF, provider yetenekleri |
 | 6B | [Reranking (karar tabanlı ve cross-encoder)](06b-reranking.md) | ✅ yazıldı; ❌ canlı sonuç yok | OpenAI Decisions, Jev, ONNX, pointwise/listwise, kalibrasyon, hata yönetimi |
-| 7 | [Retrieval Evaluation](07-retrieval-evaluation.md) | ✅ yazıldı (Faz 3) | Recall/Precision/MRR/nDCG/AP, golden dataset, harness, ilk baseline; quality gate 🔵 planned |
+| 7 | [Retrieval Evaluation](07-retrieval-evaluation.md) | ✅ yazıldı (Faz 3; §7.7d insan etiketli pilot: araçlar hazır, etiketleme bekleniyor) | Recall/Precision/MRR/nDCG/AP, golden dataset, harness, ilk baseline; quality gate 🔵 planned |
 | 8 | [Redis ve Caching](08-redis-caching.md) | ✅ yazıldı | Embedding cache, query cache, cache key, stale sorunu |
 | 9 | [Storage Sistemleri](09-storage-systems.md) | ⬜ | MinIO, Qdrant, PostgreSQL, persistent vs derived data |
 | 10 | [Resilience ve Observability](10-resilience-observability.md) | ⬜ | Resilience katmanı (retry/breaker/timeout), OpenTelemetry, Prometheus, Grafana, Tempo |

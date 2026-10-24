@@ -168,6 +168,49 @@ Bir konfigürasyonu aynı sorgularda hem seçip hem "kanıtlamak" yanıltıcıd�
 
 **Sınırlar:** held-out 19 sorgu, tek anotatör; aralık geniş. Sonuç "hybrid bu corpus'ta işe yaramıyor" demek için yeterince tutarlı ama "hybrid asla işe yaramaz" demek için yetersiz. Reranking sonrası yeniden test planlı.
 
+## 7.7d İnsan etiketli doğrulama pilotu (hazırlık tamamlandı, etiketleme bekleniyor)
+
+**Durum:** ✅ araçlar ve belgeler uygulandı ve test edildi · 🔵 insan etiketleme henüz yapılmadı · ❌ pilot bulguları henüz yok (insan girdisi olmadan üretilemez). Protokol: `docs/eval/protocol-human-pilot.md`.
+
+**Neden gerekli?** golden-v1'deki ilgi yargıları, corpus ve sorgularla aynı LLM destekli süreçte yazıldı. Bir LLM hakem (reranker) ile bir LLM etiketleyicinin **ortak önyargıları** örtüşebilir ve kazancı abartabilir. Bağımsız insan etiketi bu riski ölçer. Ama 160 sorguluk etiketleme çok pahalı (insan saati); önce **20–30 sorguluk bir pilot**: corpus ne kadar zor, anotatörler ne kadar anlaşıyor, gerçek çaba ne kadar?
+
+**Corpus kararı.** RagService'in kendi teknik dokümanları, yalnızca dış sağlayıcıya göndermek için **güvenli** olanlar; şirkete özgü veya gizli malzeme dışarıda (`plan.md`, `.env`, deployment dosyaları…). Seçim **allow-list** ile yapılır: listede olmayan hiçbir dosya girmez. Bir **güvenlik tarayıcısı** kopyalamadan *önce* tüm dosyaları tarar (anahtar, e-posta, kullanıcı yolu, IP, parola…) ve bulgu varsa hiçbir şey yazmaz; bulgu çıktısı eşleşen metni **göstermez** (tarayıcı sızıntı kaynağı olmasın). Tarayıcı kalıp tanır, anlam tanımaz; bu yüzden sahibin incelemesi ve **onayı** gerekir. Onay manifestin içerik özetine **bağlıdır**: dosya veya chunk'lama değişirse onay geçersizdir.
+
+**Bir bulgu kararı etkiledi.** Bu dokümanlar üretim chunk'lamasıyla (1000/200) golden-v1 kadar küçük bir corpus verir ve top-20 corpus'un yarısından fazlasını kaplar. Pilotta **250/40** chunk'lama kullanılır (daha ince ayrıntı, daha hızlı yargı); bu bir pilot parametresidir ve manifestte kayıtlıdır. Kesin sayılar manifest ve plan belgesindedir.
+
+**Kör aday havuzu (pooling).** Etiketlenecek pasajlar tek bir sistemin değil, **birden çok sistemin** üst sonuçlarının birleşimidir: BM25, hashing-dense ve (varsa) BM25 + yerel ONNX cross-encoder; artı sorgu başına birkaç **rastgele** pasaj. Birleşim, yargıların tek bir sistemi kayırmasını önler; rastgele pasajlar net "ilgisiz" örnekler verir ve havuzun kaçırdığı ilgiyi tahmin ettirir. Anotatör **yalnızca sorgu ve pasajı** görür: sistem adı, sıra veya skor yoktur; sıra her anotatör için ayrı karıştırılır (aksi hâlde konum sıra hakkında bilgi sızdırır). Hangi sistemin neyi getirdiğini gösteren **kör olmayan anahtar** ayrı bir dizinde tutulur ve etiketleme bitene kadar açılmaz. *Pooling yanlılığı:* havuzda olmayan pasajlar "ilgisiz" sayılır; havuzlayan sistemlere benzemeyen bir sistemi (örn. OpenAI embedding'li dense) olduğundan düşük gösterebilir. Bu yüzden böyle bir sistem skorlanmadan önce **ek yargı turu** gerekir; pilot yalnızca ücretsiz çevrimdışı sistemlerle havuzlar (ücretli çağrı yapılmaz).
+
+**Ölçek (0–3).** 3 cevaplar · 2 büyük ölçüde yardımcı · 1 yalnızca ilgili · 0 ilgisiz. Kılavuz (`annotation-guidelines.md`) sağlayıcı prompt'undan **bağımsız** yazıldı; çünkü etiketler "bir kişi ilgiyi nasıl görür"ü ölçmeli, belirli bir reranker'ın ifadesiyle uyumu değil.
+
+**Anotatörler arası uyuşma: Cohen'in κ'sı.** İki kişinin tesadüfen de uyuşacağı düşünülerek düzeltilmiş uyuşma: `κ = (p₀ − pₑ) / (1 − pₑ)`; `p₀` gözlenen uyuşma, `pₑ` marjinallerden beklenen tesadüfi uyuşma. Derecelendirmede 1 ile 3 arası fark 1 ile 2 arası farktan çok daha ciddidir; bu yüzden **ikinci dereceden ağırlıklı κ**: ağırlık `w(i,j) = 1 − ((i−j)/(k−1))²`.
+
+*Elle çözülmüş örnek (testle aynı, bağımsız bir Python hesabıyla doğrulandı):* A = 0 0 1 1 2 2 3 3 2 1 0 3, B = 0 1 1 2 2 3 3 3 2 0 0 2 (12 öğe, 4 derece). Ağırlıklı: `p₀ = 0.9537`, `pₑ = 0.7222` → **κ_w = 0.833**. Ağırlıksız (yalnızca tam uyuşma): **κ = 0.444**. İkili (derece ≥ 2): **0.833**. Tam uyuşma 7/12 = 0.583, bir basamak içinde uyuşma 12/12. Fark şunu gösterir: anotatörler hep **bir basamak** ayrışıyor; ağırlıklı κ bunu hafif, ağırlıksız κ ağır cezalandırır. Hangisinin doğru olduğu, hatanın maliyetine bağlıdır; ikisi de raporlanır.
+
+*Tanımsız κ:* iki kişi de her öğeye aynı dereceyi verirse `pₑ = 1`, payda sıfır olur. Bu "mükemmel uyuşma" değil, **bilgi yokluğudur**; araç `null` döndürür ve kriteri başarısız sayar. κ'nın güven aralığı **sorgu bazlı bootstrap** ile hesaplanır (bir sorgunun öğeleri bağımsız değildir); 24 sorguda aralık geniştir ve rapor bunu söyler.
+
+**Uzlaşma (adjudication).** Notların **herhangi bir farkı** veya bir bayrak (`unclear-query`, `unjudgeable`) bir insan hakemine gider; hakem iki notu görür, **sistemi/sırayı asla**, nihai notu ve gerekçeyi yazar. Hiçbir şey ortalama alınarak veya araçla çözülmez. Nihai etiket ya "iki insan aynı notu verdi" ya da "insan karar verdi + gerekçe"dir; **hiçbir etiketi LLM üretmez** (anotatör kaydı `kind: human` beyanı ister; araçlar hiçbir model çağırmaz). Bu beyan araçla doğrulanamaz, sürece dayanır.
+
+**Pilotun önceden kayıtlı kabul kriterleri** (hepsi kodda tek yerde; protokol belgesiyle uyum testlidir):
+
+| | Kriter | Eşik |
+|---|---|---|
+| P1 | Göndermeye güvenli | tarayıcı temiz + sahip onayı manifeste bağlı |
+| P2 | Sorgular | 20–30, kategori asgarileri, hepsi kayıtlı insanlardan |
+| P3 | İzolasyon | golden-v1 / nihai kümeyle 0 çakışma |
+| P4 | Tamlık | havuzdaki öğelerin ≥ %98'i iki anotatörce notlanmış |
+| P5 | Uyuşma | ağırlıklı κ ≥ 0.60 **ve** ikili κ ≥ 0.60 (0.40–0.60: gözden geçir; <0.40 veya tanımsız: başarısız) |
+| P6 | Cevaplanabilirlik | cevaplanabilir sorguların ≥ %85'inde derece ≥ 2 pasaj; cevapsızlarda yok |
+| P7 | **Baş boşluğu** | en iyi ücretsiz taban çizgi: ortalama nDCG@10 ≤ 0.90 ve sorguların ≥ %30'u 0.90 altında; ≥ 0.95 → başarısız (tavan) |
+| P8 | Çaba | medyan ≤ 45 sn/yargı (45–60 gözden geçir, >60 başarısız) |
+| P9 | Havuz boyutu | sorgu başına medyan 15–30 benzersiz aday |
+| P10 | İnsan etiketi | her nihai etiket iki insan uyuşması veya kayıtlı insan kararı |
+
+**Karar:** herhangi biri *başarısız* → **NO-GO**; başarısız yok ama *gözden geçir* var → **REVISE**; hepsi geçti → **GO**. **P7 neden önemli:** corpus öyle kolaysa ki ücretsiz taban çizgi zaten ~1.0 alıyorsa, δ = 0.05'lik bir kazancı **ölçmek mümkün değildir** (tavan etkisi); golden-v1'de gördüğümüz tam bu sorundu.
+
+**Pilot neyi gösteremez:** hiçbir reranker'ı ölçmez (ücretli çağrı yok); yalnızca havuzlanan pasajlar etiketlidir; iki anotatörle κ küçük örneklemde geniş aralıklı bir tahmindir; tahmin edilen varyans bir **vekildir** (gerçek karşılaştırma — dense ve dense+reranker — ölçülmemiştir).
+
+**İzolasyon.** Pilot sorguları `pilot-` önekli ayrı dizinde yaşar; `SplitIsolation`, normalleştirmeden sonra aynı veya çok benzer (Jaccard ≥ 0.8) sorguları reddeder; **pilot etiketleri nihai etiket olarak asla yeniden kullanılmaz** ve kılavuz pilottan sonra değişebilir (`guidelines-v2`).
+
 ## 7.8 Ne ters gidebilir?
 
 | Risk | Açıklama / önlem |
