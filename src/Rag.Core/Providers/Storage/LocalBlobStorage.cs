@@ -15,10 +15,28 @@ public sealed class LocalBlobStorage : IBlobStorage
         Directory.CreateDirectory(_basePath);
     }
 
+    /// <summary>
+    /// Maps an object key to a file under the storage root. The key comes from a request, so it is untrusted: <c>../</c> segments and
+    /// rooted paths (which <see cref="Path.Combine(string, string)"/> would let replace the base entirely) are rejected instead of
+    /// being allowed to read or overwrite any file the process can reach. Symbolic links inside the root are not resolved.
+    /// </summary>
+    private string Resolve(string objectKey)
+    {
+        var root = Path.GetFullPath(_basePath);
+        var full = Path.GetFullPath(Path.Combine(root, objectKey));
+        var rootWithSeparator = root.EndsWith(Path.DirectorySeparatorChar) ? root : root + Path.DirectorySeparatorChar;
+        if (!full.StartsWith(rootWithSeparator, StringComparison.Ordinal) && !string.Equals(full, root, StringComparison.Ordinal))
+        {
+            throw new ArgumentException("The object key resolves outside the storage root.", nameof(objectKey));
+        }
+
+        return full;
+    }
+
     public Task<Stream> OpenReadAsync(string objectKey, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
-        var fullPath = Path.Combine(_basePath, objectKey);
+        var fullPath = Resolve(objectKey);
         Stream stream = File.Open(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read);
         return Task.FromResult(stream);
     }
@@ -26,8 +44,8 @@ public sealed class LocalBlobStorage : IBlobStorage
     public async IAsyncEnumerable<string> ListObjectKeysAsync(string? prefix, [EnumeratorCancellation] CancellationToken ct)
     {
         var searchPath = string.IsNullOrEmpty(prefix)
-            ? _basePath
-            : Path.Combine(_basePath, prefix);
+            ? Path.GetFullPath(_basePath)
+            : Resolve(prefix);
 
         if (!Directory.Exists(searchPath))
             yield break;
@@ -41,7 +59,7 @@ public sealed class LocalBlobStorage : IBlobStorage
 
     public async Task UploadAsync(string objectKey, Stream content, string? contentType, CancellationToken ct)
     {
-        var fullPath = Path.Combine(_basePath, objectKey);
+        var fullPath = Resolve(objectKey);
         Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
         await using var file = File.Create(fullPath);
         await content.CopyToAsync(file, ct);
