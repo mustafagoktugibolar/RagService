@@ -87,9 +87,15 @@ public static class ServiceCollectionExtensions
                 services.AddTransient<AzureOpenAiEmbeddingProvider>();
                 break;
 
+            case "hashing":
+                // Local, deterministic, no network: development, tests and the Docker end-to-end check. Not semantic.
+                services.AddTransient<HashingEmbeddingProvider>(sp =>
+                    new HashingEmbeddingProvider(sp.GetRequiredService<IOptions<RagOptions>>().Value.VectorSize));
+                break;
+
             default:
                 throw new InvalidOperationException(
-                    $"Unsupported Rag:EmbeddingProvider '{provider}'. Supported values are OpenAI and AzureOpenAI.");
+                    $"Unsupported Rag:EmbeddingProvider '{provider}'. Supported values are OpenAI, AzureOpenAI and Hashing (development/test only).");
         }
 
         services.AddTransient<IEmbeddingProvider>(sp =>
@@ -99,6 +105,11 @@ public static class ServiceCollectionExtensions
 
             IEmbeddingProvider inner;
             int? dimensions;
+
+            if (normalizedProvider == "hashing")
+            {
+                return sp.GetRequiredService<HashingEmbeddingProvider>();   // already cheap and deterministic: no cache wrapper
+            }
 
             if (normalizedProvider == "openai")
             {

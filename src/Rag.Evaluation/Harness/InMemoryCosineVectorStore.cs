@@ -1,3 +1,4 @@
+using Rag.Core.Providers.Embeddings;
 using Rag.Core.Abstractions;
 using Rag.Core.Models;
 using Rag.Core.Retrieval;

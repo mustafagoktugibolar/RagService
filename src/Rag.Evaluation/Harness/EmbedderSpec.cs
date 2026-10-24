@@ -1,3 +1,4 @@
+using Rag.Core.Providers.Embeddings;
 using Rag.Core.Abstractions;
 
 namespace Rag.Evaluation.Harness;

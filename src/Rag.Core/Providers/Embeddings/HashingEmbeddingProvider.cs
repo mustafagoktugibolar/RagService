@@ -1,14 +1,15 @@
 using System.Text;
 using Rag.Core.Abstractions;
 
-namespace Rag.Evaluation.Harness;
+namespace Rag.Core.Providers.Embeddings;
 
 /// <summary>
 /// Deterministic bag-of-words embedder (feature hashing, sublinear tf, L2-normalised). It needs no network and
-/// produces identical vectors on every machine, which makes the harness reproducible in CI.
+/// produces identical vectors on every machine. Selected with <c>Rag:EmbeddingProvider=Hashing</c> for local development, tests and
+/// the Docker end-to-end check, and used by the evaluation harness, so none of those ever call a paid embedding API.
 /// <para>
 /// It is NOT a semantic model: it only sees shared surface tokens. Scores obtained with it measure the pipeline and
-/// the dataset, never the retrieval quality of a real embedding model, and must be labelled accordingly.
+/// the dataset, never the retrieval quality of a real embedding model, and must be labelled accordingly. Not for production relevance.
 /// </para>
 /// </summary>
 public sealed class HashingEmbeddingProvider(int dimensions = 256) : IEmbeddingProvider

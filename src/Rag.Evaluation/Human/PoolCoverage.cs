@@ -1,3 +1,4 @@
+using Rag.Core.Providers.Embeddings;
 using Rag.Evaluation.Harness;
 
 namespace Rag.Evaluation.Human;
