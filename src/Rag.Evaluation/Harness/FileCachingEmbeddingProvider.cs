@@ -59,11 +59,10 @@ public sealed class FileCachingEmbeddingProvider(IEmbeddingProvider inner, strin
         return results;
     }
 
-    private string PathFor(string text)
-    {
-        var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"{model}\n{text}")));
-        return Path.Combine(directory, $"{hash}.bin");
-    }
+    /// <summary>The cache key of a text under a model. One definition, shared by the cache, the cache check and the cache-only provider.</summary>
+    public static string KeyFor(string model, string text) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"{model}\n{text}")));
+
+    private string PathFor(string text) => Path.Combine(directory, $"{KeyFor(model, text)}.bin");
 
     private static float[] Read(string path)
     {
@@ -75,4 +74,30 @@ public sealed class FileCachingEmbeddingProvider(IEmbeddingProvider inner, strin
 
     private static void Write(string path, float[] vector) =>
         File.WriteAllBytes(path, MemoryMarshal.AsBytes(vector.AsSpan()).ToArray());
+}
+
+/// <summary>
+/// Reads embeddings from the on-disk cache and nothing else. It has no inner provider, no credential and no network access, so a cache miss
+/// is an error rather than a billable call. Used for analyses that must be provably free.
+/// </summary>
+public sealed class CacheOnlyEmbeddingProvider(string model, string directory) : IEmbeddingProvider
+{
+    public Task<float[]> EmbedAsync(string text, CancellationToken ct) => Task.FromResult(Load(text));
+
+    public Task<IReadOnlyList<float[]>> EmbedBatchAsync(IReadOnlyList<string> texts, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<float[]>>(texts.Select(Load).ToArray());
+
+    private float[] Load(string text)
+    {
+        var path = Path.Combine(directory, $"{FileCachingEmbeddingProvider.KeyFor(model, text)}.bin");
+        if (!File.Exists(path))
+        {
+            throw new InvalidOperationException("An embedding is not in the local cache and this provider cannot make a live (paid) call.");
+        }
+
+        var bytes = File.ReadAllBytes(path);
+        var vector = new float[bytes.Length / sizeof(float)];
+        MemoryMarshal.Cast<byte, float>(bytes).CopyTo(vector);
+        return vector;
+    }
 }
