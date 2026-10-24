@@ -9,7 +9,12 @@ public sealed record RetrievalRequest(
     string Query,
     float[]? Embedding,
     int TopK,
-    Dictionary<string, string>? Filters);
+    Dictionary<string, string>? Filters,
+    string? OriginalQuery = null)
+{
+    /// <summary>What the user typed. Retrieval searches <see cref="Query"/> (possibly rewritten); relevance is always judged against this.</summary>
+    public string JudgedQuery => OriginalQuery ?? Query;
+}
 
 /// <summary>Ranked chunks plus machine-readable notes about anything that degraded (e.g. one hybrid leg failed).</summary>
 public sealed record RetrievalOutcome(IReadOnlyList<FusedResult> Results, IReadOnlyList<string> Warnings);

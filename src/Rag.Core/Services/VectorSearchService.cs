@@ -9,6 +9,7 @@ using Rag.Core.Models;
 using Rag.Core.Options;
 using Rag.Core.Reranking;
 using Rag.Core.Retrieval;
+using Rag.Core.Rewriting;
 using Rag.Core.Telemetry;
 
 namespace Rag.Core.Services;
@@ -21,7 +22,8 @@ public sealed class VectorSearchService(
     IOptions<QueryCacheOptions> queryCacheOptions,
     ILogger<VectorSearchService> logger,
     IOptions<RetrievalOptions>? retrievalOptions = null,
-    IReranker? reranker = null)
+    IReranker? reranker = null,
+    QueryRewritingStage? rewriting = null)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -78,6 +80,14 @@ public sealed class VectorSearchService(
             var strategyId = rerankActive
                 ? $"{plan.StrategyId}+{reranker!.Name}:budget{rerank.CandidateBudget}"
                 : plan.StrategyId;
+            // Rewriting changes what is searched, so the rewriter's identity keys the cache too. The key still uses the ORIGINAL query:
+            // a cache hit answers without a rewrite call.
+            var rewriteActive = rewriting is not null && retrieval.QueryRewriting.Enabled;
+            if (rewriteActive)
+            {
+                strategyId += $"+rw:{rewriting!.Name}";
+            }
+
             activity?.SetTag("rag.strategy", strategyId);
 
             string? queryCacheKey = cacheOpts.Enabled
@@ -109,10 +119,34 @@ public sealed class VectorSearchService(
                 }
             }
 
+            var searchQuery = request.Query;
+            var rewriteWarnings = new List<string>();
+            if (rewriteActive)
+            {
+                var transformation = await rewriting!.TransformAsync(request.Query, ct);
+                searchQuery = transformation.Effective;
+                activity?.SetTag("rag.rewrite.outcome", transformation.Outcome.ToString());
+                activity?.SetTag("rag.rewrite.query_hash", QueryRewritingStage.Fingerprint(request.Query));
+                if (transformation.Outcome == RewriteOutcome.Rewritten)
+                {
+                    activity?.SetTag("rag.rewrite.rewritten_hash", QueryRewritingStage.Fingerprint(searchQuery));
+                    if (retrieval.QueryRewriting.RecordQueryText)
+                    {
+                        activity?.SetTag("rag.rewrite.original", request.Query);
+                        activity?.SetTag("rag.rewrite.rewritten", searchQuery);
+                    }
+                }
+
+                if (transformation.Warning is not null)
+                {
+                    rewriteWarnings.Add(transformation.Warning);
+                }
+            }
+
             float[]? embedding = null;
             if (plan.Strategy != RetrievalStrategy.Lexical)
             {
-                embedding = await embeddingProvider.EmbedAsync(request.Query, ct);
+                embedding = await embeddingProvider.EmbedAsync(searchQuery, ct);
                 if (embedding.Length != ragOptions.VectorSize)
                 {
                     return Failure(
@@ -128,9 +162,9 @@ public sealed class VectorSearchService(
             }
 
             var outcome = await retriever
-                .RetrieveAsync(new RetrievalRequest(request.Collection, request.Query, embedding, topK, request.Filters), ct);
+                .RetrieveAsync(new RetrievalRequest(request.Collection, searchQuery, embedding, topK, request.Filters, request.Query), ct);
 
-            var warnings = plan.Warnings.Concat(outcome.Warnings).ToList();
+            var warnings = plan.Warnings.Concat(rewriteWarnings).Concat(outcome.Warnings).ToList();
             foreach (var warning in warnings)
             {
                 logger.LogWarning("Query {RequestId} on {Collection} degraded: {Warning}", request.RequestId, request.Collection, warning);
@@ -152,7 +186,7 @@ public sealed class VectorSearchService(
                 .ToList();
 
             // A result produced by a failed hybrid leg is worse than normal; never pin it in the cache.
-            if (queryCacheKey is not null && outcome.Warnings.Count == 0)
+            if (queryCacheKey is not null && outcome.Warnings.Count == 0 && rewriteWarnings.Count == 0)
             {
                 var bytes = JsonSerializer.SerializeToUtf8Bytes(resultDtos, JsonOptions);
                 await cache.SetAsync(queryCacheKey, bytes, new DistributedCacheEntryOptions

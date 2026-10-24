@@ -38,4 +38,10 @@ public static class RagTelemetry
 
     public static readonly Histogram<double> RerankDurationMs =
         Meter.CreateHistogram<double>("rag.rerank.duration", unit: "ms", description: "Duration of one rerank provider request");
+
+    public static readonly Counter<long> RewriteRequests =
+        Meter.CreateCounter<long>("rag.rewrite.requests", description: "Query rewrite attempts by outcome (rewritten, unchanged, skipped, rejected, failed, timeout, cached)");
+
+    public static readonly Histogram<double> RewriteDurationMs =
+        Meter.CreateHistogram<double>("rag.rewrite.duration", unit: "ms", description: "Duration of a rewrite that reached the provider");
 }

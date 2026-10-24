@@ -27,8 +27,54 @@ public sealed class RetrievalOptions
 
     public double LexicalWeight { get; set; } = 1.0;
 
+    /// <summary>Optional first stage that proposes a better search query; the original query is always kept for reranking and caching.</summary>
+    public QueryRewritingOptions QueryRewriting { get; set; } = new();
+
     /// <summary>Optional second stage that reorders the candidates of whichever strategy is selected.</summary>
     public RerankingOptions Reranking { get; set; } = new();
+}
+
+public enum QueryRewriteProviderKind
+{
+    /// <summary>No rewriting.</summary>
+    None,
+
+    /// <summary>Deterministic, local, free: removes conversational filler. Useful for tests, the Docker end-to-end check and as a cheap baseline.</summary>
+    Rules,
+
+    /// <summary>An LLM through the existing OpenAI configuration (<c>OpenAI:ApiKey</c>), behind Microsoft.Extensions.AI <c>IChatClient</c>; any other IChatClient can be registered instead.</summary>
+    OpenAi
+}
+
+public sealed class QueryRewritingOptions
+{
+    /// <summary>Off by default: rewriting changes what is searched, so it is enabled only after it is shown to help.</summary>
+    public bool Enabled { get; set; } = false;
+
+    public QueryRewriteProviderKind Provider { get; set; } = QueryRewriteProviderKind.None;
+
+    /// <summary>Chat model for the OpenAi provider. No default on purpose: a model id that does not exist should fail at startup, not at the first query.</summary>
+    public string Model { get; set; } = string.Empty;
+
+    /// <summary>Limit for one rewrite. On expiry the original query is used.</summary>
+    public int TimeoutSeconds { get; set; } = 5;
+
+    /// <summary>Queries with fewer words are searched as written (identifier and keyword lookups gain little and risk drift), saving the call.</summary>
+    public int MinimumWords { get; set; } = 3;
+
+    public int MaxOutputTokens { get; set; } = 64;
+
+    /// <summary>A rewrite longer than this, or than three times the original, is rejected.</summary>
+    public int MaxCharacters { get; set; } = 300;
+
+    /// <summary>Share of the original's content words the rewrite must keep (stem-prefix match). Guards against intent drift.</summary>
+    public double MinimumOverlap { get; set; } = 0.5;
+
+    /// <summary>Validated rewrites are cached so the same query costs one call per TTL. 0 disables the cache.</summary>
+    public int CacheTtlHours { get; set; } = 24;
+
+    /// <summary>Put the original and rewritten text on the trace span. Off by default: queries can be sensitive; hashes are always recorded.</summary>
+    public bool RecordQueryText { get; set; } = false;
 }
 
 public enum RerankProviderKind

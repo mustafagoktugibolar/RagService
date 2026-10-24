@@ -40,6 +40,7 @@ public static class ServiceCollectionExtensions
         services.AddEmbeddingProvider(configuration);
         services.AddVectorStore(configuration);
         services.AddReranking(configuration);
+        services.AddQueryRewriting(configuration);
 
         services.AddTransient<IndexDocumentService>();
         services.AddTransient<VectorSearchService>();

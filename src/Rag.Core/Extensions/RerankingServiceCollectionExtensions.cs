@@ -66,13 +66,14 @@ public sealed class RetrievalOptionsValidator(
 {
     public ValidateOptionsResult Validate(string? name, RetrievalOptions options)
     {
+        var errors = new List<string>();
+        ValidateRewriting(errors, options.QueryRewriting);
         var r = options.Reranking;
         if (!r.Enabled)
         {
-            return ValidateOptionsResult.Success;
+            return errors.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(errors);
         }
 
-        var errors = new List<string>();
         Range(errors, "Retrieval:Reranking:CandidateBudget", r.CandidateBudget, 2, 400);
         Range(errors, "Retrieval:Reranking:QuestionsPerRequest", r.QuestionsPerRequest, 1, 400);
         Range(errors, "Retrieval:Reranking:MaxConcurrentRequests", r.MaxConcurrentRequests, 1, 64);
@@ -106,6 +107,36 @@ public sealed class RetrievalOptionsValidator(
         }
 
         return errors.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(errors);
+    }
+
+    private void ValidateRewriting(List<string> errors, QueryRewritingOptions q)
+    {
+        if (!q.Enabled)
+        {
+            return;
+        }
+
+        if (q.Provider == QueryRewriteProviderKind.None)
+        {
+            errors.Add("Retrieval:QueryRewriting:Enabled is true but Provider is None.");
+            return;
+        }
+
+        Range(errors, "Retrieval:QueryRewriting:TimeoutSeconds", q.TimeoutSeconds, 1, 60);
+        Range(errors, "Retrieval:QueryRewriting:MinimumWords", q.MinimumWords, 1, 50);
+        Range(errors, "Retrieval:QueryRewriting:MaxOutputTokens", q.MaxOutputTokens, 8, 512);
+        Range(errors, "Retrieval:QueryRewriting:MaxCharacters", q.MaxCharacters, 20, 2000);
+        Range(errors, "Retrieval:QueryRewriting:CacheTtlHours", q.CacheTtlHours, 0, 24 * 30);
+        if (q.MinimumOverlap is < 0 or > 1)
+        {
+            errors.Add("Retrieval:QueryRewriting:MinimumOverlap must be between 0 and 1.");
+        }
+
+        if (q.Provider == QueryRewriteProviderKind.OpenAi)
+        {
+            Required(errors, "OpenAI:ApiKey (reused by query rewriting)", openAi.Value.ApiKey);
+            Required(errors, "Retrieval:QueryRewriting:Model", q.Model);
+        }
     }
 
     private static void Range(List<string> errors, string key, int value, int min, int max)

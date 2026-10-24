@@ -78,7 +78,7 @@ public sealed class RerankingRetriever(
         try
         {
             scores = await reranker.RerankAsync(
-                request.Query,
+                request.JudgedQuery,
                 candidates.Select(c => new RerankCandidate(c.Result.ChunkId, c.Result.Text)).ToArray(),
                 timeout.Token);
         }
