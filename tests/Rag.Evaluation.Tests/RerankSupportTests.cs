@@ -140,4 +140,47 @@ public sealed class RerankSupportTests : IDisposable
 
         Assert.Single(inner.Calls);
     }
+
+    private sealed class UnderEstimatingProvider(long billedTokensPerCall) : IReranker, IRerankUsageSource
+    {
+        private int _calls;
+
+        public string Name => "fake:under-estimated";
+
+        public int Calls => _calls;
+
+        public RerankUsage Usage => new(_calls, 0, 0, _calls * billedTokensPerCall, 0, 0, [], null);
+
+        public Task<IReadOnlyList<RerankScore>> RerankAsync(string query, IReadOnlyList<RerankCandidate> candidates, CancellationToken ct)
+        {
+            _calls++;
+            return Task.FromResult<IReadOnlyList<RerankScore>>(candidates.Select(c => new RerankScore(c.ChunkId, 1)).ToArray());
+        }
+    }
+
+    [Fact]
+    public async Task TheGuard_StopsOnWhatWasBilled_NotOnWhatWasGuessed()
+    {
+        // The estimate for these tiny pairs is a few hundred tokens ($0.00003); the provider bills 20 000 ($0.002) per call.
+        var provider = new UnderEstimatingProvider(billedTokensPerCall: 20_000);
+        var guarded = new SpendGuardedReranker(provider, new SpendGuard(maxRequests: 100, maxDollars: 0.003, pricePerMillionInputTokens: 0.10));
+
+        await guarded.RerankAsync("q", Pairs, CancellationToken.None);    // billed $0.002
+        await guarded.RerankAsync("q", Pairs, CancellationToken.None);    // billed $0.004 in total -> over the limit now
+
+        await Assert.ThrowsAsync<SpendLimitExceededException>(() => guarded.RerankAsync("q", Pairs, CancellationToken.None));
+        Assert.Equal(2, provider.Calls);                                   // the third paid call never happened
+    }
+
+    [Fact]
+    public void Reconcile_NeverDrivesTheSpentAmountBelowZero()
+    {
+        var guard = new SpendGuard(10, 1, 0.10);
+
+        guard.Authorise(1000);
+        guard.Reconcile(estimatedInputTokens: 1000, observedInputTokens: 0);
+        guard.Reconcile(estimatedInputTokens: 1000, observedInputTokens: 0);
+
+        Assert.Equal(0, guard.EstimatedDollars);
+    }
 }

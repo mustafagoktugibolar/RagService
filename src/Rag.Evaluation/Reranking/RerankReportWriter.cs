@@ -53,7 +53,7 @@ public static class RerankReportWriter
         b.AppendLine("|---|---|---:|:-:|:-:|:-:|:-:|:-:|");
         foreach (var c in report.Comparisons)
         {
-            b.AppendLine($"| {c.Name} ({c.Baseline} → {c.Challenger}) | {S(c.Ndcg10Difference.MeanDifference)} [{S(c.Ndcg10Difference.Lower)}, {S(c.Ndcg10Difference.Upper)}] | {S(c.Ndcg1Difference.MeanDifference)} | {Tick(c.Verdict.IntervalLowerBoundAboveZero)} | {Tick(c.Verdict.TopRankNotWorse)} | {Tick(c.Verdict.NoLargeCategoryLoss)} | {Tick(c.Verdict.RerankLatencyWithinLimit)} | **{Tick(c.Verdict.Candidate)}** |");
+            b.AppendLine($"| {c.Name} ({c.Baseline} → {c.Challenger}) | {S(c.Ndcg10Difference.MeanDifference)} [{S(c.Ndcg10Difference.Lower)}, {S(c.Ndcg10Difference.Upper)}] | {S(c.Ndcg1Difference.MeanDifference)} | {Tick(c.Verdict.IntervalLowerBoundAboveZero)} | {Tick(c.Verdict.TopRankNotWorse)} | {Tick(c.Verdict.NoLargeCategoryLoss)} | {Latency(c, report)} | **{Tick(c.Verdict.Candidate)}** |");
         }
 
         b.AppendLine();
@@ -104,6 +104,10 @@ public static class RerankReportWriter
     private static string F(double v) => v.ToString("F3", CultureInfo.InvariantCulture);
 
     private static string S(double v) => v.ToString("+0.000;-0.000;0.000", CultureInfo.InvariantCulture);
+
+    // With no live request the verdict field is false (a candidate cannot be adopted unmeasured), but the honest label is "not measured".
+    private static string Latency(RerankComparison c, RerankReport report) =>
+        c.Verdict.RerankLatencyWithinLimit == false && report.RerankRequestP95Ms is null ? "not measured" : Tick(c.Verdict.RerankLatencyWithinLimit);
 
     private static string Tick(bool? v) => v switch { true => "yes", false => "no", null => "n/a" };
 }

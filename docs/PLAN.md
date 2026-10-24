@@ -101,13 +101,15 @@ Companion docs: [ASSESSMENT.md](ASSESSMENT.md) · [Knowledge Base](kb/README.md)
 - [x] Security review finding fixed: fixed-tag blocklist bypassable → random per-request delimiter + invisible-character stripping; rubric `rel-v1` → `rel-v2`
 - [x] Local ONNX cross-encoder: .NET WordPiece tokenizer, parity with the Hugging Face reference on 23 pairs, logits within 1e-3 of Python ONNX Runtime, CPU latency/memory measured (`docs/eval/reranker-cpu-benchmark.md`)
 - [x] Evaluation machinery: pair-level score cache, cost model, spend guard, six-strategy experiment, report writer, `rerank-plan` / `rerank` modes; protocol committed before any provider request (`docs/eval/protocol-reranking.md`)
-- [ ] **Live OpenAI Decisions evaluation — BLOCKED on explicit approval of the plan numbers.** Also unknown until a first call: whether the existing key can call `/v1/decisions` / `gpt-6-luna`
+- [x] **Live OpenAI Decisions evaluation done** (owner-approved: 40 requests, 0 failed; the existing key works for `/v1/decisions` / `gpt-6-luna`). Held-out nDCG@10 dense 0.861 → dense+rerank 0.979 (+0.118, 95 % interval [+0.044, +0.200]); nDCG@1 0.729 → 0.940; p95 rerank request 600 ms. All four pre-registered conditions passed → **adoption candidate, default NOT changed** (`docs/eval/rerank-openai-decisions.md`)
 - [ ] **Live Jev evaluation — BLOCKED: no Jev credential, no approval.** The OpenAI key is not assumed to work for Jev
-- [ ] Budget-10 diagnostic arm (free after the budget-20 run, no live latency)
+- [x] Budget-10 diagnostic arm (0 live requests): hybrid candidates differ from dense at this budget (42 hybrid-only pairs in 21/40 queries), yet hybrid+rerank − dense+rerank = +0.002 [0.000, +0.007] → no measurable advantage from hybrid candidate diversity
 - [ ] Optional free reference arm: the local ONNX reranker through the same experiment (not in the current protocol; would be added to it before running)
 - [ ] Wire any provider into the hosts (Dockerfiles, appsettings) — deliberately not done: nothing is adopted
 **Finding that changed the design** At budget 20 on the 35-chunk corpus hybrid adds **0 candidates** beyond dense in 0/40 queries, so the hybrid-diversity question is unanswerable there; a budget-10 arm was pre-registered.
-**Acceptance** ⬜ not met: requires a measured, validated improvement on the held-out split. Default stays `Dense`, reranking off.
+**Findings** (a) reranking dense candidates improved held-out ranking quality with a validated margin; (b) reranked hybrid ≡ reranked dense at budget 20 (identical candidate sets on this corpus), no advantage at budget 10; (c) token cost was under-estimated by 61 % and **observed spend ($0.0306) exceeded the approved cap ($0.024)** — guard and estimator fixed afterwards, recorded in the protocol.
+**Limits** judgments are LLM-authored (shared-bias risk with an LLM reranker); 35-chunk corpus shows ceiling effects; 19 held-out queries; one run (no provider variance measured); OpenAI question isolation unverified; resolved model not captured.
+**Acceptance** ⬜ partially met: the held-out improvement criterion passed for dense+OpenAI Decisions; **Jev unevaluated; production default unchanged** pending an explicit decision that also weighs cost, data egress and the limits above.
 **Plan numbers (no API call produced them)** 40 scored queries, 800 unique pairs, 40 batched requests per provider, ≈190 k input tokens → ≈ $0.019 (OpenAI, $0.10/M) and ≈ $0.008 (Jev, $0.042/M). Estimates only (≈4 chars/token + rubric).
 
 ## Phase 6 — Query rewriting and expansion — ⬜
@@ -136,6 +138,7 @@ Perf pass, README/KB/plan consistency, doc reference checker, diagram accuracy c
 | 2026-10-24 | 3/4 | Real-embedder runs (`text-embedding-3-small`): dense nDCG@10 0.903, lexical 0.787, hybrid 0.857 — hybrid not adopted |
 | 2026-10-24 | 4 | Dataset `golden-v1.1.0` (tune/heldout split), pre-registered protocol, paired bootstrap, tuning run: hybrid fails all three adoption conditions on held-out |
 | 2026-10-24 | 5 | Provider-independent reranking implemented: OpenAI Decisions + Jev adapters, optional ONNX, 111 + 30 deterministic tests; security-review fix (random fence); protocol + ADRs 0001-0003 committed; **no live provider call made** |
+| 2026-10-24 | 5 | **Live OpenAI Decisions run (approved):** dense+rerank passes the pre-registered rule on held-out (nDCG@10 0.861 → 0.979); hybrid candidates add nothing after reranking; observed cost $0.0306 > approved $0.024 (estimator 61 % low) — guard fixed, deviation recorded |
 | 2026-10-24 | coord | The in-house resilience layer (replacing Polly) landed in commits `066182a`/`f128474`; full suite green afterwards |
 | 2026-10-24 | env | Pre-existing: `IntegrationTestWebAppFactory` fails to start here (`minio/minio` pull denied) → 6 of the older integration tests cannot run in this environment; unrelated to Phase 2 |
 

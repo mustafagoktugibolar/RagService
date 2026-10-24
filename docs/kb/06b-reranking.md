@@ -5,17 +5,19 @@
 | Konu | Durum | Kanıt |
 |---|---|---|
 | `IReranker` sözleşmesi, `RerankingRetriever`, `NoOpReranker` | ✅ Implemented, 🧪 deterministik testle doğrulandı | 15 test (`RerankingRetrieverTests`) |
-| `OpenAiDecisionsReranker` adaptörü | ✅ Implemented, ⚠️ **yalnızca sahte HTTP sunucusuna karşı test edildi; canlı OpenAI'a hiç istek atılmadı** | 36 test (`OpenAiDecisionsRerankerTests`) |
+| `OpenAiDecisionsReranker` adaptörü | ✅ Implemented, ✅ **canlı doğrulandı: 40 gerçek istek, 0 başarısız** (mevcut OpenAI anahtarı `gpt-6-luna` için yetkili) | 36 deterministik test + canlı koşu (`docs/eval/rerank-openai-decisions.md`) |
 | `JevReranker` adaptörü | ✅ Implemented, ⚠️ **yalnızca sahte HTTP sunucusuna karşı test edildi; Jev kimlik bilgisi yok, hiç istek atılmadı** | 13 test (`JevRerankerTests`) |
 | Yapılandırma ile sağlayıcı seçimi, başlangıç doğrulaması | ✅ Implemented + test | 24 test (`RerankingRegistrationTests`) |
 | Altı strateji uçtan uca (sahte sağlayıcıyla) | ✅ Test edildi | 21 test (`RerankingPipelineTests`) |
 | Yerel ONNX cross-encoder (`ms-marco-MiniLM-L6-v2`) | ✅ Implemented, gerçek modelle test edildi; 🔵 **golden-v1 üzerinde değerlendirilmedi**; hostlara bağlı değil | `tests/Rag.Reranking.Onnx.Tests` (30 test) |
 | Altı stratejili **değerlendirme deneyi** (kod) | ✅ Implemented, sahte reranker'larla test edildi | `RerankExperimentTests` |
-| **Gerçek sağlayıcılarla deney sonuçları** | ❌ **Yok. Koşulmadı.** | Ücretli çağrı onayı bekleniyor |
-| Reranking'in kaliteyi artırdığı iddiası | ❌ **Kanıtlanmadı** | — |
+| **OpenAI Decisions deney sonuçları** | ✅ Koşuldu (bütçe 20 ve bütçe-10 tanı kolu); **sonuçlar §6B.15'te** | `docs/eval/rerank-openai-decisions*.md` |
+| **Jev deney sonuçları** | ❌ **Yok. Koşulmadı** (kimlik bilgisi ve onay yok) | — |
+| Reranking'in (OpenAI Decisions ile) bu veri kümesinde held-out nDCG@10'u artırdığı | ✅ Ölçüldü, önceden kayıtlı kuralı geçti — **ama güçlü sınırlarla** (§6B.15) | aynı |
+| Üretim varsayılanı | `Dense`, reranking **kapalı** — değişmedi |  ADR 0003 |
 | Varsayılan | `Dense`, reranking **kapalı** | ADR 0001, 0003 |
 
-> Bu bölümdeki hiçbir cümle "OpenAI Decisions/Jev bu repoda retrieval kalitesini artırıyor" demez. Henüz ölçülmedi.
+> OpenAI Decisions için ölçüm var (§6B.15). **Jev için ölçüm yoktur**; Jev hakkında hiçbir kalite iddiası yapılmaz.
 
 ## 6B.1 Reranking nedir, neden iki aşama?
 
@@ -176,6 +178,47 @@ Plan, **bütçe 20'de hybrid'in dense'in aday kümesine hiç yeni aday eklemedi�
 `src/Rag.Reranking.Onnx`: `cross-encoder/ms-marco-MiniLM-L6-v2` (BERT, 6 katman, hidden 384, uncased WordPiece, ham logit). **Tamamen .NET:** tokenizer kendi yazdığımız `BertWordPieceTokenizer` — `Microsoft.ML.Tokenizers 2.0.0`'ın `BertTokenizer`'ı gerçek metinlerde referanstan saptı (`= ` + `$ ^ | ~ < >` gibi sembolleri **düşürüyor**, `_`'yi kelimeye yapıştırıyor, aksanlı harfleri `[UNK]` yapıyor). Referans (Hugging Face `tokenizers`) ile **23 çiftte birebir** aynı id'ler ve Python ONNX Runtime ile 1e-3 içinde aynı logit'ler **testle** sabitlenmiştir.
 
 Ölçülen (8 çekirdek arm64, 20 aday, ~91 token/çift): fp32 p50 ≈ 172–189 ms, p95 ≈ 203–215 ms; nicemlenmiş (int8) p50 ≈ 80–92 ms. Bellek (taze süreç): fp32 +182 MB yükleme, +218 MB çıkarımdan sonra; int8 +74 / +124 MB. Model, SHA-256 doğrulamalı betikle indirilir; çalışma zamanında ağ yoktur. **Bu model henüz golden-v1 üzerinde değerlendirilmedi** ve hostlara bağlanmadı.
+
+## 6B.15 Bulgular: OpenAI Decisions, golden-v1.1.0 (canlı, 40 istek)
+
+Önceden kayıtlı protokol (`docs/eval/protocol-reranking.md`), `text-embedding-3-small` embedding'leri, aday bütçesi 20, rubrik `rel-v2`, başarısızlık politikası `Fail`. **Karar yalnızca held-out (19 sorgu).**
+
+| Held-out | nDCG@1 | nDCG@5 | nDCG@10 | MRR@10 | Recall@10 | aday Recall@20 |
+|---|---:|---:|---:|---:|---:|---:|
+| dense | 0.729 | 0.849 | 0.861 | 0.877 | 0.930 | 1.000 |
+| **dense + OpenAI Decisions** | **0.940** | **0.979** | **0.979** | **1.000** | 0.974 | 1.000 |
+| hybrid | 0.594 | 0.765 | 0.785 | 0.798 | 0.956 | 1.000 |
+| hybrid + OpenAI Decisions | 0.940 | 0.979 | 0.979 | 1.000 | 0.974 | 1.000 |
+
+**Karşılaştırmalar (held-out, paired bootstrap %95):**
+
+| | nDCG@10 farkı [aralık] | nDCG@1 farkı | önceden kayıtlı kural |
+|---|---|---:|---|
+| dense → dense+rerank | **+0.118 [+0.044, +0.200]** | +0.211 | **dört koşul da geçti** (aralık>0, nDCG@1≥0, kategori kaybı yok, p95 600 ms ≤ 1500 ms) → *benimseme adayı* |
+| hybrid → hybrid+rerank | +0.194 [+0.101, +0.288] | +0.346 | geçti |
+| **dense+rerank → hybrid+rerank (aday çeşitliliği sorusu)** | 0.000 [0.000, 0.000] | 0.000 | **geçmedi: fark yok** |
+| dense → hybrid (referans, rerank yok) | −0.076 [−0.155, −0.010] | −0.135 | geçmedi (önceki sonuçla tutarlı) |
+
+**Ne öğrendik:**
+1. **Reranking sıralamayı belirgin biçimde düzeltti.** Kazanç en çok paraphrase sorgularında: pa-04 0.394 → 0.834, pa-16 0.459 → 0.917. 40 sorgunun yalnızca birinde (mr-01, tune) belirgin kayıp var (−0.033). Aday Recall@20 zaten 1.000 olduğundan kazanç **tamamen sıralamadan** geliyor (reranker aday kümesini değiştiremez).
+2. **Hybrid'in aday çeşitliliği reranking sonrası da bir şey eklemedi.** Bütçe 20'de iki pipeline'ın aday kümesi **aynı** (0/40 sorguda hybrid yeni aday eklemiyor; corpus 35 chunk), sonuçlar bire bir eşit: bu "hybrid işe yaramıyor" değil, "bu bütçede soru cevaplanamaz". Önceden kayıtlı **bütçe-10 kolunda** kümeler gerçekten farklı (21 sorguda 42 hybrid-özgü çift) ve hybrid+rerank − dense+rerank = **+0.002 [0.000, +0.007]**: ölçülebilir avantaj yok. (Bu kol canlı istek içermez, gecikme *ölçülmedi*, benimsenemez; yalnızca tanı.)
+3. **Hybrid'in ilk bulgusu değişmedi:** reranking yokken hybrid dense'ten kötü; reranking bunu telafi ediyor çünkü ikisi de aynı adayları sıralıyor.
+
+**Gecikme ve maliyet (canlı):** rerank isteği (20 aday, tek batch) p50 **399 ms**, p95 **600 ms**. Gözlenen girdi **306 220 token**, 40 istek → **7 655 token/sorgu ≈ $0.00077/sorgu** (yaklaşık $0.77 / 1000 sorgu; çıktı ücretsiz). Hatasız: 0 başarısız istek.
+
+> ⚠️ **Maliyet tahmini %61 düşük çıktı ve onaylanan $0.024 üst sınırı aşıldı ($0.0306).** Token tahmincisi (karakter/4 + 150 rubrik) gerçek 383 token/soru yerine 237 öngördü; harcama bekçisi yalnızca kendi tahminini sınırlıyordu. Düzeltildi: rubrik sabiti 300'e kalibre edildi ve bekçi artık **faturalanan token'larla** mutabakat yapıp ona göre duruyor. Tutar küçük ama ilke önemli; protokole "yürütme notu" olarak kaydedildi.
+
+### Bu sonuçlara neden temkinli bakmalı (sınırlar)
+
+- **Yargılar bağımsız insan etiketi değil.** Corpus, sorgular ve ilgi yargıları aynı LLM-destekli süreçte yazıldı; bir LLM hakem (reranker) ile bir LLM etiketleyicinin **ortak önyargıları** örtüşebilir. Bu, kazancı abartabilir. İnsan etiketli bağımsız bir küme bu riski ölçer.
+- **Corpus küçük ve "kolay":** 35 chunk, konular birbirinden ayrık, aday havuzu corpus'un %57'si. Gerçek bir koleksiyonda binlerce yakın konulu chunk arasında kazanç farklı olabilir; MRR@10 = 1.000 ve nDCG@10 ≈ 0.98 **tavan etkisine** işaret eder.
+- **19 held-out sorgu, tek koşu:** sağlayıcı varyansı (aynı çiftin tekrar skorlanması) **ölçülmedi**; cache tek cevabı tekrar oynatır. Dense'in kendi skoru bölmeler arasında 0.940 → 0.861 oynadı.
+- **OpenAI yalıtım varsayımı doğrulanmadı:** bir istekteki soruların birbirini etkilemediği *varsayıldı*; `QuestionsPerRequest = 1` kontrolü koşulmadı.
+- **`gpt-6-luna` tek model; çözümlenmiş model yanıttan okunmadı** (rapor "none reported"): model değişirse adaptör bunu şu an fark etmez.
+- **Veri çıkışı:** sorgu ve pasaj metni OpenAI'a gider.
+
+### Karar durumu
+Önceden kayıtlı kurala göre **dense + OpenAI Decisions bir benimseme adayıdır**. Protokol gereği bu yalnızca bir *öneridir*: üretim varsayılanı (`Dense`, reranking kapalı) **değiştirilmedi**. Varsayılanı değiştirmek; yukarıdaki sınırların, maliyetin ($0.77/1000 sorgu), p95 +600 ms'nin, tek-sağlayıcı bağımlılığının ve **veri çıkışının** ayrıca tartılmasını gerektirir.
 
 ## 6B.14 Ne zaman hangisi? (şimdilik yalnızca tasarım ilkeleri, sonuç yok)
 

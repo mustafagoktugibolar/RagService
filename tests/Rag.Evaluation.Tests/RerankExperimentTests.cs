@@ -213,7 +213,7 @@ public sealed class RerankReportWriterTests
         Assert.Contains("rerank on dense candidates (dense → dense+rerank)", markdown);
         Assert.Contains("candidate Recall@20", markdown);
         Assert.Contains("`abc1234`", markdown);
-        Assert.Contains("not measured", markdown);   // the oracle reports no live latency
+        Assert.Contains("| not measured |", markdown);   // the oracle reports no live latency: the cell must say so, not "no"
         Assert.DoesNotContain("sk-", markdown);
         Assert.Contains("\"pipeline\": \"dense+rerank\"", RerankReportWriter.ToJson(report));
     }

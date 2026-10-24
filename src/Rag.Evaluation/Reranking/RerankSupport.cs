@@ -78,8 +78,11 @@ public static class CostModel
     /// <summary>TypeSafe announcement: $0.042 per 1M input tokens, output free. A company claim, not independently confirmed.</summary>
     public const double JevPerMillionInput = 0.042;
 
-    /// <summary>Rubric levels + instruction preamble repeated in every question (≈ 4 level sentences + preamble).</summary>
-    public const int RubricTokensPerQuestion = 150;
+    /// <summary>
+    /// Rubric levels, fence, instruction preamble and JSON framing repeated in every question. Calibrated from the one observed OpenAI run
+    /// (383 input tokens per question vs 237 estimated with the earlier value of 150, i.e. 61 % under). Other tokenizers (Jev) are unverified.
+    /// </summary>
+    public const int RubricTokensPerQuestion = 300;
 
     /// <summary>~4 characters per token for English prose. A rough planning figure; observed usage replaces it in reports.</summary>
     public static int EstimateInputTokens(string query, IEnumerable<string> passages) =>
@@ -120,6 +123,18 @@ public sealed class SpendGuard(int maxRequests, double maxDollars, double priceP
             _dollars += cost;
         }
     }
+
+    /// <summary>
+    /// Replaces the estimate of a finished request by what the provider actually billed. Without this the guard bounds only its own
+    /// guess: an under-estimate (it happened: 61 % low) would let real spend pass the approved limit.
+    /// </summary>
+    public void Reconcile(int estimatedInputTokens, long observedInputTokens)
+    {
+        lock (_lock)
+        {
+            _dollars = Math.Max(0, _dollars + CostModel.Dollars(observedInputTokens - estimatedInputTokens, pricePerMillionInputTokens));
+        }
+    }
 }
 
 /// <summary>Puts a <see cref="SpendGuard"/> in front of a paid provider: every request is authorised against the approved budget first.</summary>
@@ -129,9 +144,21 @@ public sealed class SpendGuardedReranker(IReranker inner, SpendGuard guard) : IR
 
     public RerankUsage Usage => (inner as IRerankUsageSource)?.Usage ?? new RerankUsage(0, 0, 0, 0, 0, 0, [], null);
 
-    public Task<IReadOnlyList<RerankScore>> RerankAsync(string query, IReadOnlyList<RerankCandidate> candidates, CancellationToken ct)
+    public async Task<IReadOnlyList<RerankScore>> RerankAsync(string query, IReadOnlyList<RerankCandidate> candidates, CancellationToken ct)
     {
-        guard.Authorise(CostModel.EstimateInputTokens(query, candidates.Select(c => c.Text)));
-        return inner.RerankAsync(query, candidates, ct);
+        var estimate = CostModel.EstimateInputTokens(query, candidates.Select(c => c.Text));
+        guard.Authorise(estimate);
+        var before = (inner as IRerankUsageSource)?.Usage.InputTokens;
+        try
+        {
+            return await inner.RerankAsync(query, candidates, ct);
+        }
+        finally
+        {
+            if (before is { } start && inner is IRerankUsageSource source)
+            {
+                guard.Reconcile(estimate, source.Usage.InputTokens - start);   // billed tokens replace the guess, even when the call failed
+            }
+        }
     }
 }

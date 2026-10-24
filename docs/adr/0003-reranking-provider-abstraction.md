@@ -1,6 +1,6 @@
 # ADR 0003 — Provider-independent reranking: neutral contract, per-provider adapters, candidate text inside each question
 
-Status: accepted for implementation; **not adopted for production** (no live evaluation has run) (2026-10-24)
+Status: accepted. OpenAI Decisions **validated live** (40 requests) and a pre-registered *adoption candidate* for dense retrieval; Jev **not** evaluated; **production default unchanged** (2026-10-24)
 
 ## Context
 Two decision APIs were to be compared — OpenAI Decisions and TypeSafe Jev — with a local ONNX cross-encoder as an optional third provider. Their wire formats differ (`input`/`questions[]` vs
@@ -24,3 +24,9 @@ Two decision APIs were to be compared — OpenAI Decisions and TypeSafe Jev — 
 - **Data egress:** with a hosted provider, query and passage text leave the process. Reranking is off by default for that reason as well as for cost.
 - Retries use the existing in-house pipeline (two retries, only 408/429/5xx); `Retry-After` is not honoured yet.
 - The OpenAI request is only as good as an assumption that questions do not influence each other; the isolation control exists to test it.
+
+## Update — live OpenAI Decisions result (2026-10-24)
+Held-out nDCG@10 dense 0.861 → dense+OpenAI Decisions 0.979 (+0.118, 95 % interval [+0.044, +0.200]), nDCG@1 0.729 → 0.940, rerank request p50 399 ms / p95 600 ms, 0 failed requests,
+≈ $0.00077 per query observed. All four pre-registered conditions passed. Reranked hybrid equals reranked dense at budget 20 (identical candidate sets); at budget 10 the difference is +0.002 [0.000, +0.007].
+Limits: LLM-authored judgments, a 35-chunk corpus with ceiling effects, 19 held-out queries, one run. Enabling reranking in production remains a separate decision (cost, data egress, single provider, the limits above).
+The spend estimator was 61 % low and the approved dollar cap was exceeded ($0.0306 vs $0.024); the guard now reconciles with billed tokens.

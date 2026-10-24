@@ -67,3 +67,20 @@ default also weighs observed cost, provider availability and terms, and **data e
 2. The owner approves explicit numbers; the CLI refuses to run without `--approve-requests` and `--approve-usd` that cover the plan.
 3. A spend guard stops the run before the request that would exceed either number.
 4. Jev runs only with a Jev credential and separate approval; the OpenAI key is not assumed to work for Jev.
+
+---
+
+## Execution notes (added after the OpenAI run; the protocol text above was not changed)
+
+**2026-10-24 — OpenAI Decisions, budget 20 (primary).** Approved by the owner on the plan numbers: 40 requests, ≈ 190 k tokens, ≈ $0.019 (cap: 50 requests, $0.024).
+Executed exactly as planned: 40 live requests, 0 failed. Rules, split, seed, hybrid configuration and failure policy were not touched after results appeared.
+
+**Deviation: observed spend exceeded the approved dollar cap.** Billed input was **306 220 tokens ≈ $0.0306**, against an estimate of 189 998 (≈ $0.019) and an approved cap of $0.024.
+Cause: the token estimator (~4 characters per token + 150 rubric tokens per question) was 61 % low — real cost was 383 tokens per question, not 237. The spend guard bounded only its
+own estimate, so real spend could pass the approved amount (here by $0.0066). Fixed afterwards: the rubric constant is calibrated to 300 from this run, and the guard now reconciles each
+request with the tokens actually billed and stops on that. Jev token counts will differ; its estimate stays unverified until a Jev run.
+
+**2026-10-24 — budget-10 diagnostic arm.** Run with an approved limit of 0 requests / $0: every pair was already cached, so no request was possible or made. It has no live latency and, by the
+rule above, cannot make any challenger an adoption candidate; the report labels that cell "not measured" (an earlier rendering said "no"; only the label was corrected).
+
+**Not run:** Jev (no credential, no approval); the `predicate` mechanism and the `QuestionsPerRequest = 1` isolation control (each needs its own approval); repeat runs for provider variance.
