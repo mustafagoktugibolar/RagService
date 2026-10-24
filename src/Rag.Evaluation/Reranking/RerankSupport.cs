@@ -24,7 +24,7 @@ public sealed class FileCachingReranker(IReranker inner, string directory) : IRe
     public async Task<IReadOnlyList<RerankScore>> RerankAsync(
         string query, IReadOnlyList<RerankCandidate> candidates, CancellationToken ct)
     {
-        var folder = Path.Combine(directory, Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(inner.Name)))[..16]);
+        var folder = FolderFor(directory, inner.Name);
         Directory.CreateDirectory(folder);
 
         var scores = new Dictionary<string, double>(StringComparer.Ordinal);
@@ -57,6 +57,13 @@ public sealed class FileCachingReranker(IReranker inner, string directory) : IRe
 
         return candidates.Where(c => scores.ContainsKey(c.ChunkId)).Select(c => new RerankScore(c.ChunkId, scores[c.ChunkId])).ToArray();
     }
+
+    /// <summary>Whether a pair is already scored, so a plan can count what a run would really send.</summary>
+    public static bool IsCached(string directory, string rerankerName, string query, string text) =>
+        File.Exists(PathFor(FolderFor(directory, rerankerName), query, text));
+
+    private static string FolderFor(string directory, string rerankerName) =>
+        Path.Combine(directory, Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(rerankerName)))[..16]);
 
     private static string PathFor(string folder, string query, string text) =>
         Path.Combine(folder, Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"{query}\n{text}"))) + ".txt");

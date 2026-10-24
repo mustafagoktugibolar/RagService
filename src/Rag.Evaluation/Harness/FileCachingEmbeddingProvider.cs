@@ -10,7 +10,7 @@ namespace Rag.Evaluation.Harness;
 /// over the same corpus and queries) pay for each embedding once. Embeddings are a pure function of model and text, so
 /// entries never go stale. The cache directory must not be committed.
 /// </summary>
-public sealed class FileCachingEmbeddingProvider(IEmbeddingProvider inner, string model, string directory) : IEmbeddingProvider
+public sealed class FileCachingEmbeddingProvider(IEmbeddingProvider inner, string model, string directory, bool allowLive = true) : IEmbeddingProvider
 {
     public int CacheHits { get; private set; }
 
@@ -41,6 +41,12 @@ public sealed class FileCachingEmbeddingProvider(IEmbeddingProvider inner, strin
 
         if (missing.Count > 0)
         {
+            if (!allowLive)
+            {
+                throw new InvalidOperationException(
+                    $"{missing.Count} embedding(s) are not cached and this run is not allowed to make live (paid) embedding calls.");
+            }
+
             var embedded = await inner.EmbedBatchAsync(missing.Select(i => texts[i]).ToArray(), ct);
             for (var j = 0; j < missing.Count; j++)
             {

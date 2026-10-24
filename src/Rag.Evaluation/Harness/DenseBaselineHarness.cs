@@ -6,6 +6,7 @@ using Rag.Core.Abstractions;
 using Rag.Core.Contracts;
 using Rag.Core.Models;
 using Rag.Core.Options;
+using Rag.Core.Reranking;
 using Rag.Core.Providers.Chunking;
 using Rag.Core.Services;
 using Rag.Evaluation.Dataset;
@@ -110,14 +111,15 @@ public sealed class DenseBaselineHarness
     /// A retriever over the same already-built index but with different retrieval options. Lets a tuning run compare many
     /// configurations without re-chunking or re-embedding the corpus.
     /// </summary>
-    public RetrieveAsync RetrieverFor(RetrievalOptions options) => ToRetriever(new VectorSearchService(
+    public RetrieveAsync RetrieverFor(RetrievalOptions options, IReranker? reranker = null) => ToRetriever(new VectorSearchService(
         Embedder,
         Store,
         new MemoryDistributedCache(Microsoft.Extensions.Options.Options.Create(new MemoryDistributedCacheOptions())),
         Microsoft.Extensions.Options.Options.Create(RagSettings),
         Microsoft.Extensions.Options.Options.Create(new QueryCacheOptions { Enabled = false }),
         NullLogger<VectorSearchService>.Instance,
-        Microsoft.Extensions.Options.Options.Create(options)));
+        Microsoft.Extensions.Options.Options.Create(options),
+        reranker));
 
     private static RetrieveAsync ToRetriever(VectorSearchService search) => async (query, depth, ct) =>
     {

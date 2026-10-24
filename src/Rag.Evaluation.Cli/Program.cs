@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using Microsoft.Extensions.Options;
 using Rag.Core.Options;
 using Rag.Core.Providers.Embeddings;
@@ -6,6 +7,7 @@ using Rag.Core.Retrieval;
 using Rag.Evaluation.Dataset;
 using Rag.Evaluation.Evaluation;
 using Rag.Evaluation.Harness;
+using Rag.Evaluation.Reranking;
 using Rag.Evaluation.Tuning;
 
 // Usage: dotnet run --project src/Rag.Evaluation.Cli -- [--dataset <path>] [--out <dir>] [--label <name>]
@@ -58,8 +60,60 @@ try
         return 0;
     }
 
-    var embedder = BuildEmbedder(embedderName, options, configuration);
+    var mode = (options.GetValueOrDefault("mode") ?? "run").ToLowerInvariant();
+    var embedder = BuildEmbedder(embedderName, options, configuration, allowLiveEmbeddings: mode is not ("rerank-plan" or "rerank"));
     var harness = await DenseBaselineHarness.BuildAsync(dataset, configuration, cts.Token, embedder);
+
+    if (mode is "rerank-plan" or "rerank")
+    {
+        var settings = new RerankExperimentSettings { CandidateBudget = int.Parse(options.GetValueOrDefault("budget") ?? "20") };
+        var env = LoadEnv(options.GetValueOrDefault("env") ?? ".env");
+        var cacheRoot = Path.Combine(options.GetValueOrDefault("cache") ?? ".eval-cache", "rerank");
+        var providers = (options.GetValueOrDefault("provider") ?? "openai,jev").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        foreach (var providerName in providers)
+        {
+            // The plan never needs a credential; only a real run does. Identity (and so the cache folder) comes from a dummy-keyed adapter.
+            var planEnv = mode == "rerank" ? env : new Dictionary<string, string>(env)
+            {
+                ["OPENAI__APIKEY"] = "plan-only", ["JEV__APIKEY"] = "plan-only"
+            };
+            var choice = Rag.Evaluation.Cli.RerankCommands.BuildProvider(providerName, planEnv, settings);
+            var plan = await Rag.Evaluation.Cli.RerankCommands.ComputePlanAsync(dataset, harness, choice.Reranker.Name, cacheRoot, settings, cts.Token);
+            Console.WriteLine(Rag.Evaluation.Cli.RerankCommands.DescribePlan(plan, choice.Label, choice.PricePerMillion));
+
+            if (mode == "rerank-plan")
+            {
+                continue;
+            }
+
+            if (!int.TryParse(options.GetValueOrDefault("approve-requests"), out var approvedRequests)
+                || !double.TryParse(options.GetValueOrDefault("approve-usd"), NumberStyles.Float, CultureInfo.InvariantCulture, out var approvedUsd))
+            {
+                Console.Error.WriteLine("REFUSING to make paid calls: pass --approve-requests <n> and --approve-usd <amount> after reviewing the plan above.");
+                return 3;
+            }
+
+            var estimate = CostModel.Dollars(plan.EstimatedInputTokens, choice.PricePerMillion);
+            if (approvedRequests < plan.Requests || approvedUsd < estimate)
+            {
+                Console.Error.WriteLine($"REFUSING: the approved limits ({approvedRequests} requests, ${approvedUsd}) do not cover the plan ({plan.Requests} requests, ${estimate:0.0000}).");
+                return 3;
+            }
+
+            var guard = new SpendGuard(approvedRequests, approvedUsd, choice.PricePerMillion);
+            var reranker = new FileCachingReranker(new SpendGuardedReranker(choice.Reranker, guard), cacheRoot);
+            var experiment = await RerankExperiment.RunAsync(dataset, harness, reranker, choice.PricePerMillion, settings, cts.Token);
+
+            var slug = settings.CandidateBudget == 20 ? $"rerank-{choice.Label}" : $"rerank-{choice.Label}-budget{settings.CandidateBudget}";
+            await File.WriteAllTextAsync(Path.Combine(outDirectory, $"{slug}.md"), RerankReportWriter.ToMarkdown(experiment, GitCommit()), cts.Token);
+            await File.WriteAllTextAsync(Path.Combine(outDirectory, $"{slug}.json"), RerankReportWriter.ToJson(experiment), cts.Token);
+            Console.WriteLine($"Done: {guard.Requests} live request(s), estimated ${guard.EstimatedDollars:0.0000} authorised. Report: {slug}.md");
+        }
+
+        return 0;
+    }
+
 
     if ((options.GetValueOrDefault("mode") ?? "run").Equals("tune", StringComparison.OrdinalIgnoreCase))
     {
@@ -105,7 +159,7 @@ catch (OperationCanceledException)
     return 130;
 }
 
-static EmbedderSpec BuildEmbedder(string name, Dictionary<string, string> options, HarnessConfiguration configuration)
+static EmbedderSpec BuildEmbedder(string name, Dictionary<string, string> options, HarnessConfiguration configuration, bool allowLiveEmbeddings = true)
 {
     if (name.Equals("hashing", StringComparison.OrdinalIgnoreCase))
     {
@@ -131,7 +185,7 @@ static EmbedderSpec BuildEmbedder(string name, Dictionary<string, string> option
         Microsoft.Extensions.Options.Options.Create(new OpenAiOptions { ApiKey = apiKey, MaxBatchSize = 128 }),
         Microsoft.Extensions.Options.Options.Create(new RagOptions { EmbeddingProvider = "OpenAI", EmbeddingModel = model, VectorSize = vectorSize }));
 
-    var cached = new FileCachingEmbeddingProvider(inner, model, options.GetValueOrDefault("cache") ?? ".eval-cache");
+    var cached = new FileCachingEmbeddingProvider(inner, model, options.GetValueOrDefault("cache") ?? ".eval-cache", allowLiveEmbeddings);
     return new EmbedderSpec(cached, "OpenAI", model, vectorSize, "real");
 }
 
