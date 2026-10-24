@@ -73,7 +73,7 @@ public sealed class RerankingRegistrationTests
 
         Assert.IsType<OpenAiDecisionsReranker>(reranker);
         Assert.Same(reranker, provider.GetRequiredService<IReranker>());
-        Assert.Equal("openai-decisions:gpt-6-luna:rel-v1:score", reranker.Name);
+        Assert.Equal("openai-decisions:gpt-6-luna:rel-v2:score", reranker.Name);
     }
 
     [Fact]
@@ -84,7 +84,7 @@ public sealed class RerankingRegistrationTests
         var reranker = provider.GetRequiredService<IReranker>();
 
         Assert.IsType<JevReranker>(reranker);
-        Assert.Equal("jev:jev-1.13.0:rel-v1:score", reranker.Name);
+        Assert.Equal("jev:jev-1.13.0:rel-v2:score", reranker.Name);
     }
 
     [Fact]

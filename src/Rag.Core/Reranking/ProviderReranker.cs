@@ -9,7 +9,8 @@ namespace Rag.Core.Reranking;
 /// <summary>One question of a provider request: a positional name (never a chunk id) and the passage it is about.</summary>
 public sealed record RelevanceQuestion(string Name, string ChunkId, string Passage);
 
-public sealed record RelevanceBatch(IReadOnlyList<RelevanceQuestion> Questions);
+/// <summary>Questions of one request plus the random fence that separates their passages from instructions.</summary>
+public sealed record RelevanceBatch(IReadOnlyList<RelevanceQuestion> Questions, string Delimiter);
 
 /// <summary>A provider's answer to one question, already reduced to a number (or a refusal) by the adapter.</summary>
 public sealed record ProviderAnswer(string Name, double? Value, bool Refused);
@@ -130,7 +131,7 @@ public abstract class ProviderReranker : IReranker, IRerankUsageSource, IDisposa
         return candidates
             .Select((c, i) => new RelevanceQuestion($"c{i}", c.ChunkId, Truncate(c.Text, _options.MaxPassageCharacters)))
             .Chunk(size)
-            .Select(chunk => new RelevanceBatch(chunk))
+            .Select(chunk => new RelevanceBatch(chunk, RelevanceRubric.NewDelimiter()))
             .ToArray();
     }
 

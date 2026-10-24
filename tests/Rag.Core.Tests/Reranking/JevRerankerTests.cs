@@ -107,7 +107,7 @@ public sealed class JevRerankerTests
         Assert.NotNull(question["criteria"]!["true"]);
         Assert.NotNull(question["criteria"]!["false"]);
         Assert.Equal(0.97, scores["rabbitmq:0"], 9);
-        Assert.Equal("jev:jev-latest:rel-v1:predicate", reranker.Name);
+        Assert.Equal("jev:jev-latest:rel-v2:predicate", reranker.Name);
     }
 
     [Fact]
@@ -119,7 +119,7 @@ public sealed class JevRerankerTests
         await reranker.RerankAsync("q", Three, CancellationToken.None);
 
         Assert.Equal("jev-1.13.0", reranker.Usage.ResolvedModel);
-        Assert.Equal("jev:jev-latest:rel-v1:score", reranker.Name);   // identity still names the requested alias
+        Assert.Equal("jev:jev-latest:rel-v2:score", reranker.Name);   // identity still names the requested alias
     }
 
     [Theory]

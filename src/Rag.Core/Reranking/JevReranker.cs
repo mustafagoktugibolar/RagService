@@ -36,7 +36,7 @@ public sealed class JevReranker : ProviderReranker
         var questions = new JsonObject();
         foreach (var question in batch.Questions)
         {
-            questions[question.Name] = BuildQuestion(question);
+            questions[question.Name] = BuildQuestion(question, batch.Delimiter);
         }
 
         var body = new JsonObject
@@ -53,14 +53,14 @@ public sealed class JevReranker : ProviderReranker
         return Parse(json);
     }
 
-    private JsonNode BuildQuestion(RelevanceQuestion question)
+    private JsonNode BuildQuestion(RelevanceQuestion question, string delimiter)
     {
         if (Mechanism == RelevanceMechanism.Predicate)
         {
             return new JsonObject
             {
                 ["type"] = "noul",
-                ["instructions"] = RelevanceRubric.PredicateInstructions(question.Passage),
+                ["instructions"] = RelevanceRubric.PredicateInstructions(question.Passage, delimiter),
                 ["criteria"] = new JsonObject
                 {
                     ["true"] = "The passage contains information that helps answer the search query.",
@@ -72,7 +72,7 @@ public sealed class JevReranker : ProviderReranker
         return new JsonObject
         {
             ["type"] = "score",
-            ["instructions"] = RelevanceRubric.ScoreInstructions(question.Passage),
+            ["instructions"] = RelevanceRubric.ScoreInstructions(question.Passage, delimiter),
             ["criteria"] = new JsonArray(RelevanceRubric.Levels.Select(l => (JsonNode)l.Description).ToArray())
         };
     }

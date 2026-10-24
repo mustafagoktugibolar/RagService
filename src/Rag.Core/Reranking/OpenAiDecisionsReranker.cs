@@ -39,7 +39,7 @@ public sealed class OpenAiDecisionsReranker : ProviderReranker
         {
             ["model"] = _decisions.Model,
             ["input"] = ProviderHttp.QueryInput(query),
-            ["questions"] = new JsonArray(batch.Questions.Select(BuildQuestion).ToArray())
+            ["questions"] = new JsonArray(batch.Questions.Select(q => BuildQuestion(q, batch.Delimiter)).ToArray())
         };
 
         var extraHeaders = new List<KeyValuePair<string, string>>();
@@ -60,7 +60,7 @@ public sealed class OpenAiDecisionsReranker : ProviderReranker
         return Parse(json);
     }
 
-    private JsonNode BuildQuestion(RelevanceQuestion question)
+    private JsonNode BuildQuestion(RelevanceQuestion question, string delimiter)
     {
         if (Mechanism == RelevanceMechanism.Predicate)
         {
@@ -68,7 +68,7 @@ public sealed class OpenAiDecisionsReranker : ProviderReranker
             {
                 ["type"] = "predicate",
                 ["name"] = question.Name,
-                ["instructions"] = RelevanceRubric.PredicateInstructions(question.Passage)
+                ["instructions"] = RelevanceRubric.PredicateInstructions(question.Passage, delimiter)
             };
         }
 
@@ -76,7 +76,7 @@ public sealed class OpenAiDecisionsReranker : ProviderReranker
         {
             ["type"] = "score",
             ["name"] = question.Name,
-            ["instructions"] = RelevanceRubric.ScoreInstructions(question.Passage),
+            ["instructions"] = RelevanceRubric.ScoreInstructions(question.Passage, delimiter),
             ["levels"] = new JsonArray(RelevanceRubric.Levels
                 .Select(l => (JsonNode)new JsonObject { ["label"] = l.Label, ["description"] = l.Description }).ToArray())
         };

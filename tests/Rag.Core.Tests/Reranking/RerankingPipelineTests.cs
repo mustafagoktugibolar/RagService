@@ -211,7 +211,7 @@ public sealed class RerankingPipelineTests
             .SearchAsync(Query(), CancellationToken.None);
 
         Assert.False(response.Success);
-        Assert.Equal("Reranking with 'jev:jev-latest:rel-v1:score' failed.", response.ErrorMessage);
+        Assert.Equal("Reranking with 'jev:jev-latest:rel-v2:score' failed.", response.ErrorMessage);
     }
 
     [Fact]
