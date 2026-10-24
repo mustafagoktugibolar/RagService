@@ -88,27 +88,56 @@ public static class CostModel
     public static int EstimateInputTokens(string query, IEnumerable<string> passages) =>
         (query.Length + 20) / 4 + passages.Sum(p => p.Length / 4 + RubricTokensPerQuestion);
 
-    public static double Dollars(long inputTokens, double pricePerMillion) => inputTokens / 1_000_000.0 * pricePerMillion;
+    public static double Dollars(double inputTokens, double pricePerMillion) => inputTokens / 1_000_000.0 * pricePerMillion;
 }
 
 public sealed class SpendLimitExceededException(string message) : Exception(message);
 
-/// <summary>Stop-loss for a paid run: refuses the next request that would exceed the approved request count or dollar amount.</summary>
+/// <summary>Money set aside for one in-flight request. It is replaced by the billed amount once the request finishes.</summary>
+public sealed record SpendReservation(int EstimatedInputTokens, double ReservedDollars);
+
+/// <summary>
+/// Stop-loss for a paid run: refuses the next request that would exceed the approved request count or dollar amount.
+/// <list type="bullet">
+/// <item>Every request reserves its estimated cost <b>before</b> it is sent, so concurrent requests cannot jointly overshoot the cap.</item>
+/// <item>When a request finishes (success or failure) the reservation is replaced by what the provider actually billed.</item>
+/// <item>The guard learns the observed/estimated token ratio and scales later reservations by it (never below 1), so an
+/// under-estimating estimator is corrected after the first request instead of staying wrong for the whole run.</item>
+/// </list>
+/// What it cannot prevent: the first request is reserved at the raw estimate, so real spend can pass the cap by at most that one
+/// request's under-estimate. Approve a cap with headroom for that.
+/// </summary>
 public sealed class SpendGuard(int maxRequests, double maxDollars, double pricePerMillionInputTokens)
 {
     private readonly object _lock = new();
     private int _requests;
     private double _dollars;
+    private double _estimatedTokens;
+    private double _observedTokens;
 
     public int Requests => _requests;
 
+    /// <summary>Spent (billed) plus reserved for requests still in flight.</summary>
     public double EstimatedDollars => _dollars;
 
-    public void Authorise(int estimatedInputTokens)
+    /// <summary>Observed ÷ estimated input tokens over finished requests; 1 until something has been observed. Never below 1.</summary>
+    public double CalibrationFactor
+    {
+        get
+        {
+            lock (_lock)
+            {
+                return _estimatedTokens > 0 ? Math.Max(1.0, _observedTokens / _estimatedTokens) : 1.0;
+            }
+        }
+    }
+
+    public SpendReservation Authorise(int estimatedInputTokens)
     {
         lock (_lock)
         {
-            var cost = CostModel.Dollars(estimatedInputTokens, pricePerMillionInputTokens);
+            var factor = _estimatedTokens > 0 ? Math.Max(1.0, _observedTokens / _estimatedTokens) : 1.0;
+            var cost = CostModel.Dollars(estimatedInputTokens * factor, pricePerMillionInputTokens);
             if (_requests + 1 > maxRequests)
             {
                 throw new SpendLimitExceededException($"Approved request limit of {maxRequests} reached; stopping before any further paid call.");
@@ -121,18 +150,18 @@ public sealed class SpendGuard(int maxRequests, double maxDollars, double priceP
 
             _requests++;
             _dollars += cost;
+            return new SpendReservation(estimatedInputTokens, cost);
         }
     }
 
-    /// <summary>
-    /// Replaces the estimate of a finished request by what the provider actually billed. Without this the guard bounds only its own
-    /// guess: an under-estimate (it happened: 61 % low) would let real spend pass the approved limit.
-    /// </summary>
-    public void Reconcile(int estimatedInputTokens, long observedInputTokens)
+    /// <summary>Replaces the reservation by the billed amount and updates the calibration factor.</summary>
+    public void Reconcile(SpendReservation reservation, long observedInputTokens)
     {
         lock (_lock)
         {
-            _dollars = Math.Max(0, _dollars + CostModel.Dollars(observedInputTokens - estimatedInputTokens, pricePerMillionInputTokens));
+            _dollars = Math.Max(0, _dollars - reservation.ReservedDollars + CostModel.Dollars(observedInputTokens, pricePerMillionInputTokens));
+            _estimatedTokens += reservation.EstimatedInputTokens;
+            _observedTokens += observedInputTokens;
         }
     }
 }
@@ -147,7 +176,7 @@ public sealed class SpendGuardedReranker(IReranker inner, SpendGuard guard) : IR
     public async Task<IReadOnlyList<RerankScore>> RerankAsync(string query, IReadOnlyList<RerankCandidate> candidates, CancellationToken ct)
     {
         var estimate = CostModel.EstimateInputTokens(query, candidates.Select(c => c.Text));
-        guard.Authorise(estimate);
+        var reservation = guard.Authorise(estimate);
         var before = (inner as IRerankUsageSource)?.Usage.InputTokens;
         try
         {
@@ -155,9 +184,10 @@ public sealed class SpendGuardedReranker(IReranker inner, SpendGuard guard) : IR
         }
         finally
         {
+            // Billed tokens replace the reservation even when the call failed. A provider without a usage source keeps the reservation as is.
             if (before is { } start && inner is IRerankUsageSource source)
             {
-                guard.Reconcile(estimate, source.Usage.InputTokens - start);   // billed tokens replace the guess, even when the call failed
+                guard.Reconcile(reservation, source.Usage.InputTokens - start);
             }
         }
     }
