@@ -206,12 +206,20 @@ Plan, **bütçe 20'de hybrid'in dense'in aday kümesine hiç yeni aday eklemedi�
 
 **Gecikme ve maliyet (canlı):** rerank isteği (20 aday, tek batch) p50 **399 ms**, p95 **600 ms**. Gözlenen girdi **306 220 token**, 40 istek → **7 655 token/sorgu ≈ $0.00077/sorgu** (yaklaşık $0.77 / 1000 sorgu; çıktı ücretsiz). Hatasız: 0 başarısız istek.
 
-> ⚠️ **Maliyet tahmini %61 düşük çıktı ve onaylanan $0.024 üst sınırı aşıldı ($0.0306).** Token tahmincisi (karakter/4 + 150 rubrik) gerçek 383 token/soru yerine 237 öngördü; harcama bekçisi yalnızca kendi tahminini sınırlıyordu. Düzeltildi: rubrik sabiti 300'e kalibre edildi ve bekçi artık **faturalanan token'larla** mutabakat yapıp ona göre duruyor. Tutar küçük ama ilke önemli; protokole "yürütme notu" olarak kaydedildi.
+> ⚠️ **Maliyet tahmini %61 düşük çıktı ve onaylanan $0.024 üst sınırı aşıldı ($0.0306).** Token tahmincisi (karakter/4 + 150 rubrik) gerçek 383 token/soru yerine 237 öngördü; harcama bekçisi yalnızca kendi tahminini sınırlıyordu. Düzeltildi (ve ardından sağlamlaştırıldı):
+> - rubrik sabiti 300'e kalibre edildi;
+> - bekçi her isteği göndermeden **önce rezerve eder** (eşzamanlı istekler toplamda sınırı aşamaz);
+> - istek bitince (başarılı **veya başarısız**) rezervasyon **faturalanan token'larla** değiştirilir;
+> - bekçi gözlenen/tahmin oranını öğrenir ve sonraki rezervasyonları onunla çarpar (hiçbir zaman 1'in altına inmez). Örnek: sağlayıcı sürekli %61 fazla faturalarsa 100 çağrılık döngü 5–7 çağrıda durur ve toplam fatura sınırın altında kalır (test: `WhenBilledTokensExceedTheEstimate_TotalBilledSpendStaysWithinTheCap`);
+> - **kalan boşluk:** ilk istek ham tahminle rezerve edilir, bu yüzden gerçek harcama sınırı en fazla **o tek isteğin eksik tahmini** kadar aşabilir (test: `TheFirstRequestIsUnlearned_…`). Onay verirken bu kadar pay bırakılmalı.
+>
+> Tutar küçük ama ilke önemli; protokole "yürütme notu" olarak kaydedildi.
 
 ### Bu sonuçlara neden temkinli bakmalı (sınırlar)
 
 - **Yargılar bağımsız insan etiketi değil.** Corpus, sorgular ve ilgi yargıları aynı LLM-destekli süreçte yazıldı; bir LLM hakem (reranker) ile bir LLM etiketleyicinin **ortak önyargıları** örtüşebilir. Bu, kazancı abartabilir. İnsan etiketli bağımsız bir küme bu riski ölçer.
 - **Corpus küçük ve "kolay":** 35 chunk, konular birbirinden ayrık, aday havuzu corpus'un %57'si. Gerçek bir koleksiyonda binlerce yakın konulu chunk arasında kazanç farklı olabilir; MRR@10 = 1.000 ve nDCG@10 ≈ 0.98 **tavan etkisine** işaret eder.
+- **Held-out kazancı iyimser olabilir:** held-out'ta ortalama kazanç +0.118, ama 40 sorgunun tamamında **+0.085**, tune'da yalnızca **+0.054**. Eşlenmiş farkın standart sapması ≈ 0.165. Bölmeler arası bu fark, tek bölmenin şansa bağlı iyimserliğini gösterir; bağımsız veride yeniden ölçmek bu yüzden gerekir.
 - **19 held-out sorgu, tek koşu:** sağlayıcı varyansı (aynı çiftin tekrar skorlanması) **ölçülmedi**; cache tek cevabı tekrar oynatır. Dense'in kendi skoru bölmeler arasında 0.940 → 0.861 oynadı.
 - **OpenAI yalıtım varsayımı doğrulanmadı:** bir istekteki soruların birbirini etkilemediği *varsayıldı*; `QuestionsPerRequest = 1` kontrolü koşulmadı.
 - **`gpt-6-luna` tek model; çözümlenmiş model yanıttan okunmadı** (rapor "none reported"): model değişirse adaptör bunu şu an fark etmez.
@@ -219,6 +227,33 @@ Plan, **bütçe 20'de hybrid'in dense'in aday kümesine hiç yeni aday eklemedi�
 
 ### Karar durumu
 Önceden kayıtlı kurala göre **dense + OpenAI Decisions bir benimseme adayıdır**. Protokol gereği bu yalnızca bir *öneridir*: üretim varsayılanı (`Dense`, reranking kapalı) **değiştirilmedi**. Varsayılanı değiştirmek; yukarıdaki sınırların, maliyetin ($0.77/1000 sorgu), p95 +600 ms'nin, tek-sağlayıcı bağımlılığının ve **veri çıkışının** ayrıca tartılmasını gerektirir.
+
+## 6B.16 Üretimde nasıl açılır (varsayılan: kapalı)
+
+Hostlar (API, QueryWorker, IndexWorker) `AddRagCore` ile kayıt yapar; reranking **yalnızca yapılandırmayla** açılır (kod değişikliği yok). Gerçek `AddRagCore` yolu, docker-compose'un kullandığı **ortam değişkeni biçimiyle** test edildi (`HostConfigurationTests`). `.env.template` varsayılanları **kapalı** gönderir ve bir test şablonun reranking'i açmadığını doğrular.
+
+```
+RETRIEVAL__STRATEGY=Dense                     # üretim varsayılanı
+RETRIEVAL__RERANKING__ENABLED=false           # varsayılan: kapalı
+RETRIEVAL__RERANKING__PROVIDER=OpenAiDecisions   # None | OpenAiDecisions | Jev | Onnx
+RETRIEVAL__RERANKING__CANDIDATEBUDGET=20
+RETRIEVAL__RERANKING__TIMEOUTSECONDS=15
+RETRIEVAL__RERANKING__FAILUREPOLICY=Fallback  # veya Fail
+```
+
+OpenAI Decisions mevcut `OPENAI__APIKEY`'i **yeniden kullanır**; Jev ayrı `JEV__APIKEY` ister. `ENABLED=true` iken eksik anahtar, yanlış aralık, HTTPS olmayan uç nokta veya kayıtsız sağlayıcı varsa **servis başlamaz** (anahtar değeri mesaja yazılmaz). Strateji ile reranking **birbirinden bağımsızdır**: `Hybrid` + reranking iki ayrı ayardır.
+
+**Açmadan önce bilinmesi gerekenler:** sorgu ve pasaj metni sağlayıcıya gider (veri çıkışı); gözlenen maliyet ≈ $0.77 / 1000 sorgu (20 aday); gözlenen ek gecikme p50 399 ms / p95 600 ms; sağlayıcı kesintisinde `Fallback` ile retrieval sırası döner (`rag.rerank.fallbacks`), `Fail` ile sorgu başarısız olur. İzleme: `rag.rerank.requests`, `rag.rerank.input_tokens`, `rag.rerank.fallbacks`, `rag.rerank.duration`.
+
+## 6B.17 Hazırlık matrisi: ne uygulandı, ne ölçüldü, ne hâlâ doğrulanmalı
+
+| | İçerik |
+|---|---|
+| **A. Tam uygulandı** (kod + deterministik test; ağ yok) | `IReranker` sözleşmesi, `RerankingRetriever` (sıralama, atıf, `Fallback`/`Fail`), `NoOpReranker` · OpenAI Decisions ve Jev adaptörleri · yapılandırmayla sağlayıcı seçimi (gerçek `AddRagCore` + ortam değişkenleri ile doğrulandı), başlangıç doğrulaması, HTTPS zorunluluğu · batch'leme, sınırlı eşzamanlılık, kısmi batch hatası, yanıt doğrulama, sadece geçici hatalarda retry, devre kesici (mevcut katman) · içerik/anahtar sızdırmayan log ve istisnalar · rastgele ayırıcı + görünmez karakter temizliği · önbellek anahtarında sağlayıcı/model/rubrik/mekanizma/bütçe · OpenTelemetry metrik ve span'ler · değerlendirme araçları: deney, çift cache'i, rapor, plan/onay kapısı, **harcama bekçisi** (rezervasyon, faturaya mutabakat, kalibrasyon) · yerel ONNX reranker (opsiyonel proje) |
+| **B. Deneysel olarak doğrulandı** (ölçüm yapıldı) | OpenAI Decisions uç noktası mevcut anahtarla **çalışıyor**: 40 canlı istek, **0 başarısız** · gecikme p50 399 / p95 600 ms · gözlenen maliyet ve token kullanımı · held-out'ta dense → dense+rerank nDCG@10 **+0.118 [+0.044, +0.200]**, nDCG@1 +0.211; önceden kayıtlı dört koşul geçti · hybrid, dense'ten kötü (tuning + held-out) · reranking sonrası hybrid adayları bir şey eklemedi (bütçe 20: aynı küme; bütçe 10: +0.002 [0.000, +0.007]) · ONNX: tokenizer 23 çiftte referansla birebir, logit'ler 1e-3 içinde, CPU gecikme/bellek ölçüldü · sorgu cache'i doğruluk düzeltmesi (kırmızı → yeşil testler) |
+| **C. Üretim doğrulaması gerekiyor** | Bağımsız **insan etiketli** veride kalite (mevcut yargılar LLM destekli, corpus kolay) · **batch yalıtımı** (OpenAI için varsayım) · sağlayıcı **çalıştırmalar arası varyans** · gerçek yük altında rate limit ve `Retry-After` (desteklenmiyor) · **veri çıkışı onayı** (hukuk/sahip kararı; ZDR hesap için doğrulanmalı) · model sabitleme ve kayma izleme (`gpt-6-luna` tek model; çözümlenmiş model yalnızca yanıt taşırsa kaydedilir) · gerçek trafikte maliyet uyarıları · gerçek dağıtımda kesinti/geri düşüş davranışı · **Jev'in tamamı** (hiç canlı istek yok, anahtar yok) · ONNX modelinin kalitesi (golden-v1'de ölçülmedi) ve hostlara/Docker imajlarına bağlanması · Grafana panoları (metrikler var, pano yok) |
+
+Doğrulama planı (ücretli hiçbir şey çalıştırılmadan): `docs/eval/plan-independent-validation.md` — bağımsız insan etiketli veri seti (gerekli sorgu sayısı, mevcut varyanstan: δ=0.05 için ≈ 86 held-out sorgu), kör havuzlama, iki anotatör ve uyuşma ölçümü, ön kayıt; ve **batch yalıtım testi** (gürültü tabanı, izole, karıştırılmış, saldırgan komşu, kendi skorunu şişirme kolları; ≈ 900 istek ≈ $0.10 tahmini; **onaylanmadı, koşulmadı**).
 
 ## 6B.14 Ne zaman hangisi? (şimdilik yalnızca tasarım ilkeleri, sonuç yok)
 

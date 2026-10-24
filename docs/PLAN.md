@@ -105,7 +105,11 @@ Companion docs: [ASSESSMENT.md](ASSESSMENT.md) · [Knowledge Base](kb/README.md)
 - [ ] **Live Jev evaluation — BLOCKED: no Jev credential, no approval.** The OpenAI key is not assumed to work for Jev
 - [x] Budget-10 diagnostic arm (0 live requests): hybrid candidates differ from dense at this budget (42 hybrid-only pairs in 21/40 queries), yet hybrid+rerank − dense+rerank = +0.002 [0.000, +0.007] → no measurable advantage from hybrid candidate diversity
 - [ ] Optional free reference arm: the local ONNX reranker through the same experiment (not in the current protocol; would be added to it before running)
-- [ ] Wire any provider into the hosts (Dockerfiles, appsettings) — deliberately not done: nothing is adopted
+- [x] OpenAI Decisions stays an **optional production provider**: hosts already call `AddRagCore`, so it turns on by environment configuration alone (verified through the real registration with env vars); `.env.template` ships it disabled and a test keeps it that way. Default unchanged: Dense, reranking off
+- [x] Spend guard hardened after the cost overrun: per-request reservation, reconciliation with billed tokens (also for failed calls), learned calibration factor; 100 evaluation tests incl. billed > estimated, concurrency and first-request overshoot
+- [x] Plan (not executed) for an independent human-labeled validation set and batch-isolation testing: `docs/eval/plan-independent-validation.md`
+- [ ] Execute the plan above — **needs approval of plan numbers; no paid call is made without it**
+- [ ] Jev evaluation — blocked: no credential configured, not run
 **Finding that changed the design** At budget 20 on the 35-chunk corpus hybrid adds **0 candidates** beyond dense in 0/40 queries, so the hybrid-diversity question is unanswerable there; a budget-10 arm was pre-registered.
 **Findings** (a) reranking dense candidates improved held-out ranking quality with a validated margin; (b) reranked hybrid ≡ reranked dense at budget 20 (identical candidate sets on this corpus), no advantage at budget 10; (c) token cost was under-estimated by 61 % and **observed spend ($0.0306) exceeded the approved cap ($0.024)** — guard and estimator fixed afterwards, recorded in the protocol.
 **Limits** judgments are LLM-authored (shared-bias risk with an LLM reranker); 35-chunk corpus shows ceiling effects; 19 held-out queries; one run (no provider variance measured); OpenAI question isolation unverified; resolved model not captured.
@@ -139,6 +143,7 @@ Perf pass, README/KB/plan consistency, doc reference checker, diagram accuracy c
 | 2026-10-24 | 4 | Dataset `golden-v1.1.0` (tune/heldout split), pre-registered protocol, paired bootstrap, tuning run: hybrid fails all three adoption conditions on held-out |
 | 2026-10-24 | 5 | Provider-independent reranking implemented: OpenAI Decisions + Jev adapters, optional ONNX, 111 + 30 deterministic tests; security-review fix (random fence); protocol + ADRs 0001-0003 committed; **no live provider call made** |
 | 2026-10-24 | 5 | **Live OpenAI Decisions run (approved):** dense+rerank passes the pre-registered rule on held-out (nDCG@10 0.861 → 0.979); hybrid candidates add nothing after reranking; observed cost $0.0306 > approved $0.024 (estimator 61 % low) — guard fixed, deviation recorded |
+| 2026-10-24 | 5 | Owner decision: keep Dense + reranking off; OpenAI Decisions preserved as optional provider; no further paid calls and no Jev run. Spend guard hardened; host/env-var and template tests added; validation + batch-isolation plan written (not executed) |
 | 2026-10-24 | coord | The in-house resilience layer (replacing Polly) landed in commits `066182a`/`f128474`; full suite green afterwards |
 | 2026-10-24 | env | Pre-existing: `IntegrationTestWebAppFactory` fails to start here (`minio/minio` pull denied) → 6 of the older integration tests cannot run in this environment; unrelated to Phase 2 |
 
