@@ -77,8 +77,9 @@ Executed exactly as planned: 40 live requests, 0 failed. Rules, split, seed, hyb
 
 **Deviation: observed spend exceeded the approved dollar cap.** Billed input was **306 220 tokens ≈ $0.0306**, against an estimate of 189 998 (≈ $0.019) and an approved cap of $0.024.
 Cause: the token estimator (~4 characters per token + 150 rubric tokens per question) was 61 % low — real cost was 383 tokens per question, not 237. The spend guard bounded only its
-own estimate, so real spend could pass the approved amount (here by $0.0066). Fixed afterwards: the rubric constant is calibrated to 300 from this run, and the guard now reconciles each
-request with the tokens actually billed and stops on that. Jev token counts will differ; its estimate stays unverified until a Jev run.
+own estimate, so real spend could pass the approved amount (here by $0.0066). Fixed afterwards: the rubric constant is calibrated to 300 from this run, and the guard now reserves per request,
+reconciles each request with the tokens actually billed, learns the estimator's error and applies a 2× safety factor to the first request. **It remains a best-effort stop-loss, not an absolute
+billing cap**: it can still be exceeded if the first-request estimate is wrong by more than the factor, or if billing differs from reported usage; the provider-side limit is the real ceiling. Jev token counts will differ; its estimate stays unverified until a Jev run.
 
 **2026-10-24 — budget-10 diagnostic arm.** Run with an approved limit of 0 requests / $0: every pair was already cached, so no request was possible or made. It has no live latency and, by the
 rule above, cannot make any challenger an adoption candidate; the report labels that cell "not measured" (an earlier rendering said "no"; only the label was corrected).

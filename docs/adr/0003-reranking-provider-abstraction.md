@@ -29,4 +29,5 @@ Two decision APIs were to be compared — OpenAI Decisions and TypeSafe Jev — 
 Held-out nDCG@10 dense 0.861 → dense+OpenAI Decisions 0.979 (+0.118, 95 % interval [+0.044, +0.200]), nDCG@1 0.729 → 0.940, rerank request p50 399 ms / p95 600 ms, 0 failed requests,
 ≈ $0.00077 per query observed. All four pre-registered conditions passed. Reranked hybrid equals reranked dense at budget 20 (identical candidate sets); at budget 10 the difference is +0.002 [0.000, +0.007].
 Limits: LLM-authored judgments, a 35-chunk corpus with ceiling effects, 19 held-out queries, one run. Enabling reranking in production remains a separate decision (cost, data egress, single provider, the limits above).
-The spend estimator was 61 % low and the approved dollar cap was exceeded ($0.0306 vs $0.024); the guard now reconciles with billed tokens.
+The spend estimator was 61 % low and the approved dollar amount was exceeded ($0.0306 vs $0.024). The guard now reserves per request, reconciles with billed tokens, learns the estimator's error and applies a 2× initial safety factor.
+It is a **best-effort stop-loss, not an absolute billing cap**; the first-request estimate can still be wrong by more than the factor, so the provider-side budget limit remains the real ceiling.

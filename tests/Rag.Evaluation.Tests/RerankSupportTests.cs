@@ -190,7 +190,7 @@ public sealed class RerankSupportTests : IDisposable
     public void WhenBilledTokensExceedTheEstimate_TotalBilledSpendStaysWithinTheCap()
     {
         const double price = 0.10;
-        var guard = new SpendGuard(maxRequests: 1000, maxDollars: 0.001, pricePerMillionInputTokens: price);
+        var guard = new SpendGuard(maxRequests: 1000, maxDollars: 0.001, pricePerMillionInputTokens: price, initialSafetyFactor: 1.0);
         double billed = 0;
         var calls = 0;
 
@@ -217,14 +217,48 @@ public sealed class RerankSupportTests : IDisposable
     }
 
     [Fact]
-    public void TheFirstRequestIsUnlearned_SoRealSpendCanPassTheCapByAtMostThatOneRequest()
+    public void WithoutASafetyFactor_TheFirstRequestIsUnlearned_AndRealSpendCanPassTheLimit()
     {
-        var guard = new SpendGuard(maxRequests: 100, maxDollars: 0.00012, pricePerMillionInputTokens: 0.10);
+        var guard = new SpendGuard(maxRequests: 100, maxDollars: 0.00012, pricePerMillionInputTokens: 0.10, initialSafetyFactor: 1.0);
 
-        var first = guard.Authorise(1000);                     // reserved $0.0001 <= cap
-        guard.Reconcile(first, observedInputTokens: 1610);     // billed $0.000161 > cap: unavoidable overshoot of one request
+        var first = guard.Authorise(1000);                     // reserved $0.0001 <= limit
+        guard.Reconcile(first, observedInputTokens: 1610);     // billed $0.000161 > limit: the residual risk, shown
 
-        Assert.Throws<SpendLimitExceededException>(() => guard.Authorise(1000));   // nothing further is sent
+        Assert.Throws<SpendLimitExceededException>(() => guard.Authorise(1000));   // but nothing further is sent
+    }
+
+    [Fact]
+    public void TheInitialSafetyFactor_CoversAnEstimatorThatIsOffByLessThanTheFactor_OnTheFirstRequest()
+    {
+        // the real case: billed 1.61x the estimate. With the default 2x factor the first request reserves $0.0002, so $0.000161 fits.
+        var guard = new SpendGuard(maxRequests: 100, maxDollars: 0.0003, pricePerMillionInputTokens: 0.10);
+
+        var first = guard.Authorise(1000);
+        Assert.Equal(0.0002, guard.EstimatedDollars, 9);       // reserved at 2x the raw estimate
+        guard.Reconcile(first, observedInputTokens: 1610);
+
+        Assert.True(guard.EstimatedDollars <= 0.0003);         // billed total stayed within the approved amount
+    }
+
+    [Fact]
+    public void TheInitialSafetyFactor_IsNotMagic_AnEstimatorOffByMoreThanItStillOvershootsOnTheFirstRequest()
+    {
+        var guard = new SpendGuard(maxRequests: 100, maxDollars: 0.0003, pricePerMillionInputTokens: 0.10);   // factor 2
+
+        var first = guard.Authorise(1000);                     // reserved $0.0002
+        guard.Reconcile(first, observedInputTokens: 5000);     // billed $0.0005: 5x the estimate, more than the factor covers
+
+        Assert.True(guard.EstimatedDollars > 0.0003);          // the documented residual risk: over the approved amount
+        Assert.Throws<SpendLimitExceededException>(() => guard.Authorise(1000));   // and the next request is refused
+    }
+
+    [Fact]
+    public void AFirstRequestThatWouldNotFitEvenAtTheSafetyFactor_IsRefusedBeforeBeingSent()
+    {
+        var guard = new SpendGuard(maxRequests: 100, maxDollars: 0.00015, pricePerMillionInputTokens: 0.10);   // raw estimate fits, 2x does not
+
+        Assert.Throws<SpendLimitExceededException>(() => guard.Authorise(1000));
+        Assert.Equal(0, guard.Requests);
     }
 
     [Fact]
@@ -244,7 +278,7 @@ public sealed class RerankSupportTests : IDisposable
     public async Task ConcurrentRequests_ReserveBeforeSending_SoTheyCannotJointlyExceedTheCap()
     {
         // Each reservation is about $0.0001; a $0.00055 cap admits five of twenty simultaneous requests, not more.
-        var guard = new SpendGuard(maxRequests: 1000, maxDollars: 0.00055, pricePerMillionInputTokens: 0.10);
+        var guard = new SpendGuard(maxRequests: 1000, maxDollars: 0.00055, pricePerMillionInputTokens: 0.10, initialSafetyFactor: 1.0);
         var admitted = 0;
 
         await Task.WhenAll(Enumerable.Range(0, 20).Select(_ => Task.Run(() =>
@@ -265,7 +299,7 @@ public sealed class RerankSupportTests : IDisposable
     [Fact]
     public void TheCalibrationFactor_NeverShrinksTheEstimate_EvenIfTheProviderBillsLess()
     {
-        var guard = new SpendGuard(maxRequests: 100, maxDollars: 1, pricePerMillionInputTokens: 0.10);
+        var guard = new SpendGuard(maxRequests: 100, maxDollars: 1, pricePerMillionInputTokens: 0.10, initialSafetyFactor: 1.0);
 
         var reservation = guard.Authorise(1000);
         guard.Reconcile(reservation, observedInputTokens: 200);   // billed far less than estimated

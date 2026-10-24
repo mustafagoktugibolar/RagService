@@ -57,7 +57,7 @@ public sealed class RerankExperimentTests
 
         Assert.Equal(12, report.Metrics.Count);   // 4 pipelines × (tune, heldout, all)
         Assert.Equal(40, Row(report, RerankExperiment.Dense, "all").ScoredQueries);
-        Assert.Equal(report.Metrics.Where(m => m.Split == "tune").Sum(m => m.ScoredQueries) / 4 + report.Metrics.Where(m => m.Split == "heldout").Sum(m => m.ScoredQueries) / 4, 40);
+        Assert.Equal(40, report.Metrics.Where(m => m.Split == "tune").Sum(m => m.ScoredQueries) / 4 + report.Metrics.Where(m => m.Split == "heldout").Sum(m => m.ScoredQueries) / 4);
         Assert.Equal("fake:oracle", report.Provider);
         Assert.Equal("fake-1", report.ResolvedModel);
     }
@@ -177,7 +177,7 @@ public sealed class RerankExperimentTests
             Assert.True(e.RescuedByHybrid <= e.RelevantInHybridCandidates);
             Assert.Equal(4, e.Ndcg10.Count);
         });
-        Assert.Equal(report.Evidence.Count(e => e.Split == "heldout"), 19);
+        Assert.Equal(19, report.Evidence.Count(e => e.Split == "heldout"));
     }
 
     [Fact]

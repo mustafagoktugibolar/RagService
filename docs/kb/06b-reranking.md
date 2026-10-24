@@ -206,12 +206,22 @@ Plan, **bütçe 20'de hybrid'in dense'in aday kümesine hiç yeni aday eklemedi�
 
 **Gecikme ve maliyet (canlı):** rerank isteği (20 aday, tek batch) p50 **399 ms**, p95 **600 ms**. Gözlenen girdi **306 220 token**, 40 istek → **7 655 token/sorgu ≈ $0.00077/sorgu** (yaklaşık $0.77 / 1000 sorgu; çıktı ücretsiz). Hatasız: 0 başarısız istek.
 
-> ⚠️ **Maliyet tahmini %61 düşük çıktı ve onaylanan $0.024 üst sınırı aşıldı ($0.0306).** Token tahmincisi (karakter/4 + 150 rubrik) gerçek 383 token/soru yerine 237 öngördü; harcama bekçisi yalnızca kendi tahminini sınırlıyordu. Düzeltildi (ve ardından sağlamlaştırıldı):
+> ⚠️ **Maliyet tahmini %61 düşük çıktı ve onaylanan $0.024 üst sınırı aşıldı ($0.0306).** Token tahmincisi (karakter/4 + 150 rubrik) gerçek 383 token/soru yerine 237 öngördü; harcama bekçisi yalnızca kendi tahminini sınırlıyordu. Düzeltildi (ve ardından sağlamlaştırıldı). **Önemli: harcama bekçisi mutlak bir fatura sınırı DEĞİLDİR; en iyi çabayla çalışan bir durdurucudur (stop-loss).** Gerçek tavan yalnızca sağlayıcı konsolunda ayarlanan bütçe/kullanım limitidir.
+
+> Bekçinin yaptıkları:
 > - rubrik sabiti 300'e kalibre edildi;
-> - bekçi her isteği göndermeden **önce rezerve eder** (eşzamanlı istekler toplamda sınırı aşamaz);
+> - her isteği göndermeden **önce rezerve eder** (eşzamanlı istekler birlikte aşamaz);
 > - istek bitince (başarılı **veya başarısız**) rezervasyon **faturalanan token'larla** değiştirilir;
-> - bekçi gözlenen/tahmin oranını öğrenir ve sonraki rezervasyonları onunla çarpar (hiçbir zaman 1'in altına inmez). Örnek: sağlayıcı sürekli %61 fazla faturalarsa 100 çağrılık döngü 5–7 çağrıda durur ve toplam fatura sınırın altında kalır (test: `WhenBilledTokensExceedTheEstimate_TotalBilledSpendStaysWithinTheCap`);
-> - **kalan boşluk:** ilk istek ham tahminle rezerve edilir, bu yüzden gerçek harcama sınırı en fazla **o tek isteğin eksik tahmini** kadar aşabilir (test: `TheFirstRequestIsUnlearned_…`). Onay verirken bu kadar pay bırakılmalı.
+> - gözlenen/tahmin oranını öğrenir ve sonraki rezervasyonları onunla çarpar (hiçbir zaman 1'in altına inmez);
+> - **ilk istek için başlangıç güvenlik çarpanı** (varsayılan 2×) uygular, çünkü o ana kadar öğrenilmiş bir oran yoktur.
+>
+> **Kalan riskler (azaltıldı, ortadan kalkmadı):**
+> 1. **İlk istek tahmini.** İlk istek `tahmin × 2` ile rezerve edilir. Tahmin ilk istekte **2 kattan fazla** yanlışsa gerçek harcama onaylanan tutarı yine aşabilir. Gözlenen tek koşuda hata 1.61× idi (testle: 2× çarpanla sığar; 5× hatada **aşar** ve sonraki istek reddedilir).
+> 2. **Bildirilmeyen faturalama.** Sağlayıcı `usage`'ta göstermediği biçimde (yuvarlama, raporlanmayan token) faturalarsa bekçi bunu göremez.
+> 3. **Hiç çalıştırılmamış sağlayıcıda tahmin doğrulanmamıştır** (Jev: token sayımı farklı olabilir).
+> 4. Yalnızca bu araç üzerinden yapılan istekleri sayar.
+>
+> **Azaltma önerileri:** onay tutarına pay bırak; **sağlayıcı konsolunda bütçe/kullanım limiti belirle** (asıl tavan); yeni bir sağlayıcıda önce çok küçük onaylı bir deneme yap (örn. `--approve-requests 1`) ve gözlenen token/soru değerini kalibrasyon için kaydet; plan çıktısı bu uyarıyı her seferinde yazar.
 >
 > Tutar küçük ama ilke önemli; protokole "yürütme notu" olarak kaydedildi.
 
@@ -249,7 +259,7 @@ OpenAI Decisions mevcut `OPENAI__APIKEY`'i **yeniden kullanır**; Jev ayrı `JEV
 
 | | İçerik |
 |---|---|
-| **A. Tam uygulandı** (kod + deterministik test; ağ yok) | `IReranker` sözleşmesi, `RerankingRetriever` (sıralama, atıf, `Fallback`/`Fail`), `NoOpReranker` · OpenAI Decisions ve Jev adaptörleri · yapılandırmayla sağlayıcı seçimi (gerçek `AddRagCore` + ortam değişkenleri ile doğrulandı), başlangıç doğrulaması, HTTPS zorunluluğu · batch'leme, sınırlı eşzamanlılık, kısmi batch hatası, yanıt doğrulama, sadece geçici hatalarda retry, devre kesici (mevcut katman) · içerik/anahtar sızdırmayan log ve istisnalar · rastgele ayırıcı + görünmez karakter temizliği · önbellek anahtarında sağlayıcı/model/rubrik/mekanizma/bütçe · OpenTelemetry metrik ve span'ler · değerlendirme araçları: deney, çift cache'i, rapor, plan/onay kapısı, **harcama bekçisi** (rezervasyon, faturaya mutabakat, kalibrasyon) · yerel ONNX reranker (opsiyonel proje) |
+| **A. Tam uygulandı** (kod + deterministik test; ağ yok) | `IReranker` sözleşmesi, `RerankingRetriever` (sıralama, atıf, `Fallback`/`Fail`), `NoOpReranker` · OpenAI Decisions ve Jev adaptörleri · yapılandırmayla sağlayıcı seçimi (gerçek `AddRagCore` + ortam değişkenleri ile doğrulandı), başlangıç doğrulaması, HTTPS zorunluluğu · batch'leme, sınırlı eşzamanlılık, kısmi batch hatası, yanıt doğrulama, sadece geçici hatalarda retry, devre kesici (mevcut katman) · içerik/anahtar sızdırmayan log ve istisnalar · rastgele ayırıcı + görünmez karakter temizliği · önbellek anahtarında sağlayıcı/model/rubrik/mekanizma/bütçe · OpenTelemetry metrik ve span'ler · değerlendirme araçları: deney, çift cache'i, rapor, plan/onay kapısı, **en iyi çabayla **harcama durdurucusu** (rezervasyon, faturaya mutabakat, kalibrasyon, başlangıç çarpanı; **mutlak fatura sınırı değil**) · yerel ONNX reranker (opsiyonel proje) |
 | **B. Deneysel olarak doğrulandı** (ölçüm yapıldı) | OpenAI Decisions uç noktası mevcut anahtarla **çalışıyor**: 40 canlı istek, **0 başarısız** · gecikme p50 399 / p95 600 ms · gözlenen maliyet ve token kullanımı · held-out'ta dense → dense+rerank nDCG@10 **+0.118 [+0.044, +0.200]**, nDCG@1 +0.211; önceden kayıtlı dört koşul geçti · hybrid, dense'ten kötü (tuning + held-out) · reranking sonrası hybrid adayları bir şey eklemedi (bütçe 20: aynı küme; bütçe 10: +0.002 [0.000, +0.007]) · ONNX: tokenizer 23 çiftte referansla birebir, logit'ler 1e-3 içinde, CPU gecikme/bellek ölçüldü · sorgu cache'i doğruluk düzeltmesi (kırmızı → yeşil testler) |
 | **C. Üretim doğrulaması gerekiyor** | Bağımsız **insan etiketli** veride kalite (mevcut yargılar LLM destekli, corpus kolay) · **batch yalıtımı** (OpenAI için varsayım) · sağlayıcı **çalıştırmalar arası varyans** · gerçek yük altında rate limit ve `Retry-After` (desteklenmiyor) · **veri çıkışı onayı** (hukuk/sahip kararı; ZDR hesap için doğrulanmalı) · model sabitleme ve kayma izleme (`gpt-6-luna` tek model; çözümlenmiş model yalnızca yanıt taşırsa kaydedilir) · gerçek trafikte maliyet uyarıları · gerçek dağıtımda kesinti/geri düşüş davranışı · **Jev'in tamamı** (hiç canlı istek yok, anahtar yok) · ONNX modelinin kalitesi (golden-v1'de ölçülmedi) ve hostlara/Docker imajlarına bağlanması · Grafana panoları (metrikler var, pano yok) |
 

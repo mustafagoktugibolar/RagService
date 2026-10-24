@@ -152,6 +152,7 @@ public static class RerankCommands
         sb.AppendLine($"  provider requests         : {plan.Requests}  (one batched request per pipeline pass that has unscored candidates)");
         sb.AppendLine($"  estimated input tokens    : {plan.EstimatedInputTokens:N0}  (~4 chars/token + rubric; observed usage will replace this)");
         sb.AppendLine(string.Create(CultureInfo.InvariantCulture, $"  estimated cost            : ${dollars:0.0000}  (price ${pricePerMillion}/1M input tokens, output free per provider docs)"));
+        sb.AppendLine("  note                      : the spend guard is a best-effort stop-loss, NOT an absolute billing cap. Also set a budget/usage limit in the provider console.");
         sb.AppendLine(string.Create(CultureInfo.InvariantCulture,
             $"  suggested approval        : --approve-requests {(int)Math.Ceiling(plan.Requests * headroom)} --approve-usd {Math.Max(0.01, Math.Ceiling(dollars * headroom * 1000) / 1000):0.###}  ({headroom - 1:P0} headroom)"));
         return sb.ToString();

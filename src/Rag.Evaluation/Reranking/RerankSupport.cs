@@ -97,17 +97,22 @@ public sealed class SpendLimitExceededException(string message) : Exception(mess
 public sealed record SpendReservation(int EstimatedInputTokens, double ReservedDollars);
 
 /// <summary>
-/// Stop-loss for a paid run: refuses the next request that would exceed the approved request count or dollar amount.
+/// A best-effort <b>stop-loss</b> for a paid run. It is <b>not an absolute billing cap</b>: the provider's own budget or usage limit
+/// (set in its console) is the only real ceiling. What it does:
 /// <list type="bullet">
-/// <item>Every request reserves its estimated cost <b>before</b> it is sent, so concurrent requests cannot jointly overshoot the cap.</item>
+/// <item>Every request reserves its estimated cost <b>before</b> it is sent, so concurrent requests cannot jointly overshoot.</item>
 /// <item>When a request finishes (success or failure) the reservation is replaced by what the provider actually billed.</item>
-/// <item>The guard learns the observed/estimated token ratio and scales later reservations by it (never below 1), so an
-/// under-estimating estimator is corrected after the first request instead of staying wrong for the whole run.</item>
+/// <item>It learns the observed/estimated token ratio and scales later reservations by it (never below 1), so an under-estimating
+/// estimator is corrected after one request instead of staying wrong for the whole run.</item>
+/// <item>Until that first observation the estimate is multiplied by <c>initialSafetyFactor</c> (default 2).</item>
 /// </list>
-/// What it cannot prevent: the first request is reserved at the raw estimate, so real spend can pass the cap by at most that one
-/// request's under-estimate. Approve a cap with headroom for that.
+/// What it cannot prevent (the residual risk, stated plainly): the first request is reserved at <c>estimate × initialSafetyFactor</c>, so
+/// real spend can pass the approved amount if the estimator is wrong by <b>more than that factor</b> on the first request (the one
+/// observed OpenAI run was 1.61× under the original estimate); if the provider bills in ways it does not report (rounding, tokens not
+/// in <c>usage</c>) the guard cannot see it; the estimator for a provider never run is unverified (Jev). Approve amounts with headroom
+/// and set the provider-side limit.
 /// </summary>
-public sealed class SpendGuard(int maxRequests, double maxDollars, double pricePerMillionInputTokens)
+public sealed class SpendGuard(int maxRequests, double maxDollars, double pricePerMillionInputTokens, double initialSafetyFactor = 2.0)
 {
     private readonly object _lock = new();
     private int _requests;
@@ -117,26 +122,31 @@ public sealed class SpendGuard(int maxRequests, double maxDollars, double priceP
 
     public int Requests => _requests;
 
-    /// <summary>Spent (billed) plus reserved for requests still in flight.</summary>
+    /// <summary>Billed plus reserved-for-in-flight, per the guard's own accounting. A best-effort figure, not an invoice.</summary>
     public double EstimatedDollars => _dollars;
 
-    /// <summary>Observed ÷ estimated input tokens over finished requests; 1 until something has been observed. Never below 1.</summary>
+    /// <summary>
+    /// The multiplier currently applied to estimates: the initial safety factor until a request has finished, afterwards the observed ÷ estimated
+    /// input-token ratio (never below 1).
+    /// </summary>
     public double CalibrationFactor
     {
         get
         {
             lock (_lock)
             {
-                return _estimatedTokens > 0 ? Math.Max(1.0, _observedTokens / _estimatedTokens) : 1.0;
+                return Factor();
             }
         }
     }
+
+    private double Factor() => _estimatedTokens > 0 ? Math.Max(1.0, _observedTokens / _estimatedTokens) : Math.Max(1.0, initialSafetyFactor);
 
     public SpendReservation Authorise(int estimatedInputTokens)
     {
         lock (_lock)
         {
-            var factor = _estimatedTokens > 0 ? Math.Max(1.0, _observedTokens / _estimatedTokens) : 1.0;
+            var factor = Factor();
             var cost = CostModel.Dollars(estimatedInputTokens * factor, pricePerMillionInputTokens);
             if (_requests + 1 > maxRequests)
             {
