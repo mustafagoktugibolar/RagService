@@ -111,7 +111,7 @@ public sealed class DenseBaselineHarness
     /// A retriever over the same already-built index but with different retrieval options. Lets a tuning run compare many
     /// configurations without re-chunking or re-embedding the corpus.
     /// </summary>
-    public RetrieveAsync RetrieverFor(RetrievalOptions options, IReranker? reranker = null) => ToRetriever(new VectorSearchService(
+    public RetrieveAsync RetrieverFor(RetrievalOptions options, IReranker? reranker = null, Rag.Core.Rewriting.QueryRewritingStage? rewriting = null) => ToRetriever(new VectorSearchService(
         Embedder,
         Store,
         new MemoryDistributedCache(Microsoft.Extensions.Options.Options.Create(new MemoryDistributedCacheOptions())),
@@ -119,7 +119,8 @@ public sealed class DenseBaselineHarness
         Microsoft.Extensions.Options.Options.Create(new QueryCacheOptions { Enabled = false }),
         NullLogger<VectorSearchService>.Instance,
         Microsoft.Extensions.Options.Options.Create(options),
-        reranker));
+        reranker,
+        rewriting));
 
     private static RetrieveAsync ToRetriever(VectorSearchService search) => async (query, depth, ct) =>
     {

@@ -1,0 +1,44 @@
+# End-to-end verification overlay (scripts/e2e.py). It REPLACES the .env file for the application containers, so the run can never
+# pick up a real OpenAI key: embeddings come from the local deterministic Hashing provider, and the optional stages use only local
+# components (rules rewriter, ONNX reranker). No paid call is possible from this stack.
+#
+#   docker compose -f compose.yaml -f compose.e2e.yaml up -d --build
+x-e2e-env: &e2e-env
+  RAG__EMBEDDINGPROVIDER: Hashing
+  RAG__EMBEDDINGMODEL: hashing-v1
+  RAG__VECTORSIZE: "256"
+  RAG__VECTORSTOREPROVIDER: Qdrant
+  RAG__STORAGEPROVIDER: S3
+  OPENAI__APIKEY: ""
+  QDRANT__HOST: qdrant
+  QDRANT__PORT: "6334"
+  QDRANT__HTTPPORT: "6333"
+  S3__SERVICEURL: http://seaweedfs:8333
+  S3__ACCESSKEY: ragaccess
+  S3__SECRETKEY: ragsecret
+  S3__FORCEPATHSTYLE: "true"
+  S3__BUCKET: rag-e2e
+  REDIS__CONNECTIONSTRING: redis:6379
+  RABBITMQ__HOSTNAME: rabbitmq
+  CHUNKING__CHUNKSIZE: "200"
+  CHUNKING__CHUNKOVERLAP: "40"
+  QUERYCACHE__ENABLED: "true"
+  QUERYCACHE__TTLMINUTES: "5"
+  EMBEDDINGCACHE__ENABLED: "false"
+  OPENTELEMETRY__OTLPENDPOINT: http://tempo:4317
+  RETRIEVAL__STRATEGY: ${E2E_STRATEGY:-Dense}
+  RETRIEVAL__QUERYREWRITING__ENABLED: ${E2E_REWRITE:-false}
+  RETRIEVAL__QUERYREWRITING__PROVIDER: Rules
+  RETRIEVAL__RERANKING__ENABLED: ${E2E_RERANK:-false}
+  RETRIEVAL__RERANKING__PROVIDER: ${E2E_RERANK_PROVIDER:-Onnx}
+
+services:
+  rag.api:
+    env_file: !override []
+    environment: *e2e-env
+  rag.queryworker:
+    env_file: !override []
+    environment: *e2e-env
+  rag.indexworker:
+    env_file: !override []
+    environment: *e2e-env

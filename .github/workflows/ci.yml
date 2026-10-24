@@ -1,0 +1,105 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# No secret is used by any job. Every test runs offline: the Hashing embedder, scripted HTTP servers (WireMock), local containers and the
+# local ONNX model. Paid providers (OpenAI Decisions, Jev) are exercised only against scripted servers here; live validation is a separate,
+# manually approved activity (docs/release/v1-checklist.md).
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+
+jobs:
+  build-and-unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet build RagService.slnx -c Release --nologo -warnaserror:CS8602,CS8603,CS8604
+      - name: Rag.Core.Tests (unit, in-memory fakes)
+        run: dotnet test tests/Rag.Core.Tests -c Release --no-build
+      - name: Rag.Evaluation.Tests (metrics, harness, human-annotation tooling, retrieval REGRESSION GATE on golden-v1)
+        run: dotnet test tests/Rag.Evaluation.Tests -c Release --no-build
+
+  onnx:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Cache the pinned ONNX model
+        uses: actions/cache@v4
+        with:
+          path: models
+          key: onnx-model-233902d25c44
+      - name: Download the pinned model (SHA-256 verified by the script)
+        run: bash scripts/download-reranker-model.sh
+      - name: Rag.Reranking.Onnx.Tests (tokenizer parity, real local inference)
+        run: dotnet test tests/Rag.Reranking.Onnx.Tests -c Release
+
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: "Rag.IntegrationTests (Testcontainers: Redis, RabbitMQ, SeaweedFS, Qdrant, PgVector)"
+        run: dotnet test tests/Rag.IntegrationTests -c Release
+
+  compose-e2e:
+    # The real Docker Compose stack through RabbitMQ workers: scripts/e2e.py (49 checks). Slower, so it runs on main and on demand.
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache the pinned ONNX model
+        uses: actions/cache@v4
+        with:
+          path: models
+          key: onnx-model-233902d25c44
+      - run: bash scripts/download-reranker-model.sh
+      - name: Build images and run the end-to-end script
+        run: |
+          touch .env   # compose.yaml lists .env; compose.e2e.yaml replaces it for the application containers, so it stays empty
+          docker compose -f compose.yaml -f compose.e2e.yaml build rag.api rag.queryworker rag.indexworker
+          python3 scripts/e2e.py
+      - name: Show service logs on failure
+        if: failure()
+        run: docker compose -f compose.yaml -f compose.e2e.yaml logs --no-color --tail 200 rag.api rag.queryworker rag.indexworker
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-report
+          path: docs/release/e2e-report.md
+      - if: always()
+        run: docker compose -f compose.yaml -f compose.e2e.yaml down -v
+
+  secrets-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: No credential-looking strings in tracked files
+        run: |
+          if git grep -n -I -E 'sk-[A-Za-z0-9_-]{20,}|tsk-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----' -- . ':!tests/**' ; then
+            echo "credential-looking string found"; exit 1
+          fi
+          git ls-files | grep -E '(^|/)\.env$' && { echo ".env is tracked"; exit 1; } || true

@@ -23,6 +23,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Rag.Core\Rag.Core.csproj" />
+        <ProjectReference Include="..\Rag.Reranking.Onnx\Rag.Reranking.Onnx.csproj" />
     </ItemGroup>
 
     <ItemGroup>

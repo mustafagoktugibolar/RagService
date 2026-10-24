@@ -5,6 +5,7 @@ using OpenTelemetry.Trace;
 using Rag.Api.Health;
 using Rag.Core.Contracts;
 using Rag.Core.Extensions;
+using Rag.Reranking.Onnx;
 using Rag.Core.Options;
 using Rag.Core.Services;
 using Rag.Core.Telemetry;
@@ -63,6 +64,7 @@ try
         });
 
     builder.Services.AddRagCore(builder.Configuration);
+    builder.Services.AddOnnxReranker(builder.Configuration);   // no-op unless Retrieval:Reranking is enabled with Provider=Onnx
     builder.Services.AddOpenApi();
 
     var qdrantOpts = builder.Configuration.GetSection("Qdrant").Get<QdrantOptions>() ?? new QdrantOptions();

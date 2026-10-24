@@ -10,3 +10,4 @@ riderModule.iml
 /src/Rag.Api/Properties/launchSettings.json
 .eval-cache/
 models/
+__pycache__/

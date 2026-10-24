@@ -42,7 +42,7 @@ services:
     volumes:
       - seaweedfs-data:/data
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8333/healthz"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8333/healthz"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -103,6 +103,8 @@ services:
       dockerfile: src/Rag.Api/Dockerfile
     env_file:
       - .env
+    volumes:
+      - ./models:/app/models:ro   # local ONNX reranker model (bash scripts/download-reranker-model.sh); unused unless Provider=Onnx
     ports:
       - "8080:8080"
     depends_on:
@@ -118,6 +120,8 @@ services:
       dockerfile: src/Rag.QueryWorker/Dockerfile
     env_file:
       - .env
+    volumes:
+      - ./models:/app/models:ro
     depends_on:
       rabbitmq:
         condition: service_healthy

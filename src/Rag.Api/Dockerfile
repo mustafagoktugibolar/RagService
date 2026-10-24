@@ -7,6 +7,7 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["src/Rag.Api/Rag.Api.csproj", "src/Rag.Api/"]
 COPY ["src/Rag.Core/Rag.Core.csproj", "src/Rag.Core/"]
+COPY ["src/Rag.Reranking.Onnx/Rag.Reranking.Onnx.csproj", "src/Rag.Reranking.Onnx/"]
 RUN dotnet restore "src/Rag.Api/Rag.Api.csproj"
 COPY . .
 WORKDIR "/src/src/Rag.Api"

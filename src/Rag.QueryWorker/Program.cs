@@ -1,4 +1,5 @@
 using Rag.Core.Extensions;
+using Rag.Reranking.Onnx;
 using Rag.Core.Telemetry;
 using Rag.QueryWorker;
 using Serilog;
@@ -27,6 +28,7 @@ try
         .WriteTo.Console(new CompactJsonFormatter()));
 
     builder.Services.AddRagCore(builder.Configuration);
+    builder.Services.AddOnnxReranker(builder.Configuration);   // no-op unless Retrieval:Reranking is enabled with Provider=Onnx
     builder.Services.AddRagOpenTelemetry(builder.Configuration["OpenTelemetry:OtlpEndpoint"]);
     builder.Services.AddHostedService<Worker>();
 
