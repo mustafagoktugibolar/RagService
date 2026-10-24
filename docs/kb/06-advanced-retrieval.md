@@ -9,7 +9,7 @@
 | Hybrid retrieval + RRF + source attribution + provider fallback | ✅ Implemented (Faz 4), 🧪 **varsayılan kapalı** — gerçek embedding ile ölçüldü, **dense'ten iyi değil** (§6.8) |
 | PgVector'da lexical/hybrid | ❌ Yok → hybrid, dense'e düşer (uyarıyla) |
 | Qdrant server-side fusion (Query API `Fusion.Rrf`) | 📖 Değerlendirildi, kullanılmıyor (§6.6) |
-| Cross-encoder reranking | 🔵 Planned (Faz 5) |
+| Reranking (OpenAI Decisions, Jev, yerel ONNX cross-encoder) | ✅ Implemented + deterministik testler; ❌ canlı değerlendirme yok → **[Bölüm 6B](06b-reranking.md)** |
 | Query rewriting / multi-query | 🔵 Planned (Faz 6) |
 | HyDE | 📖 Theory — yalnızca evaluation gerekçelendirirse |
 | Parent-child retrieval | 🔵 Planned (Faz 7, chunking deneyleri) |
@@ -181,7 +181,7 @@ K=1'de nDCG: dense **0.832**, hybrid 0.768. Paraphrase kategorisinde K=10 nDCG: 
 
 Bu alt bölümler **kavramsaldır**; repoda kod yoktur. Faz 5–7'de uygulandıkça "Implemented"a geçecek.
 
-- **Cross-encoder reranking (🔵 Faz 5):** Bi-encoder (embedding) sorgu ve dokümanı *ayrı* kodlar → hızlı, ölçeklenebilir ama kaba. Cross-encoder ikisini *birlikte* okur → çok daha doğru, ama N doküman için N model çağrısı. Bu yüzden iki aşama: ucuz aday üretimi (CandidateK ≈ 50) → pahalı yeniden sıralama → TopK. Karar kriteri: nDCG/MRR kazancı vs. eklenen p95 gecikme ve maliyet; başarısızlıkta rerank'siz sıraya düşme.
+- **Cross-encoder reranking** (artık uygulandı: bkz. [Bölüm 6B](06b-reranking.md); aşağıdaki paragraf kavramsal girişti): Bi-encoder (embedding) sorgu ve dokümanı *ayrı* kodlar → hızlı, ölçeklenebilir ama kaba. Cross-encoder ikisini *birlikte* okur → çok daha doğru, ama N doküman için N model çağrısı. Bu yüzden iki aşama: ucuz aday üretimi (CandidateK ≈ 50) → pahalı yeniden sıralama → TopK. Karar kriteri: nDCG/MRR kazancı vs. eklenen p95 gecikme ve maliyet; başarısızlıkta rerank'siz sıraya düşme.
 - **Query rewriting / multi-query (🔵 Faz 6):** LLM ile sorguyu yeniden yazma/genişletme. Riskler: niyet kayması (drift), ekstra LLM maliyeti/gecikmesi. Koruma: varlık/sayı değişirse orijinal sorguya geri dön; gereksiz LLM çağrısından kaçın.
 - **HyDE (📖 Theory):** LLM'den varsayımsal cevap yazdırıp onu embed etmek. Kısa sorgularda yardımcı olabilir; halüsinasyonla yanlış yöne çekebilir. Yalnızca evaluation gerekçelendirirse.
 - **Parent-child (🔵 Faz 7):** Küçük "child" chunk'larla eşleş, daha büyük "parent" bölümü döndür. Kesin eşleşme + geniş bağlam; stabil parent ID gerektirir.
