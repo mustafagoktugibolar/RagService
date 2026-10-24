@@ -127,12 +127,17 @@ Companion docs: [ASSESSMENT.md](ASSESSMENT.md) · [Knowledge Base](kb/README.md)
 - [x] Pool builder + blinded annotator sheets (no system, rank or score recoverable; per-annotator order) + CSV round trip, adjudication assembly (a tool never decides), report with criteria P1–P10 — 54 tests
 - [x] Offline CLI modes `pilot-corpus|signoff|queries|pool|adjudication|report` (no credential read, no embedder, no provider call) and an end-to-end workflow test over a synthetic repository — 9 tests
 - [x] Spend guard: documented as best-effort stop-loss, 2× initial safety factor for the first request, residual risks tested (see Phase 5)
-- [ ] Freeze the real pilot corpus and review its manifest (**owner**)
+- [x] **Security-review fix — CSV formula injection:** sheets are opened in spreadsheets, so fields starting with `=`, `+`, `-`, `@`, tab or CR are written with a leading `'` (reversible, tested for round trips including values that look like the guard) and the query validator rejects such queries
+- [x] **Topic prompts are neutral areas, not document titles:** the first freeze copied titles, and e.g. an ADR title states its own conclusion and pulls query writers toward the document's wording
+- [x] Real pilot corpus frozen (**not signed off**; sign-off is the owner's act and was deliberately not given by the tooling)
+- [ ] Review the frozen corpus manifest and copies (**owner**)
 - [ ] Owner sign-off (**owner**)
 - [ ] Write ~24 queries and fill `annotators.json` (**people**)
 - [ ] Two annotators grade their blinded sheets; adjudicator resolves differences (**people**)
 - [ ] Run `pilot-report`; decide GO / REVISE / NO-GO; propose the next phase
 - [ ] Top-up judging round if an OpenAI-embedding dense run is ever to be scored on these labels (needs approval: it is a paid call)
+**Findings from the frozen corpus (offline facts, not pilot results)** 12 documents → **212 chunks** at 250/40 (a top-20 list is **9 %** of the corpus; golden-v1 was 57 %; at the production 1000/200 the same documents give only ≈ 36 chunks). **169 of 212 chunks (80 %) are Turkish**; **85 (40 %) are table- or code-heavy**; median ≈ 160 tokens, max ≈ 298.
+Consequences to watch, none yet measured: the free pooling systems are English-oriented (English stop-words in BM25, a hashing embedder, an English-trained cross-encoder), so candidate quality on Turkish passages may be poor and the pool may miss relevant ones (P9, and the pooling-bias caveat); table/code fragments cut mid-row are slow and ambiguous to judge (P8, P5). The pilot exists to measure exactly these.
 **Acceptance** Criteria P1–P10 as pre-registered. Pilot findings do **not** exist yet and none are claimed.
 **Risks** Corpus is AI-assisted writing (labels are human); small corpus even at 250/40; Turkish/English mix vs English-only local models; two annotators give a wide kappa interval; annotator availability (fallback: test–retest, chosen beforehand).
 

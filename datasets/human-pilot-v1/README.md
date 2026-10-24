@@ -44,3 +44,4 @@ dotnet run --project src/Rag.Evaluation.Cli -- --mode pilot-report
 ```
 
 Open CSV files as UTF-8 (they carry a BOM so spreadsheets show Turkish letters correctly) and keep the column order.
+A cell that starts with `=`, `+`, `-`, `@` or a tab is written with a leading `'` so a spreadsheet cannot execute it as a formula; leave that apostrophe in place, the tools remove it when reading the sheet back.

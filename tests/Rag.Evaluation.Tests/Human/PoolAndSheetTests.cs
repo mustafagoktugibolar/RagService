@@ -189,3 +189,95 @@ public sealed class PoolAndSheetTests
         Assert.Equal("doc2:000000", dense.Search("subject6 passage", 3)[0]);
     }
 }
+
+public sealed class CsvFormulaInjectionTests
+{
+    [Theory]
+    [InlineData("=1+1")]
+    [InlineData("+cmd|' /C calc'!A0")]
+    [InlineData("-2+3")]
+    [InlineData("@SUM(1,1)")]
+    [InlineData("\tindented")]
+    [InlineData("=HYPERLINK(\"http://evil.example\",\"click\")")]
+    [InlineData("- an ordinary markdown bullet")]
+    public void FieldsThatCouldRunAsFormulas_AreNeutralisedOnTheWayOut(string value)
+    {
+        var line = Csv.Write([new[] { "id", value }]).Split("\r\n")[0];
+        var field = Csv.Read(line)[0][1];
+
+        Assert.StartsWith("id,", line);
+        Assert.Matches("^id,\"?'", line);                     // the field is written with a leading quote (inside the CSV quoting if any)
+        Assert.Equal(value, field);                           // and read back exactly
+    }
+
+    [Fact]
+    public void ACarriageReturnAtTheStart_IsGuardedToo()
+    {
+        var csv = Csv.Write([new[] { "\rvalue" }]);
+
+        Assert.StartsWith("\"'", csv);
+        Assert.Equal("\rvalue", Csv.Read(csv)[0][0]);
+    }
+
+    [Theory]
+    [InlineData("'=already prefixed looking")]
+    [InlineData("'+also")]
+    [InlineData("'plain apostrophe stays")]
+    [InlineData("it's fine")]
+    [InlineData("normal text")]
+    [InlineData("")]
+    public void TheMappingIsReversible_EvenForValuesThatLookLikeTheGuardItself(string value) =>
+        Assert.Equal(value, Csv.Read(Csv.Write([new[] { "x", value }]))[0][1]);
+
+    [Fact]
+    public void OrdinaryText_IsNotTouched()
+    {
+        Assert.Equal("x,plain text\r\n", Csv.Write([new[] { "x", "plain text" }]));
+        Assert.Equal("x,'plain\r\n", Csv.Write([new[] { "x", "'plain" }]));   // a lone leading apostrophe is not a guard and is written as is
+    }
+
+    [Fact]
+    public void ADangerousPassageOnASheet_IsGuarded_AndTheReturnedSheetStillParses()
+    {
+        var chunks = new[]
+        {
+            new PilotChunk { ChunkId = "d:000000", DocumentId = "d", Title = "T", Language = "en", Text = "=HYPERLINK(\"http://evil.example\",\"x\")" },
+            new PilotChunk { ChunkId = "d:000001", DocumentId = "d", Title = "T", Language = "en", Text = "- a bullet that starts the passage" }
+        };
+        var queries = new[] { new PilotQuery { Id = "pilot-001", Text = "a safe query", Category = "keyword", Language = "en", WrittenBy = "o" } };
+        var pool = PoolBuilder.Build(chunks, queries, [new PoolSystem("s", (_, depth) => chunks.Select(c => c.ChunkId).Take(depth).ToList())], 2, 0, 1, "c");
+
+        var csv = AnnotationSheets.ToCsv(AnnotationSheets.Build(pool, queries, chunks, "o", 1));
+
+        Assert.DoesNotContain(",=HYPERLINK", csv);
+        Assert.DoesNotContain(",\"=HYPERLINK", csv);
+        Assert.Contains("'=HYPERLINK", csv);
+        var rows = Csv.Read(csv);
+        Assert.Contains(rows.Skip(1), r => r[5] == "=HYPERLINK(\"http://evil.example\",\"x\")");   // read back exactly
+        rows[1][6] = "2";
+        Assert.Single(AnnotationSheets.ParseCsv(Csv.Write(rows.Select(r => (IReadOnlyList<string>)r)), "o", "g").Items);
+    }
+
+    [Theory]
+    [InlineData("=SUM(A1:A2) as a query")]
+    [InlineData("+49 prefix looks like a formula")]
+    [InlineData("-how does this start with a dash")]
+    [InlineData("@mention style query text")]
+    public void AQueryThatStartsLikeAFormula_IsRejectedByTheValidator(string text)
+    {
+        Annotator[] people = [new() { Id = "owner", Kind = "human", Roles = ["query-writer", "annotator"] }, new() { Id = "b", Kind = "human", Roles = ["annotator"] }];
+        var queries = new List<PilotQuery>();
+        var n = 0;
+        foreach (var (category, count) in new[] { ("keyword", 5), ("paraphrase", 6), ("multi-relevant", 4), ("conceptual", 4), ("cross-lingual", 3), ("no-answer", 2) })
+        {
+            for (var i = 0; i < count; i++, n++)
+            {
+                queries.Add(new PilotQuery { Id = $"pilot-{n:D3}", Text = $"ordinary question number {n} {category}", Category = category, Language = "en", WrittenBy = "owner" });
+            }
+        }
+
+        queries[0] = queries[0] with { Text = text };
+
+        Assert.Contains(Assert.Throws<PilotValidationException>(() => PilotValidator.ValidateQueries(queries, people)).Errors, e => e.Contains("formula injection"));
+    }
+}

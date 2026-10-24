@@ -117,4 +117,18 @@ public sealed class CorpusBuilderTests : IDisposable
         Assert.DoesNotContain("Paragraph", result.Topics);
         Assert.DoesNotContain("detail sentence", result.Topics);
     }
+
+    [Fact]
+    public async Task WhenNeutralAreasAreSupplied_TheTopicPromptsUseThemInsteadOfDocumentTitles()
+    {
+        Write("README.md", LongText("A Title That States The Conclusion Hybrid Is Off", "alpha"));
+
+        var result = await CorpusBuilder.BuildAsync(
+            _root, _output, [("README.md", "doc")], [], Spec, "v", "abc", CancellationToken.None,
+            new Dictionary<string, string> { ["README.md"] = "A recorded decision about the default search strategy" });
+
+        Assert.Contains("A recorded decision about the default search strategy", result.Topics);
+        Assert.DoesNotContain("States The Conclusion", result.Topics);
+        Assert.Contains("document in English", result.Topics);
+    }
 }

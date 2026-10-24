@@ -115,7 +115,7 @@ public sealed class PilotWorkflowTests : IDisposable
         }
 
         var topics = File.ReadAllText(Path.Combine(_dataset, "topics.md"));
-        Assert.Contains("Notes about zebra", topics);
+        Assert.Contains("Notes about zebra", topics);   // no neutral area was supplied for the synthetic docs, so the title is the fallback
         Assert.DoesNotContain("appears in sentence", topics);
     }
 

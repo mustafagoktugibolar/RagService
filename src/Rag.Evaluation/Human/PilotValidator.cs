@@ -85,6 +85,11 @@ public static class PilotValidator
                 errors.Add($"Query '{query.Id}': language must be 'en' or 'tr'.");
             }
 
+            if (Csv.StartsLikeFormula(query.Text))
+            {
+                errors.Add($"Query '{query.Id}': text must not start with =, +, -, @ or a control character (spreadsheet formula injection); rephrase it.");
+            }
+
             if (query.Text.Trim().Length is < 8 or > 300)
             {
                 errors.Add($"Query '{query.Id}': text must be 8-300 characters.");

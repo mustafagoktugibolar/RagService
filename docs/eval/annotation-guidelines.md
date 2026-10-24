@@ -13,6 +13,7 @@ model prompt on purpose: the labels must measure relevance as a person sees it, 
 3. **Judge only what is on the sheet.** Do not search the repository, the web or your memory of the documents to decide a grade. A passage is graded on its own text.
 4. **Record time honestly.** Fill `seconds` with how long the item took you (a rough timer per sitting divided by items is fine). It is used to plan the effort of the final phase.
 5. **Do not try to guess how a system ranked a passage.** Order on the sheet is random and carries no information.
+6. **A leading apostrophe is a safety marker, not part of the text.** Sheets are CSV files opened in a spreadsheet; any cell that starts with `=`, `+`, `-`, `@` or a tab is written with a leading `'` so a spreadsheet cannot run it as a formula (a markdown bullet `- item` therefore appears as `'- item`). Leave the apostrophe in place; the tools remove it when they read your sheet back. Do not start your own comments with those characters.
 
 ## Part A — Writing queries (query writers)
 

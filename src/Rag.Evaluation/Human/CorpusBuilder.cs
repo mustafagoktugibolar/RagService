@@ -68,7 +68,8 @@ public static class CorpusBuilder
         ChunkingSpec chunking,
         string corpusVersion,
         string sourceCommit,
-        CancellationToken ct)
+        CancellationToken ct,
+        IReadOnlyDictionary<string, string>? topicPrompts = null)
     {
         var texts = new List<(string Path, string Text, string Reason)>();
         var findings = new List<SafetyFinding>();
@@ -107,7 +108,9 @@ public static class CorpusBuilder
                 chunks.Add(new PilotChunk { ChunkId = chunk.ChunkId, DocumentId = documentId, Title = title, Language = language, Text = chunk.Text });
             }
 
-            topics.AppendLine($"- {title}  ({(language == "tr" ? "Türkçe" : "English")})");
+            // A neutral, hand-written area when one is given: a document's own title often states its conclusion and would pull query writers toward its wording.
+            var topic = topicPrompts is not null && topicPrompts.TryGetValue(path, out var prompt) ? prompt : title;
+            topics.AppendLine($"- {topic}  ({(language == "tr" ? "document in Turkish" : "document in English")})");
         }
 
         var manifest = new CorpusManifest

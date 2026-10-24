@@ -29,13 +29,13 @@ public sealed class PilotWorkflow(string datasetDirectory)
 
     public async Task<CorpusBuildResult> FreezeCorpusAsync(
         string repositoryRoot, IReadOnlyList<(string Path, string Reason)> allowList, IReadOnlyList<ExcludedFile> excluded,
-        ChunkingSpec chunking, string corpusVersion, string sourceCommit, CancellationToken ct)
+        ChunkingSpec chunking, string corpusVersion, string sourceCommit, CancellationToken ct, IReadOnlyDictionary<string, string>? topicPrompts = null)
     {
-        var result = await CorpusBuilder.BuildAsync(repositoryRoot, Directory, allowList, excluded, chunking, corpusVersion, sourceCommit, ct);
+        var result = await CorpusBuilder.BuildAsync(repositoryRoot, Directory, allowList, excluded, chunking, corpusVersion, sourceCommit, ct, topicPrompts);
         await File.WriteAllTextAsync(Path_("topics.md"),
             "# Topic prompts for query writers\n\n" +
-            "Write the question you would ask **if you did not know the answer**. You are shown topics only, never passages: do not look up the documents,\n" +
-            "and do not copy phrases from these titles.\n\n" + result.Topics, ct);
+            "Write the question you would ask **if you did not know the answer**. You are shown broad areas only, never passages or document titles:\n" +
+            "do not look up the documents, and use your own words.\n\n" + result.Topics, ct);
         return result;
     }
 

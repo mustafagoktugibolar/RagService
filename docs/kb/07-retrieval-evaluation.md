@@ -207,6 +207,8 @@ Bir konfigürasyonu aynı sorgularda hem seçip hem "kanıtlamak" yanıltıcıd�
 
 **Karar:** herhangi biri *başarısız* → **NO-GO**; başarısız yok ama *gözden geçir* var → **REVISE**; hepsi geçti → **GO**. **P7 neden önemli:** corpus öyle kolaysa ki ücretsiz taban çizgi zaten ~1.0 alıyorsa, δ = 0.05'lik bir kazancı **ölçmek mümkün değildir** (tavan etkisi); golden-v1'de gördüğümüz tam bu sorundu.
 
+**CSV formül enjeksiyonu (güvenlik).** Etiket sayfaları CSV olarak dışa aktarılır ve insanlarca bir hesap tablosunda açılır. `=`, `+`, `-`, `@` veya sekmeyle başlayan bir hücre (markdown madde işareti `- madde` dahil) formül olarak çalıştırılabilir. Bu yüzden yazarken böyle alanların başına `'` konur, okurken geri alınır; eşleme **tersinirdir** (zaten `'` + formül karakteriyle başlayan değerler ikinci bir `'` alır). Sorgu doğrulayıcısı da böyle başlayan sorgu metinlerini reddeder. Hesap tablosunda baştaki `'` görünür; bu bir güvenlik işaretidir, metnin parçası değil.
+
 **Pilot neyi gösteremez:** hiçbir reranker'ı ölçmez (ücretli çağrı yok); yalnızca havuzlanan pasajlar etiketlidir; iki anotatörle κ küçük örneklemde geniş aralıklı bir tahmindir; tahmin edilen varyans bir **vekildir** (gerçek karşılaştırma — dense ve dense+reranker — ölçülmemiştir).
 
 **İzolasyon.** Pilot sorguları `pilot-` önekli ayrı dizinde yaşar; `SplitIsolation`, normalleştirmeden sonra aynı veya çok benzer (Jaccard ≥ 0.8) sorguları reddeder; **pilot etiketleri nihai etiket olarak asla yeniden kullanılmaz** ve kılavuz pilottan sonra değişebilir (`guidelines-v2`).

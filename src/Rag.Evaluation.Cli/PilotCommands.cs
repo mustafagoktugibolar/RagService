@@ -32,6 +32,23 @@ public static class PilotCommands
         ("docs/research/reranking-providers.md", "provider research notes")
     ];
 
+    /// <summary>Neutral, hand-written areas shown to query writers instead of document titles (titles often state a conclusion).</summary>
+    private static readonly Dictionary<string, string> TopicPrompts = new()
+    {
+        ["README.md"] = "How the system is built, what services it consists of and how it is run",
+        ["docs/ASSESSMENT.md"] = "Strengths, weaknesses and risks found in the current code base",
+        ["docs/kb/README.md"] = "How the learning material about this system is organised",
+        ["docs/kb/01-system-architecture.md"] = "The overall architecture: query and indexing paths, workers, messaging",
+        ["docs/kb/06-advanced-retrieval.md"] = "Retrieval techniques beyond plain vector search",
+        ["docs/kb/06b-reranking.md"] = "Re-ordering retrieved results with a second stage: providers, safety, failure handling, measured results",
+        ["docs/kb/07-retrieval-evaluation.md"] = "Measuring retrieval quality: metrics, datasets, tuning discipline, human labeling",
+        ["docs/kb/08-redis-caching.md"] = "Caching of embeddings and of query results, and keeping cached answers correct",
+        ["docs/adr/0001-hybrid-search-not-default.md"] = "A recorded decision about which search strategy is the default",
+        ["docs/adr/0002-index-versioned-query-cache.md"] = "A recorded decision about cache correctness after re-indexing",
+        ["docs/adr/0003-reranking-provider-abstraction.md"] = "A recorded decision about making ranking providers interchangeable",
+        ["docs/research/reranking-providers.md"] = "What was found out about two external ranking services"
+    };
+
     private static readonly ExcludedFile[] Excluded =
     [
         new("plan.md", "company-specific Definition Seeder plan; may carry proprietary names and domain details"),
@@ -117,7 +134,7 @@ public static class PilotCommands
 
         var spec = new ChunkingSpec(
             int.Parse(options.GetValueOrDefault("chunk-size") ?? "250"), int.Parse(options.GetValueOrDefault("chunk-overlap") ?? "40"), "text-embedding-3-small");
-        var result = await workflow.FreezeCorpusAsync(Directory.GetCurrentDirectory(), AllowList, Excluded, spec, "human-pilot-corpus-v1", Git("rev-parse", "HEAD").Trim(), ct);
+        var result = await workflow.FreezeCorpusAsync(Directory.GetCurrentDirectory(), AllowList, Excluded, spec, "human-pilot-corpus-v1", Git("rev-parse", "HEAD").Trim(), ct, TopicPrompts);
 
         var tokens = result.Chunks.Select(c => c.Text.Length / 4).Order().ToArray();
         Console.WriteLine($"Frozen {result.Manifest.Files.Count} documents into {result.Chunks.Count} chunks (chunking {spec.ChunkSize}/{spec.ChunkOverlap}); safety scan clean.");

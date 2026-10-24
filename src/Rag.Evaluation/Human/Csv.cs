@@ -2,9 +2,25 @@ using System.Text;
 
 namespace Rag.Evaluation.Human;
 
-/// <summary>Minimal RFC 4180 CSV: quoted fields may contain commas, quotes (doubled) and line breaks, which passages routinely do.</summary>
+/// <summary>
+/// Minimal RFC 4180 CSV: quoted fields may contain commas, quotes (doubled) and line breaks, which passages routinely do.
+/// <para>
+/// <b>Formula-injection guard.</b> These files are opened in spreadsheets by people. A cell that starts with <c>=</c>, <c>+</c>, <c>-</c>, <c>@</c>,
+/// a tab or a carriage return can be run as a formula, so <see cref="Write"/> prefixes such fields with a single quote and <see cref="Read"/> removes
+/// that prefix again. The mapping is reversible: a value that itself begins with a quote followed by one of those characters gets a second quote
+/// on the way out, so round trips are exact. In a spreadsheet the quote is visible: a leading <c>'</c> on a passage is this safety marker.
+/// </para>
+/// </summary>
 public static class Csv
 {
+    private static readonly char[] FormulaStarts = ['=', '+', '-', '@', '\t', '\r'];
+
+    /// <summary>True for text that begins with a formula character, or with a quote followed by one (the already-prefixed form).</summary>
+    public static bool NeedsGuard(string value) =>
+        value.Length > 0 && (FormulaStarts.Contains(value[0]) || (value[0] == '\'' && value.Length > 1 && FormulaStarts.Contains(value[1])));
+
+    public static bool StartsLikeFormula(string value) => value.Length > 0 && FormulaStarts.Contains(value[0]);
+
     public static string Write(IEnumerable<IReadOnlyList<string>> rows)
     {
         var builder = new StringBuilder();
@@ -53,7 +69,7 @@ public static class Csv
                     hasContent = true;
                     break;
                 case ',':
-                    row.Add(field.ToString());
+                    row.Add(Unguard(field.ToString()));
                     field.Clear();
                     hasContent = true;
                     break;
@@ -62,7 +78,7 @@ public static class Csv
                 case '\n':
                     if (hasContent || field.Length > 0)
                     {
-                        row.Add(field.ToString());
+                        row.Add(Unguard(field.ToString()));
                         rows.Add(row);
                     }
 
@@ -79,13 +95,22 @@ public static class Csv
 
         if (hasContent || field.Length > 0)
         {
-            row.Add(field.ToString());
+            row.Add(Unguard(field.ToString()));
             rows.Add(row);
         }
 
         return rows;
     }
 
-    private static string Escape(string value) =>
-        value.IndexOfAny([',', '"', '\n', '\r']) >= 0 ? "\"" + value.Replace("\"", "\"\"") + "\"" : value;
+    private static string Escape(string value)
+    {
+        if (NeedsGuard(value))
+        {
+            value = "'" + value;
+        }
+
+        return value.IndexOfAny([',', '"', '\n', '\r']) >= 0 ? "\"" + value.Replace("\"", "\"\"") + "\"" : value;
+    }
+
+    private static string Unguard(string field) => field.Length > 1 && field[0] == '\'' && NeedsGuard(field[1..]) ? field[1..] : field;
 }
